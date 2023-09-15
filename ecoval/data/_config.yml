@@ -1,0 +1,6 @@
+title:
+author:
+execute:
+  execute_notebooks: force
+  timeout: 500
+  interactiveShell.ast_node_interactivity: last_expr

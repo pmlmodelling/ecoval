@@ -1,0 +1,19 @@
+name: ecoval
+channels:
+  - conda-forge
+dependencies:
+  - cartopy
+  - cdo>2.1.0
+  - cmocean
+  - nco
+  - nctoolkit>=1.1.1
+  - pandoc
+  - python=3.9.16=h2782a2a_0_cpython
+  - r-base
+  - r-cowplot
+  - r-dplyr
+  - r-ggplot2
+  - r-maps
+  - r-plotrix
+  - r-tibble
+  - r-tidyr
