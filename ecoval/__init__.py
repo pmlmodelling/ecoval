@@ -10,6 +10,61 @@ import glob
 import nctoolkit as nc
 import webbrowser
 from ecoval.chunkers import add_chunks
+import glob
+import os
+import pandas as pd
+
+def fix_toc():
+    paths = glob.glob("book/notebooks/*.ipynb")
+    variables = list(pd.read_csv("matched/mapping.csv").variable)
+    variables.sort()
+
+    vv_dict = dict()
+    for vv in variables:
+        if vv != "ph":
+            vv_paths = [os.path.basename(x) for x in paths if vv in x]
+            if len(vv_paths) > 0: 
+                vv_dict[vv] = vv_paths
+        else:
+            vv_paths = [os.path.basename(x) for x in paths if vv in x and "phos" not in x and "chlo" not in x]
+            if len(vv_paths) > 0: 
+                vv_dict[vv] = vv_paths
+    # get summary docs
+    ss_paths = [os.path.basename(x) for x in paths if "summary" in x]
+
+    out = "book/_toc.yml"
+    # write line by line to out
+    with open(out, "w") as f:
+        #"format: jb-book"
+        x = f.write("format: jb-book\n")
+        x = f.write("root: intro\n")
+        x = f.write("parts:\n")
+        x = f.write(f"- caption: Introduction\n")
+        x = f.write("  chapters:\n")
+        x = f.write(f"  - file: notebooks/000_info.ipynb\n")
+
+        # loop over variables in each vv_dict
+        # value is the file in the chapter section
+        # key is the variable name, so is the section
+        for vv in vv_dict.keys():
+            # capitalize if not ph
+            if vv != "ph":
+                vv_out = vv.capitalize()
+            # correct ph
+            if vv == "ph":
+                vv_out = "pH"
+            x = f.write(f"- caption: {vv_out}\n")
+            x = f.write("  chapters:\n")
+            for file in vv_dict[vv]:
+                x = f.write(f"  - file: notebooks/{file}\n")
+
+        x = f.write(f"- caption: Summaries\n")
+        x = f.write("  chapters:\n")
+        for file in ss_paths:
+            x = f.write(f"  - file: notebooks/{file}\n")
+
+
+
 
 def compare(model_dict = None):
     """
@@ -384,7 +439,6 @@ def validate(title="Automated model evaluation", author=None):
             if not os.path.exists(vv_file_find):
                 print(f"Not finding {vv_file}")
             if os.path.exists(vv_file_find):
-                print("Finding this.....")
                 if len(glob.glob(f"book/notebooks/*ices_{variable}.ipynb")) == 0:
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/ices_template.ipynb"
@@ -426,7 +480,6 @@ def validate(title="Automated model evaluation", author=None):
             if not os.path.exists(vv_file_find):
                 print(f"Not finding {vv_file}")
             if os.path.exists(vv_file_find):
-                print("Finding this.....")
                 if len(glob.glob(f"book/notebooks/*ices_bottom_{variable}.ipynb")) == 0:
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/ices_bottom.ipynb"
@@ -779,6 +832,10 @@ def validate(title="Automated model evaluation", author=None):
         # Write the file out again
         with open(ff, "w") as file:
             file.write(filedata)
+
+    # fix the toc using the function
+
+    fix_toc()
 
     os.system("jupyter-book build book/")
 
