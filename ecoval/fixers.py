@@ -12,6 +12,8 @@ def ignore_warning(x):
         True if the warning should be ignored
         False if the warning should not be ignored
     """
+    if "None of the points are contained" in x:
+        return True
     if "0 as the fill value" in x:
         return True
     if "found more than one time variabl" in x:
