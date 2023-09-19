@@ -303,6 +303,13 @@ def matchup(
 
     """
 
+    # check if the folder exists
+    if folder is None:
+        raise ValueError("Please provide a folder")
+    
+    if not os.path.exists(folder):
+        raise ValueError(f"{folder} does not exist")
+
     # loop through kwargs, if first three characters match arg and arg is None, set arg to value
 
     # check if the ices variables are in ices_variables
