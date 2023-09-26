@@ -45,6 +45,8 @@ ecoval.matchup("/data/sthenno1/scratch/hpo/LOCATE/new_production_run/data/", cor
 ```
 This will put all relevant matchup data into a folder called matched. Note: this could take a couple of hours if you have a large simulation.
 
+Ideally, the data directory specified will only have model simulation output in it, and it should have a consistent structure. The matchup function will infer the folder structure and read in all the relevant data. But if things are inconsistent, or you have stray files, things could go wrong.
+
 Once this is done you can build the docs. This should take 10-15 minutes.
 
 
