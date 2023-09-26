@@ -19,7 +19,8 @@ lat_max = df_bias.dropna().lat.max()
 lon_range = [lon_min, lon_max]
 lat_range = [lat_min, lat_max]
 
-ds_bias.subset(lon = lon_range, lat = lat_range)
+if lon_max < 90:
+    ds_bias.subset(lon = lon_range, lat = lat_range)
 if "model" == ds_bias.variables[0]:
     ds_bias.set_longnames({"model": Variable + " bias"})
 else:

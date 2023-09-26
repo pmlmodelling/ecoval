@@ -137,6 +137,7 @@ def global_regionals(ds_model, ds_obs, variable, i_figure):
 
 
     gg = gg.draw()
+    return gg
     gg.show()
     #display(gg)
     md_result = md(f"**Figure {i_figure}**: Zonal mean {variable} for model and observations.")

@@ -9,6 +9,8 @@ import xarray as xr
 import nctoolkit as nc
 
 from ecoval.fixers import tidy_warnings
+from ecoval.utils import get_datadir
+data_dir = get_datadir()
 
 def write_report(x):
     # append x to report
@@ -242,7 +244,7 @@ def nsbc_matchup(
                     ds.fix_amm7_grid()
                     amm7 = True
                 ds_nsbc = nc.open_data(
-                    "/data/proteus1/scratch/rwi/evaldata/data/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
+                    f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
                     checks=False,
                 )
 
@@ -389,7 +391,7 @@ def nsbc_matchup(
                     ds.fix_amm7_grid()
                     amm7 = True
                 ds_nsbc = nc.open_data(
-                    "/data/proteus1/scratch/rwi/evaldata/data/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
+                    f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
                     checks=False,
                 )
 

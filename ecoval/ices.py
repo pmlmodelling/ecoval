@@ -3,6 +3,8 @@ import nctoolkit as nc
 import pandas as pd
 import os
 import xarray as xr
+from ecoval.utils import get_datadir
+data_dir = get_datadir()
 import warnings
 from pathlib import Path
 from netCDF4 import Dataset
@@ -20,7 +22,7 @@ def split_path(path):
 def get_units(ds, mapping):
     """
     """
-    base_units = pd.read_csv("/data/proteus1/scratch/rwi/ersemval/data/ices/ices_units.csv")
+    base_units = pd.read_csv(f"{data_dir}/ices/ices_units.csv")
     ds1 = nc.open_data(ds[0], checks = False)
     the_contents = ds1.contents
     keys = []
@@ -232,12 +234,9 @@ def match_data(ds, mapping, nan = None):
         if mapping[key] is not None:
             all_df = []
             for yy in the_years:
-                infile = f"/data/proteus1/scratch/rwi/ersemval/data/ices/{key}/ices_{key}_{yy}.csv"
+                infile = f"{data_dir}/ices/{key}/ices_{key}_{yy}.csv"
                 if os.path.exists(infile):
                     i_df = pd.read_csv(infile)
-                    # if "temperature" in infile:
-                        # df_subset = pd.read_csv("/data/proteus1/scratch/rwi/evaldata/data/ices/mld_profiles.csv")
-                        # i_df = i_df.merge(df_subset)
                     all_df.append(i_df)
 
             
@@ -248,8 +247,6 @@ def match_data(ds, mapping, nan = None):
                 if len(all_locs) == 0:
                     print(f"There are no matching times for {key}")
                 else:
-                    #return all_locs
-                    #return all_locs
                     try:
                         if "+" in mapping[key]:
                             vars = mapping[key].split("+")

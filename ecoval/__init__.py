@@ -4,6 +4,7 @@ from ecoval.ices import match_ices
 from ecoval.matchall import matchup
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
+from ecoval.utils import get_datadir
 import pandas as pd
 import glob
 
@@ -738,7 +739,7 @@ def validate(title="Automated model evaluation", author=None):
         # figure out if we need the shelf
         try:
             ds_regions = nc.open_data(
-                "/data/proteus1/scratch/rwi/evaldata/data/amm7_val_subdomains.nc"
+                f"{data_dir}/amm7_val_subdomains.nc"
             )
             ds_xr = ds_regions.to_xarray()
             lon_size = len(ds_xr.lon)

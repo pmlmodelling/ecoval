@@ -65,7 +65,7 @@ md(f"**Figure {i_figure}**: Seasonal temporal correlation between model and obse
 i_figure += 1
 
 # %% tags=["remove-cell"]
-ds_regions = nc.open_data("/data/proteus1/scratch/rwi/evaldata/data/amm7_val_subdomains.nc")
+ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
 ds_regions.as_missing(0)
 ds_regions.set_fill(-9999)
 ds_regions.run()
@@ -93,7 +93,7 @@ else:
 
 
 # %% tags=["remove-cell"]
-shape = gpd.read_file("/data/proteus1/scratch/rwi/evaldata//data/mapping/TM_WORLD_BORDERS-0.3.shp")
+shape = gpd.read_file(f"{data_dir}/mapping/TM_WORLD_BORDERS-0.3.shp")
 mod_var = ds_model.variables[0]
 obs_var = ds_obs.variables[0]
 # create xlim using mod_var

@@ -8,11 +8,13 @@ from IPython.display import Markdown as md
 %load_ext rpy2.ipython
 import jellyfish
 import ecoval
+data_dir = ecoval.get_datadir(level = -2)
 import nctoolkit as nc
 import hvplot.xarray
 import geopandas as gpd
 import xarray as xr
 import holoviews as hv
+from holteandtalley import HolteAndTalley
 import numpy as np
 from mask import mask_all, mask_shelf
 import pandas as pd

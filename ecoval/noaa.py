@@ -4,11 +4,13 @@ import pandas as pd
 import os
 import xarray as xr
 import warnings
+from ecoval.utils import get_datadir
 
 def get_units(ds, mapping):
     """
     """
-    base_units = pd.read_csv("/data/proteus1/scratch/rwi/ersemval/data/noaa/noaa_units.csv")
+    data_dir = get_datadir()
+    base_units = pd.read_csv(f"{data_dir}/noaa/noaa_units.csv")
     ds1 = nc.open_data(ds[0], checks = False)
     the_contents = ds1.contents
     keys = []

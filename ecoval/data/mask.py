@@ -7,7 +7,7 @@ def mask_all(ds):
 
     try:
 
-        ds_regions = nc.open_data("/data/proteus1/scratch/rwi/evaldata/data/amm7_val_subdomains.nc")
+        ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
         ds_xr = ds_regions.to_xarray()
         lon_size = len(ds_xr.lon)
         lat_size = len(ds_xr.lat)
@@ -30,7 +30,7 @@ def mask_all(ds):
 
 def mask_shelf(ds):
     try:
-        ds_regions = nc.open_data("/data/proteus1/scratch/rwi/evaldata/data/amm7_val_subdomains.nc")
+        ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
         ds_xr = ds_regions.to_xarray()
         lon_size = len(ds_xr.lon)
         lat_size = len(ds_xr.lat)

@@ -40,6 +40,53 @@ ices_variables = [
     "pco2",
     "alkalinity",
 ]
+data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
+
+def find_config():
+    # first look in the working directory
+    for ff in [".ecovalrc", "ecovalrc"]:
+        if os.path.exists(ff):
+            return ff
+
+    # now look in the home directory....
+    from os.path import expanduser
+
+    home = expanduser("~")
+    for ff in [".ecovalrc", "ecovalrc"]:
+        if os.path.exists(home + "/" + ff):
+            return home + "/" + ff
+
+    return None
+
+config_file = find_config()
+
+if config_file is not None:
+    # valid_keys = ["thread_safe", "lazy", "cores", "precision", "temp_dir"]
+
+    file1 = open(config_file, "r")
+    Lines = file1.readlines()
+
+    count = 0
+    # Strips the newline character
+    for line in Lines:
+        text = line.replace(" ", "").strip()
+        if text.count(":") != 1:
+            if len(text) > 0:
+                raise ValueError(f"Line in {config_file} is invalid: {line}")
+
+    for line in Lines:
+        text = line.replace(" ", "").strip()
+        if len(text) > 0:
+            terms = text.split(":")
+            key = terms[0]
+            value = None
+            # print(key)
+        data_path = terms[1].replace(" ", "")
+
+        if os.path.exists(data_path):
+            data_dir = data_path
+        else:
+            raise ValueError(f"{data_path} does not exist")
 
 
 def mm_match(ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all):
@@ -589,7 +636,7 @@ def matchup(
                         ds2.drop(variables=drop_these)
 
                     ds_nsbc = nc.open_data(
-                        "/data/proteus1/scratch/rwi/evaldata/data/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
+                        f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
                         checks=False,
                     )
                     ds2.regrid(ds_nsbc, "nn")
@@ -688,7 +735,9 @@ def matchup(
         print("Grid is not global")
     print("********************************")
 
+    all_df = all_df.dropna().reset_index(drop = True)
     df_mapping = all_df
+    # get rid of any rows where pattern is None
 
     if not global_grid:
 
@@ -842,7 +891,7 @@ def matchup(
                                     ).model_variable
                                 )[0]
                                 paths = glob.glob(
-                                    "/data/proteus1/scratch/rwi/evaldata/data/ices/**/**/ices_**.csv"
+                                    f"{data_dir}/ices/**/**/ices_**.csv"
                                 )
                                 paths = [x for x in paths if depths in x]
                                 paths = [x for x in paths if f"{ices_variable}/" in x]
@@ -856,7 +905,7 @@ def matchup(
                                 df = pd.concat([pd.read_csv(x) for x in paths])
                                 if variable == "temperature":
                                     df_include = pd.read_csv(
-                                        "/data/proteus1/scratch/rwi/evaldata/data/ices/mld_profiles.csv"
+                                        f"{data_dir}/ices/mld_profiles.csv"
                                     )
                                     df = df.merge(df_include).reset_index(drop=True)
                                 paths = list(
@@ -1043,7 +1092,7 @@ def matchup(
 
                 # get the ostia paths
                 paths = nc.create_ensemble(
-                    "/data/proteus1/scratch/rwi/evaldata/data/ostia"
+                    f"{data_dir}/ostia"
                 )
                 years = [
                     int(os.path.basename(x).split("_")[1].replace(".nc", ""))
@@ -1251,7 +1300,6 @@ def matchup(
 
     else:
         if "co2flux" in var_choice:
-            print("Matching CO2 fluxes")
             # extract the CO2 fluxes
             vars = ["co2flux"]
 
@@ -1262,9 +1310,12 @@ def matchup(
 
             df = df_mapping.query("variable in @vars").reset_index(drop=True)
             if len(df) > 0:
+                print("********************************")
+                print("Matching CO2 fluxes")
+                print("********************************")
                 mapping = dict()
                 for vv in df.variable:
-                    mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
+                    mapping[vv] = list(df.query("variable == @vv").reset_index(drop = True).model_variable)[0]
 
                 selection = []
                 for vv in vars:
@@ -1294,9 +1345,10 @@ def matchup(
                 df_times = []
 
                 for ff in paths:
-                    ff_times = xr.open_dataset(ff)[time_name]
-                    ff_month = ff_times.dt.month.values
-                    ff_year = ff_times.dt.year.values
+                    # ff_times = xr.open_dataset(ff)[time_name]
+                    ds = xr.open_dataset(ff)
+                    ff_month = [int(x.dt.month) for x in ds[time_name]]
+                    ff_year = [int(x.dt.year) for x in ds[time_name]]
                     df_times.append(
                         pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
                             path=ff
@@ -1317,7 +1369,15 @@ def matchup(
                     .reset_index(drop=True)
                 )
 
-                min_year = ersem_paths.year.min() + spinup
+                if spinup is not None:
+                    min_year = ersem_paths.year.min() + spinup
+                
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
+                if end is not None:
+                    max_year = end
+                    ersem_paths = ersem_paths.query("year <= @max_year")
 
                 ersem_paths = ersem_paths.query("year >= @min_year")
                 ersem_paths = ersem_paths.query(
@@ -1336,24 +1396,26 @@ def matchup(
 
                 selection = df_mapping.query(
                     "variable == 'co2flux'"
-                ).model_variable.values[0]
+                ).reset_index(drop = True).model_variable.values[0]
 
-                ds_model = nc.open_data(ersem_paths, checks=False)
-                ds_model.subset(variables=selection)
-                if surface == "top":
-                    ds_model.top()
-                else:
-                    ds_model.bottom()
-                ds_model.as_missing(0)
-                ds_model.tmean("month")
-                ds_model.merge("time")
-                ds_model.rename({selection: "model"})
-                ds_model.run()
+                with warnings.catch_warnings(record=True) as w:
+                    ds_model = nc.open_data(ersem_paths, checks=False)
+                    ds_model.subset(variables=selection)
+                    if surface == "top":
+                        ds_model.top()
+                    else:
+                        ds_model.bottom()
+                    ds_model.as_missing(0)
+                    ds_model.tmean("month")
+                    ds_model.merge("time")
+                    ds_model.rename({selection: "model"})
+                    ds_model.run()
+                tidy_warnings(w)
 
                 # extract the observation data
 
                 ds_obs = nc.open_data(
-                    "/data/proteus1/scratch/rwi/evaldata/data/fluxes/MPI_SOM_FFN_2022_NCEI_OCADS.nc",
+                    f"{data_dir}/fluxes/MPI_SOM_FFN_2022_NCEI_OCADS.nc",
                     checks=False,
                 )
 
@@ -1381,7 +1443,6 @@ def matchup(
                 ds_model.to_nc(out_file, zip=True, overwrite=True)
 
         if "pco2" in var_choice:
-            print("Matching the surface CO2")
             # extract the surface CO2
             vars = ["pco2"]
 
@@ -1392,6 +1453,9 @@ def matchup(
 
             df = df_mapping.query("variable in @vars").reset_index(drop=True)
             if len(df) > 0:
+                print("******************************")
+                print("Matching the surface CO2")
+                print("******************************")
                 mapping = dict()
                 for vv in df.variable:
                     mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
@@ -1468,22 +1532,24 @@ def matchup(
                     "variable == 'pco2'"
                 ).model_variable.values[0]
 
-                ds_model = nc.open_data(ersem_paths, checks=False)
-                ds_model.subset(variables=selection)
-                if surface == "top":
-                    ds_model.top()
-                else:
-                    ds_model.bottom()
-                ds_model.as_missing(0)
-                ds_model.tmean("month")
-                ds_model.merge("time")
-                ds_model.rename({selection: "model"})
-                ds_model.run()
+                with warnings.catch_warnings(record=True) as w:
+                    ds_model = nc.open_data(ersem_paths, checks=False)
+                    ds_model.subset(variables=selection)
+                    if surface == "top":
+                        ds_model.top()
+                    else:
+                        ds_model.bottom()
+                    ds_model.as_missing(0)
+                    ds_model.tmean("month")
+                    ds_model.merge("time")
+                    ds_model.rename({selection: "model"})
+                    ds_model.run()
+                tidy_warnings(w)
 
                 # extract the observation data
 
                 ds_obs = nc.open_data(
-                    "/data/proteus1/scratch/rwi/evaldata/data/fluxes/MPI-SOM_FFN_SOCCOMv2018_minus_4uatm_offset.nc",
+                    f"{data_dir}/fluxes/MPI-SOM_FFN_SOCCOMv2018_minus_4uatm_offset.nc",
                     checks=False,
                 )
 
@@ -1514,7 +1580,7 @@ def matchup(
 
             variables = list(all_df.variable)
 
-            noaa_paths = glob.glob("/data/proteus1/scratch/rwi/evaldata/data/woa/*.nc")
+            noaa_paths = glob.glob(f"{data_dir}/woa/*.nc")
 
             noaa_variables = [
                 x.split("/")[-1].split("_")[1].replace(".nc", "") for x in noaa_paths
@@ -1523,6 +1589,9 @@ def matchup(
             variables = [x for x in variables if x in ["temperature"]]
 
             if len(variables) > 0:
+                print("********************************")
+                print("Matching up WOA temperature with model data")
+                print("********************************")
                 pattern = all_df.query("variable == @variables[0]").pattern.values[0]
 
                 paths = glob.glob(folder + "/**/**/" + pattern)
@@ -1531,7 +1600,7 @@ def matchup(
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
 
                 ds_obs = nc.open_data(
-                    f"/data/proteus1/scratch/rwi/evaldata/data/woa/woa_{variables[0]}.nc",
+                    f"{data_dir}/woa/woa_{variables[0]}.nc",
                     checks=False,
                 )
                 ds_obs.subset(variables="*_an")
@@ -1558,7 +1627,8 @@ def matchup(
                 for ff in paths:
                     try:
                         ds = nc.open_data(ff, checks=False).to_xarray()
-                        years.append(ds[time_name].dt.year.values[0])
+                        ff_year = [int(x.dt.year) for x in ds[time_name]][0]
+                        years.append(ff_year)
                     except:
                         bad_paths.append(ff)
 
@@ -1566,7 +1636,14 @@ def matchup(
 
                 df_years = pd.DataFrame({"year": years, "path": paths})
 
-                min_year = df_years.year.min() + spinup
+                if spinup is not None:
+                    min_year = df_years.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
+                if end is not None:
+                    max_year = end
+                    df_years = df_years.query("year <= @max_year").reset_index(drop = True)
 
                 df_years = df_years.query("year >= @min_year")
                 df_years = df_years.query(
@@ -1581,51 +1658,58 @@ def matchup(
                     .query("year <= 2017")
                     .reset_index(drop=True)
                 )
-                paths = list(df_years.query("year >= @min_year").path.values)
-
-                ds_model = nc.open_data(paths, checks=False)
-                # different approach for mission atlantic files
-                if "MissionAtlantic" in ff:
-                    ds_model.nco_command(f"ncks   -v {model_var}")
+                if len(df_years) == 0:
+                    print("No model temperature between 2005 and 2017")
                 else:
-                    ds_model.subset(variables=model_var)
+                    paths = list(df_years.query("year >= @min_year").path.values)
 
-                ds_model.as_missing(0)
-                ds_model.tmean("month")
-                ds_model.merge("time")
-                ds_model.tmean("month")
-                ds_model.rename({model_var: "model"})
-                ds_model.run()
+                    with warnings.catch_warnings(record=True) as w:
+                        ds_model = nc.open_data(paths, checks=False)
+                        # different approach for mission atlantic files
+                        if "MissionAtlantic" in ff:
+                            nc.options(cores = 1)
+                            ds_model.nco_command(f"ncks   -v {model_var}")
+                            nc.options(cores = cores)
+                        else:
+                            ds_model.subset(variables=model_var)
+                        
 
-                noaa_levels = ds_obs.levels
-                # replace 0.0 with 2.5 in noaa_levels
-                noaa_levels = [2.5 if x < 2.0 else x for x in noaa_levels]
+                        ds_model.as_missing(0)
+                        ds_model.tmean("month")
+                        ds_model.merge("time")
+                        ds_model.tmean("month")
+                        ds_model.rename({model_var: "model"})
+                        ds_model.run()
+                    tidy_warnings(w)
 
-                ds_thickness = nc.open_data(paths[0], checks=False)
-                if "e3t" in ds_thickness.variables:
-                    ds_thickness.subset(time=0, variables="e3t")
-                    ds_thickness.as_missing(0)
-                    ds_thickness.run()
-                    ds_model.vertical_interp(noaa_levels, ds_thickness=ds_thickness)
-                else:
-                    ds_model.vertical_interp(noaa_levels, fixed=True)
+                    noaa_levels = ds_obs.levels
+                    # replace 0.0 with 2.5 in noaa_levels
+                    noaa_levels = [2.5 if x < 2.0 else x for x in noaa_levels]
 
-                ds_obs.vertical_interp(noaa_levels, fixed=True)
+                    ds_thickness = nc.open_data(paths[0], checks=False)
+                    if "e3t" in ds_thickness.variables:
+                        ds_thickness.subset(time=0, variables="e3t")
+                        ds_thickness.as_missing(0)
+                        ds_thickness.run()
+                        ds_model.vertical_interp(noaa_levels, ds_thickness=ds_thickness)
+                    else:
+                        ds_model.vertical_interp(noaa_levels, fixed=True)
 
-                ds_model.regrid(ds_obs)
-                ds_obs.append(ds_model)
-                ds_obs.merge("variable", "month")
+                    ds_obs.vertical_interp(noaa_levels, fixed=True)
 
-                out_dir = "matched/woa/"
-                if not os.path.exists(out_dir):
-                    os.makedirs(out_dir)
+                    ds_model.regrid(ds_obs)
+                    ds_obs.append(ds_model)
+                    ds_obs.merge("variable", "month")
 
-                out_file = out_dir + f"woa_{variables[0]}.nc"
+                    out_dir = "matched/woa/"
+                    if not os.path.exists(out_dir):
+                        os.makedirs(out_dir)
 
-                ds_obs.to_nc(out_file, zip=True, overwrite=True)
+                    out_file = out_dir + f"woa_{variables[0]}.nc"
+
+                    ds_obs.to_nc(out_file, zip=True, overwrite=True)
 
         if True:
-            print("Matching up WOA data")
 
             # extracting sst
 
@@ -1637,7 +1721,7 @@ def matchup(
 
             variables = list(all_df.variable)
 
-            noaa_paths = glob.glob("/data/proteus1/scratch/rwi/evaldata/data/woa/*.nc")
+            noaa_paths = glob.glob(f"{data_dir}/woa/*.nc")
 
             noaa_variables = [
                 x.split("/")[-1].split("_")[1].replace(".nc", "") for x in noaa_paths
@@ -1648,6 +1732,9 @@ def matchup(
             variables = [x for x in variables if x in noaa_variables]
 
             for vv in variables:
+                print("********************************")
+                print(f"Matching up WOA {vv} with model data")
+                print("********************************")
                 pattern = all_df.query("variable == @vv").pattern.values[0]
 
                 paths = glob.glob(folder + "/**/**/" + pattern)
@@ -1656,7 +1743,7 @@ def matchup(
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
 
                 ds_obs = nc.open_data(
-                    f"/data/proteus1/scratch/rwi/evaldata/data/woa/woa_{vv}.nc",
+                    f"{data_dir}/woa/woa_{vv}.nc",
                     checks=False,
                 )
                 ds_obs.subset(variables="*_an")
@@ -1681,7 +1768,8 @@ def matchup(
                 for ff in paths:
                     try:
                         ds = nc.open_data(ff, checks=False).to_xarray()
-                        years.append(ds[time_name].dt.year.values[0])
+                        ff_year = [int(x.dt.year) for x in ds[time_name]][0]
+                        years.append(ff_year)
                     except:
                         bad_paths.append(ff)
 
@@ -1689,7 +1777,14 @@ def matchup(
 
                 df_years = pd.DataFrame({"year": years, "path": paths})
 
-                min_year = df_years.year.min() + spinup
+                if spinup is not None:
+                    min_year = df_years.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
+                if end is not None:
+                    max_year = end
+                    df_years = df_years.query("year <= @max_year").reset_index(drop = True)
 
                 df_years = df_years.query("year >= @min_year")
                 df_years = df_years.query(
@@ -1700,22 +1795,24 @@ def matchup(
                 df_years = df_years.query("year >= @min_year")
                 paths = list(df_years.query("year >= @min_year").path.values)
 
-                ds_model = nc.open_data(paths, checks=False)
-                # different approach for mission atlantic files
-                if "MissionAtlantic" in ff:
-                    ds_model.nco_command(f"ncks -F -d deptht,1 -v {model_var}")
-                else:
-                    ds_model.subset(variables=model_var)
-                    if surface == "top":
-                        ds_model.top()
+                with warnings.catch_warnings(record=True) as w:
+                    ds_model = nc.open_data(paths, checks=False)
+                    # different approach for mission atlantic files
+                    if "MissionAtlantic" in ff:
+                        ds_model.nco_command(f"ncks -F -d deptht,1 -v {model_var}")
                     else:
-                        ds_model.bottom()
-                ds_model.as_missing(0)
-                ds_model.tmean("month")
-                ds_model.merge("time")
-                ds_model.rename({model_var: "model"})
-                ds_model.tmean("month")
-                ds_model.run()
+                        ds_model.subset(variables=model_var)
+                        if surface == "top":
+                            ds_model.top()
+                        else:
+                            ds_model.bottom()
+                    ds_model.as_missing(0)
+                    ds_model.tmean("month")
+                    ds_model.merge("time")
+                    ds_model.rename({model_var: "model"})
+                    ds_model.tmean("month")
+                    ds_model.run()
+                tidy_warnings(w)
 
                 ds_model.regrid(ds_obs)
                 ds_obs.append(ds_model)
@@ -1755,6 +1852,9 @@ def matchup(
             df = df_mapping.query("variable in @vars").reset_index(drop=True)
 
             if len(df) > 0:
+                print("********************************")
+                print("Matching OCCI chlorophyll with model data")
+                print("********************************")
                 mapping = dict()
                 for vv in df.variable:
                     mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
@@ -1784,8 +1884,8 @@ def matchup(
 
                 for ff in paths:
                     ff_times = xr.open_dataset(ff)[time_name]
-                    ff_month = ff_times.dt.month.values
-                    ff_year = ff_times.dt.year.values
+                    ff_month = [int(x.dt.month) for x in ff_times]
+                    ff_year = [int(x.dt.year) for x in ff_times]
                     df_times.append(
                         pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
                             path=ff
@@ -1803,7 +1903,15 @@ def matchup(
 
                 ersem_paths = df_times
 
-                min_year = ersem_paths.year.min() + spinup
+                if spinup is not None:
+                    min_year = ersem_paths.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
+                    
+                if end is not None:
+                    max_year = end
+                    ersem_paths = ersem_paths.query("year <= @max_year")
                 ersem_paths = ersem_paths.query("year >= @min_year")
 
                 ersem_paths = ersem_paths.query(
@@ -1811,14 +1919,14 @@ def matchup(
                 ).reset_index(drop=True)
 
                 ersem_paths = (
-                    df_times.loc[:, ["year", "month"]]
+                    ersem_paths.loc[:, ["year", "month"]]
                     .merge(occci_dates)
                     .drop_duplicates()
                     .groupby("year")
                     .count()
                     .query("month == 12")
                     .reset_index()
-                    .merge(df_times, on="year", how="left")
+                    .merge(ersem_paths, on="year", how="left")
                     .loc[:, ["year", "path"]]
                     .drop_duplicates()
                     .reset_index(drop=True)
@@ -1836,25 +1944,31 @@ def matchup(
 
                 ersem_paths = ersem_paths.loc[:, ["path"]]
                 paths = list(ersem_paths.path)
+                # print(paths)
+                # print(df_occci)
+                # raise ValueError("What is happening?")
 
-                ds = nc.open_data(paths, checks=False)
-                ds.subset(variables=selection)
-                if surface == "top":
-                    ds.top()
-                else:
-                    ds.bottom()
-                ds.as_missing(0)
-                ds.tmean("month")
+                with warnings.catch_warnings(record=True) as w:
+                    ds = nc.open_data(paths, checks=False)
+                    ds.subset(variables=selection)
+                    if surface == "top":
+                        ds.top()
+                    else:
+                        ds.bottom()
+                    ds.as_missing(0)
+                    ds.tmean("month")
 
-                if "chlorophyll" in list(df.variable):
-                    command = "-aexpr,chlorophyll=" + mapping["chlorophyll"]
-                    ds.cdo_command(command)
-                    drop_these = mapping["chlorophyll"].split("+")
-                    ds_contents = ds.contents
-                    ds_contents = ds_contents.query("variable in @drop_these")
-                    chl_unit = ds_contents.unit[0]
-                    ds.drop(variables=drop_these)
-                ds.run()
+                    if "chlorophyll" in list(df.variable):
+                        command = "-aexpr,chlorophyll=" + mapping["chlorophyll"]
+                        ds.cdo_command(command)
+                        drop_these = mapping["chlorophyll"].split("+")
+                        ds_contents = ds.contents
+                        ds_contents = ds_contents.query("variable in @drop_these")
+                        chl_unit = ds_contents.unit[0]
+                        ds.drop(variables=drop_these)
+                    ds.run()
+
+                tidy_warnings(w)
                 for key in mapping:
                     if key != "chlorophyll":
                         if mapping[key] in ds.variables:
@@ -1894,6 +2008,8 @@ def matchup(
 
             df = df_mapping.query("variable in @vars").reset_index(drop=True)
             if len(df) > 0:
+                print("******************************")
+                print("Matching the surface temperature from COBE2 with model data")
                 mapping = dict()
                 for vv in df.variable:
                     mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
@@ -1927,8 +2043,8 @@ def matchup(
 
                 for ff in paths:
                     ff_times = xr.open_dataset(ff)[time_name]
-                    ff_month = ff_times.dt.month.values
-                    ff_year = ff_times.dt.year.values
+                    ff_month = [int(x.dt.month) for x in ff_times]
+                    ff_year = [int(x.dt.year) for x in ff_times]
                     df_times.append(
                         pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
                             path=ff
@@ -1949,12 +2065,20 @@ def matchup(
                     .reset_index(drop=True)
                 )
 
-                min_year = ersem_paths.year.min() + spinup
+                if spinup is not None:
+                    min_year = ersem_paths.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
 
                 ersem_paths = ersem_paths.query("year >= @min_year")
                 ersem_paths = ersem_paths.query(
                     "year >= @sim_start and year <= @sim_end"
                 ).reset_index(drop=True)
+
+                if end is not None:
+                    max_year = end
+                    ersem_paths = ersem_paths.query("year <= @max_year").reset_index(drop = True)
 
                 ersem_years = list(set(ersem_paths.year))
 
@@ -1970,26 +2094,28 @@ def matchup(
                     "variable == 'temperature'"
                 ).model_variable.values[0]
 
-                ds_model = nc.open_data(ersem_paths, checks=False)
-                # need a hack for mission atlantic data
-                if "MissionAtlantic" in ersem_paths[0]:
-                    ds_model.nco_command("ncks -F -d deptht,1 -v thetao_con")
-                else:
-                    ds_model.subset(variables=selection)
-                    if surface == "top":
-                        ds_model.top()
+                with warnings.catch_warnings(record=True) as w:
+                    ds_model = nc.open_data(ersem_paths, checks=False)
+                    # need a hack for mission atlantic data
+                    if "MissionAtlantic" in ersem_paths[0]:
+                        ds_model.nco_command("ncks -F -d deptht,1 -v thetao_con")
                     else:
-                        ds_model.bottom()
-                ds_model.as_missing(0)
-                ds_model.tmean("month")
-                ds_model.merge("time")
-                ds_model.rename({selection: "model"})
-                ds_model.run()
+                        ds_model.subset(variables=selection)
+                        if surface == "top":
+                            ds_model.top()
+                        else:
+                            ds_model.bottom()
+                    ds_model.as_missing(0)
+                    ds_model.tmean("month")
+                    ds_model.merge("time")
+                    ds_model.rename({selection: "model"})
+                    ds_model.run()
+                tidy_warnings(w)
 
                 # extract the observation data
 
                 ds_obs = nc.open_data(
-                    "/data/proteus1/scratch/rwi/evaldata/data/cobe2/sst.mon.mean.nc",
+                    f"{data_dir}/cobe2/sst.mon.mean.nc",
                     checks=False,
                 )
 
@@ -2018,6 +2144,9 @@ def matchup(
 
             df = df_mapping.query("variable in @vars").reset_index(drop=True)
             if len(df) > 0:
+                print("******************************")
+                print("Matching the surface alkalinity")
+                print("******************************")
                 mapping = dict()
                 for vv in df.variable:
                     mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
@@ -2051,8 +2180,8 @@ def matchup(
 
                 for ff in paths:
                     ff_times = xr.open_dataset(ff)[time_name]
-                    ff_month = ff_times.dt.month.values
-                    ff_year = ff_times.dt.year.values
+                    ff_month = [int(x.dt.month) for x in ff_times]
+                    ff_year = [int(x.dt.year) for x in ff_times]
                     df_times.append(
                         pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
                             path=ff
@@ -2081,9 +2210,17 @@ def matchup(
                     "year >= @sim_start and year <= @sim_end"
                 ).reset_index(drop=True)
 
-                min_year = ersem_paths.year.min() + spinup
+                if spinup is not None:
+                    min_year = ersem_paths.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
 
                 ersem_paths = ersem_paths.query("year >= @min_year")
+
+                if end is not None:
+                    max_year = end
+                    ersem_paths = ersem_paths.query("year <= @max_year").reset_index(drop = True)
 
                 if len(ersem_paths) > 0:
                     ersem_years = list(set(ersem_paths.year))
@@ -2100,27 +2237,29 @@ def matchup(
                         "variable == 'alkalinity'"
                     ).model_variable.values[0]
 
-                    ds_model = nc.open_data(ersem_paths, checks=False)
-                    # need a hack for mission atlantic data
-                    if "MissionAtlantic" in ersem_paths[0]:
-                        ds_model.nco_command("ncks -F -d deptht,1 -v thetao_con")
-                    else:
-                        ds_model.subset(variables=selection)
-                        if surface == "top":
-                            ds_model.top()
+                    with warnings.catch_warnings(record=True) as w:
+                        ds_model = nc.open_data(ersem_paths, checks=False)
+                        # need a hack for mission atlantic data
+                        if "MissionAtlantic" in ersem_paths[0]:
+                            ds_model.nco_command("ncks -F -d deptht,1 -v thetao_con")
                         else:
-                            ds_model.bottom()
-                    ds_model.as_missing(0)
-                    ds_model.tmean("month")
-                    ds_model.merge("time")
-                    ds_model.rename({selection: "model"})
-                    ds_model.run()
+                            ds_model.subset(variables=selection)
+                            if surface == "top":
+                                ds_model.top()
+                            else:
+                                ds_model.bottom()
+                        ds_model.as_missing(0)
+                        ds_model.tmean("month")
+                        ds_model.merge("time")
+                        ds_model.rename({selection: "model"})
+                        ds_model.run()
+                    tidy_warnings(w)
 
                     ds_model.tmean()
                     ds_model.run()
 
                     # extract the observation data
-                    obs_file = "/data/proteus1/scratch/rwi/evaldata/data/GLODAPv2.2016b_MappedClimatologies/GLODAPv2.2016b.TAlk.nc"
+                    obs_file = f"{data_dir}/GLODAPv2.2016b_MappedClimatologies/GLODAPv2.2016b.TAlk.nc"
 
                     ds_obs = nc.open_data(obs_file, checks=False)
 
@@ -2187,8 +2326,8 @@ def matchup(
 
                 for ff in paths:
                     ff_times = xr.open_dataset(ff)[time_name]
-                    ff_month = ff_times.dt.month.values
-                    ff_year = ff_times.dt.year.values
+                    ff_month = [int(x.dt.month) for x in ff_times]
+                    ff_year = [int(x.dt.year) for x in ff_times]
                     df_times.append(
                         pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
                             path=ff
@@ -2214,10 +2353,18 @@ def matchup(
 
                 ersem_paths = ersem_paths.query("year > 1971 and year < 2014")
 
-                min_year = ersem_paths.year.min() + spinup
+                if spinup is not None:
+                    min_year = ersem_paths.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
                 ersem_paths = ersem_paths.query(
                     "year >= @sim_start and year <= @sim_end"
                 ).reset_index(drop=True)
+
+                if end is not None:
+                    max_year = end
+                    ersem_paths = ersem_paths.query("year <= @max_year").reset_index(drop = True)
 
                 ersem_paths = ersem_paths.query("year >= @min_year")
 
@@ -2236,27 +2383,29 @@ def matchup(
                         0
                     ]
 
-                    ds_model = nc.open_data(ersem_paths, checks=False)
-                    # need a hack for mission atlantic data
-                    if "MissionAtlantic" in ersem_paths[0]:
-                        ds_model.nco_command("ncks -F -d deptht,1 -v thetao_con")
-                    else:
-                        ds_model.subset(variables=selection)
-                        if surface == "top":
-                            ds_model.top()
+                    with warnings.catch_warnings(record=True) as w:
+                        ds_model = nc.open_data(ersem_paths, checks=False)
+                        # need a hack for mission atlantic data
+                        if "MissionAtlantic" in ersem_paths[0]:
+                            ds_model.nco_command("ncks -F -d deptht,1 -v thetao_con")
                         else:
-                            ds_model.bottom()
-                    ds_model.as_missing(0)
-                    ds_model.tmean("month")
-                    ds_model.merge("time")
-                    ds_model.rename({selection: "model"})
-                    ds_model.run()
+                            ds_model.subset(variables=selection)
+                            if surface == "top":
+                                ds_model.top()
+                            else:
+                                ds_model.bottom()
+                        ds_model.as_missing(0)
+                        ds_model.tmean("month")
+                        ds_model.merge("time")
+                        ds_model.rename({selection: "model"})
+                        ds_model.run()
+                    tidy_warnings(w)
 
                     ds_model.tmean()
                     ds_model.run()
 
                     # extract the observation data
-                    obs_file = "/data/proteus1/scratch/rwi/evaldata/data/GLODAPv2.2016b_MappedClimatologies/GLODAPv2.2016b.pHtsinsitutp.nc"
+                    obs_file = f"{data_dir}/GLODAPv2.2016b_MappedClimatologies/GLODAPv2.2016b.pHtsinsitutp.nc"
 
                     ds_obs = nc.open_data(obs_file, checks=False)
 

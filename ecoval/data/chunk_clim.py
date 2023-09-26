@@ -47,7 +47,8 @@ lon_min = coord_ranges["lon"]["min"]
 lon_max = coord_ranges["lon"]["max"]
 lat_min = coord_ranges["lat"]["min"]
 lat_max = coord_ranges["lat"]["max"]
-ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
+if lon_max < 90:
+    ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 
 plot_model = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
@@ -75,7 +76,8 @@ lon_min = coord_ranges["lon"]["min"]
 lon_max = coord_ranges["lon"]["max"]
 lat_min = coord_ranges["lat"]["min"]
 lat_max = coord_ranges["lat"]["max"]
-ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
+if lon_max < 90:
+    ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 
 plot_obs = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
@@ -108,7 +110,8 @@ lon_min = coord_ranges["lon"]["min"]
 lon_max = coord_ranges["lon"]["max"]
 lat_min = coord_ranges["lat"]["min"]
 lat_max = coord_ranges["lat"]["max"]
-ds_both.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
+if lon_max < 90:
+    ds_both.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 
 
 
