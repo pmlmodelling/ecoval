@@ -2,6 +2,7 @@ import nctoolkit as nc
 
 nc.options(parallel=True)
 nc.options(progress=False)
+import re
 import glob
 import multiprocessing
 from multiprocessing import Process, Manager
@@ -12,6 +13,19 @@ import time
 
 import numpy as np
 import xarray as xr
+
+def extension_of_directory(starting_directory):
+    n_remove = len(starting_directory)
+    n_max = 0
+    for root, directories, files in os.walk(starting_directory):
+        r_n = (len(root[n_remove:].split("/")))
+        paths = root[n_remove+1:].split("/")
+        paths = [x for x in paths if len(x) > 0]
+        r_n = len(paths)
+        if r_n > n_max:
+            n_max = r_n 
+    ## repeat "**" n_max
+    return "/" + "/".join(["**" for i in range(n_max)]) + "/"
 
 
 def bin_value(x, bin_res):
@@ -154,7 +168,9 @@ def get_res(x, folder=None):
     if "_1m_" in x:
         return "m"
 
-    path = glob.glob(folder + "/**/**/" + x)[0]
+    final_extension = extension_of_directory(folder)
+
+    path = glob.glob(folder + final_extension + x)[0]
 
     ds = nc.open_data(path)
     ds_times = ds.times
@@ -173,7 +189,7 @@ def get_res(x, folder=None):
         return "d"
 
 
-def find_paths(folder, fvcom=False):
+def find_paths(folder, fvcom=False, exclude = []):
     i = 1
     while True:
         ensemble = glob.glob(folder + "/**")
@@ -222,9 +238,18 @@ def find_paths(folder, fvcom=False):
     print("********************************")
     print("Identifying variables in model output")
     print("********************************")
+
+    # remove any files from options if parts of exclude are in them
+    for exc in exclude:
+        options = [x for x in options if f"{exc}" not in os.path.basename(x)]
+
     for ff in options:
         ds = nc.open_data(ff, checks=False)
-        ds_dict = generate_mapping(ds, fvcom=fvcom)
+        try:
+            ds_dict = generate_mapping(ds, fvcom=fvcom)
+        # output error and ff
+        except Exception as e:
+            raise ValueError(f"Error in generate_mapping. Please check the file {ff}. It may be corrupt.")
 
         ds_vars = ds.variables
         # vosaline and votemper are special cases
@@ -257,6 +282,11 @@ def find_paths(folder, fvcom=False):
             for key in ds_dict:
                 if ds_dict[key] is not None:
                     new_dict[ds_dict[key]] = [key]
+            # new_name. Replace numbers between _ with **
+
+            # replace integers with 4 or more digits with **
+            new_name = re.sub(r"\d{4,}", "**", new_name)
+
             all_df.append(
                 pd.DataFrame.from_dict(new_dict).melt().assign(pattern=new_name)
             )
@@ -349,6 +379,9 @@ def matchup(
 
 
     """
+
+    if isinstance(exclude, str):
+        exclude = [exclude]
 
     # check if the folder exists
     if folder is None:
@@ -506,7 +539,7 @@ def matchup(
         all_df = pd.read_csv(mapping)
 
     if all_df is None:
-        all_df = find_paths(folder, fvcom=fvcom)
+        all_df = find_paths(folder, fvcom=fvcom, exclude = exclude)
 
         # add in anything that is missing
         all_vars = [
@@ -553,7 +586,8 @@ def matchup(
     if not os.path.exists("matched"):
         os.mkdir("matched")
     df_out = all_df.dropna().reset_index(drop=True)
-    df_out["pattern"] = [folder + "/**/**/" + x for x in df_out.pattern]
+    final_extension = extension_of_directory(folder)
+    df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
     df_out.to_csv(out, index=False)
 
     if fvcom:
@@ -582,12 +616,14 @@ def matchup(
             good_to_go = True
 
             if pattern is not None:
-                ersem_paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                ersem_paths = glob.glob(folder + final_extension + pattern)
                 if len(ersem_paths) > 0:
                     good_to_go = True
 
             if good_to_go:
-                ersem_paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                ersem_paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     ersem_paths = [
@@ -700,19 +736,22 @@ def matchup(
     df = df.iloc[0:1, :]
     pattern = list(df.pattern)[0]
     pattern = pattern.replace("//", "/")
-    while True:
-        i = 0
-        patterns = pattern.split("/")
-        for x in patterns:
-            if x == "**":
-                break
-            i += 1
-        new_pattern = glob.glob("/".join(patterns[0:i]) + "/" + "**")[-1].split("/")[-1]
-        patterns[i] = new_pattern
-        pattern = "/".join(patterns)
+    print(pattern)
 
-        if len([x for x in pattern.split("/") if x == "**"]) == 0:
-            break
+    if "**/" in pattern:
+        while True:
+            i = 0
+            patterns = pattern.split("/")
+            for x in patterns:
+                if x == "**":
+                    break
+                i += 1
+            new_pattern = glob.glob("/".join(patterns[0:i]) + "/" + "**")[-1].split("/")[-1]
+            patterns[i] = new_pattern
+            pattern = "/".join(patterns)
+
+            if len([x for x in pattern.split("/") if x == "**"]) == 0:
+                break
     paths = glob.glob(pattern)
     ds = nc.open_data(paths[0], checks=False).to_xarray()
     lon_name = [x for x in ds.coords if "lon" in x]
@@ -779,7 +818,8 @@ def matchup(
                     patterns = list(set(all_df.pattern))
 
                     for pattern in patterns:
-                        ensemble = glob.glob(folder + "/**/**/" + pattern)
+                        final_extension = extension_of_directory(folder)
+                        ensemble = glob.glob(folder + final_extension + pattern)
                         for exc in exclude:
                             ensemble = [
                                 x
@@ -1144,7 +1184,9 @@ def matchup(
                 )
 
                 # extract the ERSEM paths
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
+                print(paths)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -1332,7 +1374,8 @@ def matchup(
                 pattern = list(patterns)[0]
 
                 # extract the ERSEM paths
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -1475,7 +1518,8 @@ def matchup(
                 pattern = list(patterns)[0]
 
                 # extract the ERSEM paths
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -1594,7 +1638,8 @@ def matchup(
                 print("********************************")
                 pattern = all_df.query("variable == @variables[0]").pattern.values[0]
 
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -1737,7 +1782,8 @@ def matchup(
                 print("********************************")
                 pattern = all_df.query("variable == @vv").pattern.values[0]
 
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -1873,7 +1919,8 @@ def matchup(
                     )
                 pattern = list(patterns)[0]
 
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 import xarray as xr
 
@@ -2029,7 +2076,8 @@ def matchup(
                 pattern = list(patterns)[0]
 
                 # extract the ERSEM paths
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -2166,7 +2214,8 @@ def matchup(
                 pattern = list(patterns)[0]
 
                 # extract the ERSEM paths
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
@@ -2311,7 +2360,8 @@ def matchup(
                 pattern = list(patterns)[0]
 
                 # extract the ERSEM paths
-                paths = glob.glob(folder + "/**/**/" + pattern)
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
