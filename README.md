@@ -55,3 +55,12 @@ import ecoval
 ecoval.validate()
 ```
 
+## Corrupt files
+
+Please ensure that there are no corrupt files in the data directory. If there are, the matchup function will probably fail. You can check for corrupt files using the following command:
+
+```sh
+    import nctoolkit as nc
+    ds = nc.open_data("foo.nc")
+    ds.is_corrupt()
+```
