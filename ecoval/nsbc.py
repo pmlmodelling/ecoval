@@ -9,7 +9,7 @@ import xarray as xr
 import nctoolkit as nc
 
 from ecoval.fixers import tidy_warnings
-from ecoval.utils import get_datadir
+from ecoval.utils import get_datadir, extension_of_directory
 data_dir = get_datadir()
 
 def write_report(x):
@@ -18,20 +18,6 @@ def write_report(x):
         f.write(x + "\n")
         # add blank line
         f.write("\n")
-
-
-def extension_of_directory(starting_directory):
-    n_remove = len(starting_directory)
-    n_max = 0
-    for root, directories, files in os.walk(starting_directory):
-        r_n = (len(root[n_remove:].split("/")))
-        paths = root[n_remove+1:].split("/")
-        paths = [x for x in paths if len(x) > 0]
-        r_n = len(paths)
-        if r_n > n_max:
-            n_max = r_n 
-    ## repeat "**" n_max
-    return "/" + "/".join(["**" for i in range(n_max)]) + "/"
 
 
 def nsbc_matchup(

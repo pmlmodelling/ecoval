@@ -14,18 +14,8 @@ import time
 import numpy as np
 import xarray as xr
 
-def extension_of_directory(starting_directory):
-    n_remove = len(starting_directory)
-    n_max = 0
-    for root, directories, files in os.walk(starting_directory):
-        r_n = (len(root[n_remove:].split("/")))
-        paths = root[n_remove+1:].split("/")
-        paths = [x for x in paths if len(x) > 0]
-        r_n = len(paths)
-        if r_n > n_max:
-            n_max = r_n 
-    ## repeat "**" n_max
-    return "/" + "/".join(["**" for i in range(n_max)]) + "/"
+from ecoval.utils import extension_of_directory
+
 
 
 def bin_value(x, bin_res):
@@ -1186,7 +1176,6 @@ def matchup(
                 # extract the ERSEM paths
                 final_extension = extension_of_directory(folder)
                 paths = glob.glob(folder + final_extension + pattern)
-                print(paths)
 
                 for exc in exclude:
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
