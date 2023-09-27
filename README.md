@@ -64,3 +64,13 @@ Please ensure that there are no corrupt files in the data directory. If there ar
     ds = nc.open_data("foo.nc")
     ds.is_corrupt()
 ```
+
+
+## Minimal simulation requirements
+
+Simulations should have at least one year of complete data. Matchups for gridded data will require the model to have at least monthly resolution; if it is daily gridded model output will be averaged in each month to matchup with gridded observations. 
+
+Point observation matchups will do a strict day/month/year matchup. If you have monthly output only, any point matchups will be relatively ineffective.
+
+
+
