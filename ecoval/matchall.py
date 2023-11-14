@@ -10,12 +10,14 @@ import os
 import pandas as pd
 import warnings
 import time
+from tqdm import tqdm
 
 import numpy as np
 import xarray as xr
 
-from ecoval.utils import extension_of_directory
+from ecoval.utils import get_datadir, session
 
+from ecoval.utils import extension_of_directory
 
 
 def bin_value(x, bin_res):
@@ -42,6 +44,8 @@ ices_variables = [
     "ammonium",
     "co2flux",
     "pco2",
+    "doc",
+    "poc",
     "alkalinity",
 ]
 data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
@@ -84,13 +88,43 @@ if config_file is not None:
             terms = text.split(":")
             key = terms[0]
             value = None
-            # print(key)
         data_path = terms[1].replace(" ", "")
 
         if os.path.exists(data_path):
             data_dir = data_path
         else:
             raise ValueError(f"{data_path} does not exist")
+def matchup_wod(ff = None, variable = None, df_all = None, depths = None):
+    data_dir = get_datadir()
+    ds = nc.open_data(ff, checks=False)
+    years = list(set(ds.years))
+    # read in the WOD data
+    df_wod = []
+
+    try:
+        for year in years:
+            ff_year = f"{data_dir}/wod/temp_csv/yearly/wod_temp_{year}.csv"
+            df_wod.append(pd.read_csv(ff_year))
+    except:
+        return None
+    
+    df_wod = pd.concat(df_wod)
+
+    df_locs = df_wod.drop(columns = "temperature")
+    df_wod = df_wod.rename(columns = {"temperature":"observation"})
+
+    depths_file = ds.levels
+
+    with warnings.catch_warnings(record=True) as w:
+        df_out = ds.match_points(df_locs, variables = variable, depths = depths_file, quiet = True)
+    tidy_warnings(w)
+
+    df_out.rename(columns = { variable: "model"}, inplace = True)
+    df_out = df_out.merge(df_wod)
+
+
+    df_all.append(df_out)
+
 
 
 def mm_match(ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all):
@@ -115,9 +149,12 @@ def mm_match(ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all)
     try:
         with warnings.catch_warnings(record=True) as w:
             ds = nc.open_data(ff, checks=False)
-            ds.subset(variables=ersem_variable)
+            var_match = ersem_variable.split("+")
+            ds.subset(variables=var_match)
             ds.as_missing(0)
             ds.run()
+            if len(var_match) > 1:
+                ds.sum_all()
 
             df_locs = (
                 df_times.query("path == @ff")
@@ -182,34 +219,49 @@ def get_res(x, folder=None):
 def find_paths(folder, fvcom=False, exclude = []):
     i = 1
     while True:
-        ensemble = glob.glob(folder + "/**")
-        ensemble = [x for x in ensemble if os.path.isdir(x)]
-        ensemble = [x for x in ensemble if os.path.basename(x).isdigit()]
-        ensemble = list(set(ensemble))
-        len_ensemble = len(ensemble)
-        stop = -1
+        # ensemble = glob.glob(folder + "/**")
+        # ensemble = [x for x in ensemble if os.path.isdir(x)]
+        # ensemble = [x for x in ensemble if os.path.basename(x).isdigit()]
+        # ensemble = list(set(ensemble))
+        # len_ensemble = len(ensemble)
+        # stop = -1
 
-        if len_ensemble > 10:
-            stop = len_ensemble - int(len_ensemble / 2)
+        # if len_ensemble > 10:
+        #     stop = len_ensemble - int(len_ensemble / 2)
 
-        while True:
-            bad = True
-            for x in ensemble[-i:]:
-                if os.path.isdir(x):
-                    try:
-                        y = int(x.split("/")[-1])
-                        bad = False
-                        ensemble = glob.glob(x + "/**")
-                        final = x
-                        break
+        # while True:
+        #     bad = True
+        #     for x in ensemble[-i:]:
+        #         if os.path.isdir(x):
+        #             try:
+        #                 y = int(x.split("/")[-1])
+        #                 bad = False
+        #                 ensemble = glob.glob(x + "/**")
+        #                 final = x
+        #                 break
 
-                    except:
-                        blah = "blah"
-            if bad:
-                if i > stop:
-                    break
-            i += 1
-        options = glob.glob(final + "/**.nc")
+        #             except:
+        #                 blah = "blah"
+        #     if bad:
+        #         if i > stop:
+        #             break
+        #     i += 1
+
+        levels = session["levels"]
+
+        new_directory = folder + "/"
+        for i in range(levels):
+            dir_glob = glob.glob(new_directory + "/**")
+            for x in dir_glob:
+                # figure out if the the base directory is an integer
+                try:
+                    y = int(os.path.basename(x))
+                    new_directory = x + "/"
+                except:
+                    blah = "blah"
+        
+        options = glob.glob( new_directory + "/**.nc")
+        # options = glob.glob(final + "/**.nc")
         if not fvcom:
             options = [x for x in options if "part" not in os.path.basename(x)]
             options = [x for x in options if "restart" not in os.path.basename(x)]
@@ -239,7 +291,7 @@ def find_paths(folder, fvcom=False, exclude = []):
             ds_dict = generate_mapping(ds, fvcom=fvcom)
         # output error and ff
         except Exception as e:
-            raise ValueError(f"Error in generate_mapping. Please check the file {ff}. It may be corrupt.")
+            blah = "blah"
 
         ds_vars = ds.variables
         # vosaline and votemper are special cases
@@ -313,7 +365,7 @@ def matchup(
     surface=None,
     start=None,
     end=None,
-    ices_all=["temperature", "ph", "alkalinity"],
+    ices_all=["temperature", "ph", "alkalinity", "doc"],
     ices_bottom=[
         "temperature",
         "salinity",
@@ -323,6 +375,7 @@ def matchup(
         "nitrate",
         "ammonium",
     ],
+    levels = 2,
     **kwargs,
 ):
     """
@@ -364,11 +417,16 @@ def matchup(
             "co2flux",
             "pco2",
             'alkalinity']
+    levels: int
+        Number of directories to go down to find the files
+        0 means the files are in that directory. 1 means they are in a subdirectory. 2 means they are in a subsubdirectory
     **kwargs:
         Additional arguments to pass to matchup
 
 
     """
+
+    session["levels"] = levels
 
     if isinstance(exclude, str):
         exclude = [exclude]
@@ -471,6 +529,7 @@ def matchup(
             "chlorophyll",
             "co2flux",
             "pco2",
+            "doc"
         ]
     else:
         var_choice = variables
@@ -496,6 +555,8 @@ def matchup(
         "chlorophyll",
         "co2flux",
         "pco2",
+        "doc",
+        "poc"
     ]
 
     for vv in var_choice:
@@ -530,6 +591,7 @@ def matchup(
 
     if all_df is None:
         all_df = find_paths(folder, fvcom=fvcom, exclude = exclude)
+        # all_df = find_paths(folder, fvcom=fvcom, exclude = exclude)
 
         # add in anything that is missing
         all_vars = [
@@ -556,6 +618,17 @@ def matchup(
             .head(1)
             .reset_index(drop=True)
         )
+        # add in poc
+        if "poc" in var_choice:
+            df_poc = all_df.query("variable == 'chlorophyll'").reset_index(drop = True)
+            poc_mapping = df_poc.model_variable[0]
+            # replace Chl with c
+            poc_mapping = poc_mapping.replace("Chl", "c")
+            poc_mapping = poc_mapping + "+Z5_c+Z6_c"
+            df_poc["model_variable"] = [poc_mapping]
+            df_poc["variable"] = ["poc"]
+
+            all_df = pd.concat([all_df, df_poc]).reset_index(drop = True)
 
         print(f"** Inferred mapping of model variable names from {folder}")
         print(all_df)
@@ -579,6 +652,8 @@ def matchup(
     final_extension = extension_of_directory(folder)
     df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
     df_out.to_csv(out, index=False)
+
+    # raise ValueError(df_out)
 
     if fvcom:
         import xarray as xr
@@ -650,6 +725,17 @@ def matchup(
                     ds2.run()
                     ds2.cdo_command(f"setgrid,{out_grid}")
                     ds2.as_missing(0)
+
+                    if vv == "doc":
+                        command = "-aexpr,doc=" + model_variables[0]
+                        ds2.cdo_command(command)
+                        drop_these = model_variables[0].split("+")
+                        ds_contents = ds2.contents
+                        ds_contents = ds_contents.query("variable in @drop_these")
+                        doc_unit = ds_contents.unit[0]
+                        ds2.set_units({"doc": doc_unit})
+                        ds2.drop(variables=drop_these)
+
 
                     if vv == "chlorophyll":
                         command = "-aexpr,chlorophyll=" + model_variables[0]
@@ -726,22 +812,23 @@ def matchup(
     df = df.iloc[0:1, :]
     pattern = list(df.pattern)[0]
     pattern = pattern.replace("//", "/")
-    print(pattern)
 
-    if "**/" in pattern:
-        while True:
-            i = 0
-            patterns = pattern.split("/")
-            for x in patterns:
-                if x == "**":
-                    break
-                i += 1
-            new_pattern = glob.glob("/".join(patterns[0:i]) + "/" + "**")[-1].split("/")[-1]
-            patterns[i] = new_pattern
-            pattern = "/".join(patterns)
+    # if "**/" in pattern:
+    #     while True:
+    #         print("issue")
+    #         i = 0
+    #         patterns = pattern.split("/")
+    #         for x in patterns:
+    #             if x == "**":
+    #                 break
+    #             i += 1
+    #         print(patterns)
+    #         new_pattern = glob.glob("/".join(patterns[0:i]) + "/" + "**")[-1].split("/")[-1]
+    #         patterns[i] = new_pattern
+    #         pattern = "/".join(patterns)
 
-            if len([x for x in pattern.split("/") if x == "**"]) == 0:
-                break
+    #         if len([x for x in pattern.split("/") if x == "**"]) == 0:
+    #             break
     paths = glob.glob(pattern)
     ds = nc.open_data(paths[0], checks=False).to_xarray()
     lon_name = [x for x in ds.coords if "lon" in x]
@@ -767,6 +854,147 @@ def matchup(
     all_df = all_df.dropna().reset_index(drop = True)
     df_mapping = all_df
     # get rid of any rows where pattern is None
+
+    if global_grid:
+
+        if "temperature" in variables:
+            vars = ["temperature"]
+
+            out_dir = "matched/gridded/cobe2/"
+
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            df = df_mapping.query("variable in @vars").reset_index(drop=True)
+            if len(df) > 0:
+                print("******************************")
+                print("Matching the vertically resolved temperature with NOAA World Ocean Database")
+                mapping = dict()
+                for vv in df.variable:
+                    mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
+
+                selection = []
+                for vv in vars:
+                    try:
+                        selection += mapping[vv].split("+")
+                    except:
+                        selection = selection
+
+                patterns = set(df.pattern)
+                if len(patterns) > 1:
+                    raise ValueError(
+                        "Something strange going on in the string patterns. Unable to handle this. Bug fix time!"
+                    )
+                pattern = list(patterns)[0]
+
+                # extract the ERSEM paths
+                final_extension = extension_of_directory(folder)
+                paths = glob.glob(folder + final_extension + pattern)
+
+                for exc in exclude:
+                    paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
+
+                import xarray as xr
+
+                time_name = [x for x in xr.open_dataset(paths[0]).dims if "time" in x][
+                    0
+                ]
+                df_times = []
+
+                for ff in paths:
+                    ff_times = xr.open_dataset(ff)[time_name]
+                    ff_month = [int(x.dt.month) for x in ff_times]
+                    ff_year = [int(x.dt.year) for x in ff_times]
+                    df_times.append(
+                        pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
+                            path=ff
+                        )
+                    )
+                df_times = pd.concat(df_times)
+
+                ersem_paths = (
+                    df_times.loc[:, ["year", "month"]]
+                    .drop_duplicates()
+                    .groupby("year")
+                    .count()
+                    .query("month == 12")
+                    .reset_index()
+                    .merge(df_times, on="year", how="left")
+                    .loc[:, ["year", "path"]]
+                    .drop_duplicates()
+                    .reset_index(drop=True)
+                )
+
+                if spinup is not None:
+                    min_year = ersem_paths.year.min() + spinup
+                if start is not None:
+                    if spinup is None:
+                        min_year = start
+
+                ersem_paths = ersem_paths.query("year >= @min_year")
+                ersem_paths = ersem_paths.query(
+                    "year >= @sim_start and year <= @sim_end"
+                ).reset_index(drop=True)
+
+                if end is not None:
+                    max_year = end
+                    ersem_paths = ersem_paths.query("year <= @max_year").reset_index(drop = True)
+
+                ersem_years = list(set(ersem_paths.year))
+
+                ersem_paths = ersem_paths.loc[:, ["path"]]
+
+                ersem_paths = list(ersem_paths.path)
+
+                wod_output = "matched/wod/wod_matchups.csv"
+
+                manager = Manager()
+
+                df_all = manager.list()
+
+
+                pool = multiprocessing.Pool(cores)
+
+                pbar = tqdm(total=len(ersem_paths), position=0, leave=True)
+
+                    
+                var_sel = list(df.model_variable)[0]
+                results = dict()
+                for ff in ersem_paths:
+                    # matchup_wod(ff, var_sel, df_all, "fixed")
+                    temp = pool.apply_async(
+                        matchup_wod,
+                        [
+                            ff,
+                            var_sel, 
+                            df_all,
+                            "fixed"
+
+                        ],
+                    )
+                    results[ff] = temp
+
+                for k, v in results.items():
+                    value = v.get()
+                    pbar.update(1)
+
+                df_all = list(df_all)
+
+                df_all = pd.concat(df_all)
+                # make sure directory exists for wod_output
+                if not os.path.exists(os.path.dirname(wod_output)):
+                    os.makedirs(os.path.dirname(wod_output))
+
+                df_all.to_csv(wod_output, index=False)
+
+
+
+
+
+
+
+
+        raise ValueError("here")
 
     if not global_grid:
 
@@ -820,8 +1048,6 @@ def matchup(
 
                         ds = xr.open_dataset(ensemble[0])
                         time_name = [x for x in list(ds.dims) if "time" in x][0]
-                        from tqdm import tqdm
-                        import xarray as xr
 
                         nc_times = []
                         df_times = []
@@ -1980,9 +2206,6 @@ def matchup(
 
                 ersem_paths = ersem_paths.loc[:, ["path"]]
                 paths = list(ersem_paths.path)
-                # print(paths)
-                # print(df_occci)
-                # raise ValueError("What is happening?")
 
                 with warnings.catch_warnings(record=True) as w:
                     ds = nc.open_data(paths, checks=False)
@@ -1993,6 +2216,15 @@ def matchup(
                         ds.bottom()
                     ds.as_missing(0)
                     ds.tmean("month")
+
+                    if "doc" in list(df.variable):
+                        command = "-aexpr,doc=" + mapping["doc"]
+                        ds.cdo_command(command)
+                        drop_these = mapping["chlorophyll"].split("+")
+                        ds_contents = ds.contents
+                        ds_contents = ds_contents.query("variable in @drop_these")
+                        chl_unit = ds_contents.unit[0]
+                        ds.drop(variables=drop_these)
 
                     if "chlorophyll" in list(df.variable):
                         command = "-aexpr,chlorophyll=" + mapping["chlorophyll"]
@@ -2006,7 +2238,7 @@ def matchup(
 
                 tidy_warnings(w)
                 for key in mapping:
-                    if key != "chlorophyll":
+                    if key not in  ["chlorophyll", "doc"]:
                         if mapping[key] in ds.variables:
                             ds.rename({mapping[key]: key})
                 if "chlorophyll" in list(df.variable):

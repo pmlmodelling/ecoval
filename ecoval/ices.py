@@ -92,6 +92,7 @@ def generate_mapping(ds, fvcom = False):
      'ammonium',
      "co2flux",
      "pco2",
+     "doc",
      'alkalinity']
     ds1 = nc.open_data(ds[0], checks = False)
     try:
@@ -115,13 +116,17 @@ def generate_mapping(ds, fvcom = False):
                         and "benthic" not in x.lower()
                         and "river" not in x.lower()
                        ]
+        if vv == "doc":
+        # doc = [x for x in ds.contents.long_name if "arbon" in x and "iss" in x and " organic" in x and "benthic" not in x]
+            the_vars = [x for x in ds_contents.long_name if "arbon" in x and "iss" in x and " organic" in x and "benthic" not in x]
+            the_vars = [x for x in the_vars if " loss " not in x] 
+            the_vars = [x for x in the_vars if "depth" not in x] 
+
         if vv == "ph":
             the_vars = [x for x in ds_contents.long_name if "pH" in x 
                         and "benthic" not in x.lower()
                         and "river" not in x.lower()
                        ]
-            # if len(the_vars) > 0:
-                # print(the_vars)
         if vv == "co2flux":
             if fvcom == False:
                 the_vars = [x for x in ds_contents_top.long_name if "co2" in x.lower() 
@@ -188,7 +193,7 @@ def generate_mapping(ds, fvcom = False):
 
         add = True
 
-        if len(ersem_vars) > 1 and vv != "chlorophyll":
+        if len(ersem_vars) > 1 and vv not in  ["doc","chlorophyll"]:
             add = False
 
         if add:
