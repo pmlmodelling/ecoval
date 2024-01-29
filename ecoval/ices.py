@@ -119,6 +119,10 @@ def generate_mapping(ds, fvcom = False):
         if vv == "doc":
         # doc = [x for x in ds.contents.long_name if "arbon" in x and "iss" in x and " organic" in x and "benthic" not in x]
             the_vars = [x for x in ds_contents.long_name if "arbon" in x and "iss" in x and " organic" in x and "benthic" not in x]
+            vars_2 = [x for x in ds.contents.long_name if "photolabile" in x and "carbon" in x]
+            if len(vars_2) > 0:
+                the_vars += vars_2
+
             the_vars = [x for x in the_vars if " loss " not in x] 
             the_vars = [x for x in the_vars if "depth" not in x] 
 

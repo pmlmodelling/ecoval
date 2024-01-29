@@ -429,7 +429,7 @@ def validate(title="Automated model evaluation", author=None):
 
         # ices notebooks
 
-        for vv in ["ph", "alkalinity"]:
+        for vv in ["ph", "alkalinity", "doc"]:
             variable = vv
             if vv != "ph":
                 Variable = variable.title()
