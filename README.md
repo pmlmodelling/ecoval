@@ -26,6 +26,10 @@ mamba env create --name ecoval -f ecoval.yml
 
 Activate this environment. 
 
+```sh
+mamba activate ecoval 
+```
+
 
 Now, install the package.
 
