@@ -845,6 +845,8 @@ def matchup(
         global_grid = True
     if lat_max - lat_min > 170:
         global_grid = True
+    if lon_max > 50:
+        global_grid = True
     if global_grid:
         print("Grid is global")
     else:
