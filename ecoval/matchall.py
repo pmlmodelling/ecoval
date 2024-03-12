@@ -1957,7 +1957,7 @@ def matchup(
                         ds_thickness.subset(time=0, variables="e3t")
                         ds_thickness.as_missing(0)
                         ds_thickness.run()
-                        ds_model.vertical_interp(noaa_levels, ds_thickness=ds_thickness)
+                        ds_model.vertical_interp(noaa_levels, thickness=ds_thickness)
                     else:
                         ds_model.vertical_interp(noaa_levels, fixed=True)
 
