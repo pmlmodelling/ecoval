@@ -858,8 +858,12 @@ def matchup(
     # get rid of any rows where pattern is None
 
     if global_grid:
+        print(var_choice)
 
-        if "temperature" in variables:
+        # if variables is None:
+            # variables = ["temperature", 
+
+        if "temperature" in var_choice and False:
             vars = ["temperature"]
 
             out_dir = "matched/gridded/cobe2/"
@@ -996,7 +1000,7 @@ def matchup(
 
 
 
-        raise ValueError("here")
+        #raise ValueError("here")
 
     if not global_grid:
 
