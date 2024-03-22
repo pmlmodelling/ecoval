@@ -852,6 +852,37 @@ def matchup(
     else:
         print("Grid is not global")
     print("********************************")
+    if global_grid:
+        # figure out the lon/lat extent in the model
+        lons = [lon_min, lon_max]
+        lats = [lat_min, lat_max]
+        # start of with the raw coords
+        # This will not work with nemo, which outputs the grid incorrectly
+        # so we will check if the step between the first lon/lat and the second lon/lat is
+        # far bigger than the rest. If this is the case, the first should be ignored
+        # get the lon/lat values
+        lon_vals = ds[lon_name[0]].values
+        lat_vals = ds[lat_name[0]].values
+        # make them unique and ordered, and 1d
+        lon_vals = np.unique(lon_vals)
+        # make a list
+        lon_vals = lon_vals.tolist()
+        diff_1 = lon_vals[1] - lon_vals[0]
+        diff_2 = lon_vals[2] - lon_vals[1]
+        diff_3 = lon_vals[3] - lon_vals[2]
+        if diff_1 /diff_2 > 10:
+            if diff_1 / diff_3 > 10:
+                lons[0] = lon_vals[1]
+        # do it for lats
+        lat_vals = np.unique(lat_vals)
+        lat_vals = lat_vals.tolist()
+        diff_1 = lat_vals[1] - lat_vals[0]
+        diff_2 = lat_vals[2] - lat_vals[1]
+        diff_3 = lat_vals[2] - lat_vals[1]
+        if diff_1 /diff_2 > 10:
+            if diff_1 / diff_3 > 10:
+                lats[0] = lat_vals[1]
+
 
     all_df = all_df.dropna().reset_index(drop = True)
     df_mapping = all_df
@@ -1684,6 +1715,7 @@ def matchup(
                 )
 
                 ds_obs.subset(variables="fgco2_smoothed")
+                ds_obs.subset(lon = lons, lat = lats)
                 ds_obs.top()
                 ds_obs.subset(years=ds_model.years)
                 ds_obs.rename({"fgco2_smoothed": "observation"})
@@ -1820,6 +1852,7 @@ def matchup(
 
                 ds_obs.subset(variables="spco2")
                 ds_obs.top()
+                ds_obs.subset(lon = lons, lat = lats)
                 ds_obs.subset(years=ds_model.years)
                 ds_obs.rename({"spco2": "observation"})
                 # change temperature in ds_obs from Kelvin to Celsius
@@ -1870,6 +1903,7 @@ def matchup(
                     checks=False,
                 )
                 ds_obs.subset(variables="*_an")
+                ds_obs.subset(lon = lons, lat = lats)
                 ds_obs.run()
                 ds_obs.rename({ds_obs.variables[0]: "observation"})
                 model_var = all_df.query(
@@ -2014,6 +2048,7 @@ def matchup(
                     checks=False,
                 )
                 ds_obs.subset(variables="*_an")
+                ds_obs.subset(lon = lons, lat = lats)
                 ds_obs.run()
                 ds_obs.rename({ds_obs.variables[0]: "observation"})
                 model_var = all_df.query("variable == @vv").model_variable.values[0]
@@ -2396,6 +2431,7 @@ def matchup(
 
                 ds_obs.subset(variables="sst")
                 ds_obs.top()
+                ds_obs.subset(lon = lons, lat = lats)
                 ds_obs.subset(years=ds_model.years)
                 ds_obs.rename({"sst": "observation"})
                 # change temperature in ds_obs from Kelvin to Celsius
@@ -2403,6 +2439,8 @@ def matchup(
                 ds_obs.run()
 
                 ds_model.regrid(ds_obs)
+                ds_model.run()
+                # Now, nee
 
                 ds_model.append(ds_obs)
                 ds_model.merge("variable", "month")
@@ -2540,6 +2578,7 @@ def matchup(
                     ds_obs = nc.open_data(obs_file, checks=False)
 
                     ds_obs.subset(variables="TAlk")
+                    ds_obs.subset(lon = lons, lat = lats)
                     ds_obs.top()
 
                     ds_obs.rename({"TAlk": "observation"})
@@ -2687,6 +2726,7 @@ def matchup(
                     ds_obs = nc.open_data(obs_file, checks=False)
 
                     ds_obs.subset(variables="pHtsinsitutp")
+                    ds_obs.subset(lon = lons, lat = lats)
                     ds_obs.top()
 
                     ds_obs.rename({"pHtsinsitutp": "observation"})
