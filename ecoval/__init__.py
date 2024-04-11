@@ -27,7 +27,7 @@ def fix_toc():
             if len(vv_paths) > 0: 
                 vv_dict[vv] = vv_paths
         else:
-            vv_paths = [os.path.basename(x) for x in paths if vv in x and "phos" not in x and "chlo" not in x]
+            vv_paths = [os.path.basename(x) for x in paths if vv in x and "phos" not in x and "chlo" not in x and "occci" not in x]
             if len(vv_paths) > 0: 
                 vv_dict[vv] = vv_paths
     # get summary docs
@@ -469,7 +469,7 @@ def validate(title="Automated model evaluation", author=None):
         # set up the ices_bottom notebooks
 
         #ices_vars = ['temperature', 'salinity', 'oxygen', 'phosphate', 'silicate', 'nitrate', 'ammonium']   
-        for vv in ["temperature", "salinity", "oxygen", "phosphate", "silicate", "nitrate", "ammonium"]:
+        for vv in ["temperature", "salinity", "oxygen", "phosphate", "silicate", "nitrate", "ammonium", "ph"]:
         # for vv in [ "nitrate"]:
             variable = vv
             if vv != "ph":
