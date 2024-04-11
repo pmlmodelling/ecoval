@@ -371,6 +371,7 @@ def matchup(
         "salinity",
         "oxygen",
         "phosphate",
+        "ph",
         "silicate",
         "nitrate",
         "ammonium",
@@ -806,30 +807,16 @@ def matchup(
     import glob
 
     print("********************************")
-    print("Identifying whether grid is global")
+    print("Identifying whether it is a northwest European shelf domain")
+    print("********************************")
     df = pd.read_csv("matched/mapping.csv")
     df = df.dropna()
     df = df.iloc[0:1, :]
     pattern = list(df.pattern)[0]
     pattern = pattern.replace("//", "/")
 
-    # if "**/" in pattern:
-    #     while True:
-    #         print("issue")
-    #         i = 0
-    #         patterns = pattern.split("/")
-    #         for x in patterns:
-    #             if x == "**":
-    #                 break
-    #             i += 1
-    #         print(patterns)
-    #         new_pattern = glob.glob("/".join(patterns[0:i]) + "/" + "**")[-1].split("/")[-1]
-    #         patterns[i] = new_pattern
-    #         pattern = "/".join(patterns)
-
-    #         if len([x for x in pattern.split("/") if x == "**"]) == 0:
-    #             break
     paths = glob.glob(pattern)
+
     ds = nc.open_data(paths[0], checks=False).to_xarray()
     lon_name = [x for x in ds.coords if "lon" in x]
     lat_name = [x for x in ds.coords if "lat" in x]
@@ -848,9 +835,9 @@ def matchup(
     if lon_max > 50:
         global_grid = True
     if global_grid:
-        print("Grid is global")
+        print("Grid is not NW European shelf")
     else:
-        print("Grid is not global")
+        print("Grid is NW European shelf")
     print("********************************")
     if global_grid:
         # figure out the lon/lat extent in the model
