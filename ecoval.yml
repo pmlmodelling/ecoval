@@ -11,6 +11,7 @@ dependencies:
   - python=3.9.16=h2782a2a_0_cpython
   - r-base
   - r-cowplot
+  - r-ggthemes
   - r-dplyr
   - r-ggplot2
   - r-maps
