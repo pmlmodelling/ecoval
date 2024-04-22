@@ -209,11 +209,6 @@ def generate_mapping(ds, fvcom = False):
 
         add = True
 
-        if vv == "carbon":
-            print(ersem_vars)
-            print(the_vars)
-            # raise ValueError(the_vars)
-
         if len(ersem_vars) > 1 and vv not in  ["doc","chlorophyll", "carbon"]:
             add = False
 
