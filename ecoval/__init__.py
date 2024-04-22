@@ -1,4 +1,5 @@
 from ecoval.utils import get_datadir
+import pkg_resources
 import pandas as pd
 import glob
 import nctoolkit as nc
@@ -10,8 +11,8 @@ from ecoval.chunkers import add_chunks
 import os
 
 
-def fix_toc():
-    paths = glob.glob("book/notebooks/*.ipynb")
+def fix_toc(book_dir):
+    paths = glob.glob(f"{book_dir}/notebooks/*.ipynb")
     variables = list(pd.read_csv("matched/mapping.csv").variable)
     variables.sort()
 
@@ -31,11 +32,9 @@ def fix_toc():
                 vv_dict[vv] = vv_paths
     # get summary docs
     ss_paths = [os.path.basename(x) for x in paths if "summary" in x]
-    print("*****************")
-    print(vv_dict)
-    print("*****************")
 
-    out = "book/_toc.yml"
+    out = f"{book_dir}/_toc.yml"
+
     # write line by line to out
     with open(out, "w") as f:
         # "format: jb-book"
@@ -53,6 +52,8 @@ def fix_toc():
             # capitalize if not ph
             if vv != "ph":
                 vv_out = vv.capitalize()
+            if vv.lower() in ["poc", "doc"]:
+                vv_out = vv.upper() 
             # correct ph
             if vv == "ph":
                 vv_out = "pH"
@@ -67,9 +68,9 @@ def fix_toc():
             x = f.write(f"  - file: notebooks/{file}\n")
 
 
-def fix_toc_comparison():
+def fix_toc_comparison(book_dir):
 
-    out = "book/compare/_toc.yml"
+    out = f"{book_dir}/compare/_toc.yml"
     # write line by line to out
     with open(out, "w") as f:
         # "format: jb-book"
@@ -89,13 +90,9 @@ def compare(model_dict=None):
     """
 
     # make a folder called book/compare
-    import shutil
-
-    import pkg_resources
-    import os
 
     data_path = pkg_resources.resource_filename(__name__, "data/mask.py")
-    if not os.path.exists("book/compare/notebooks/mask.py"):
+    if not os.path.exists(f"book/compare/notebooks/mask.py"):
         if not os.path.exists("book/compare/notebooks"):
             # create directory recursively
             os.makedirs("book/compare/notebooks")
@@ -245,6 +242,7 @@ def validate(title="Automated model evaluation", author=None):
     -------
     None
     """
+    import os
     data_dir = get_datadir()
     path_df = []
 
@@ -254,48 +252,75 @@ def validate(title="Automated model evaluation", author=None):
 
     empty = True
 
-    if len(glob.glob("book/notebooks/*.ipynb")) > 0:
-        empty = False
+    # book directory is book, book1, book2, book10 etc.
+
+    # create a new name if one already exists
+    i = 0
+    book_dir = "book"
+
+    if os.path.exists("book"):
+        #get user input to decide if it should be removed
+        user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
+        if user_input.lower() == "y":
+            while True:
+                files = glob.glob("book/**/**/**", recursive=True)
+                # list all files in book, recursively
+                for ff in files:
+                    if ff.startswith("book"):
+                        try:
+                            os.remove(ff)
+                        except:
+                            pass
+                files = glob.glob("book/**/**/**", recursive=True)
+                # only list files
+                files = [x for x in files if os.path.isfile(x)]
+                if len(files) == 0:
+                    break
+        else:
+            print("Exiting")
+            return None
+                # if not os.path.exists(book_dir):
+                    # break
 
     import os
 
     if empty:
         from shutil import copyfile
 
-        if not os.path.exists("book"):
-            os.mkdir("book")
-        if not os.path.exists("book/notebooks"):
-            os.mkdir("book/notebooks")
+        if not os.path.exists(book_dir):
+            os.mkdir(book_dir)
+        if not os.path.exists(f"{book_dir}/notebooks"):
+            os.mkdir(f"{book_dir}/notebooks")
 
         # from importlib.resources import files
         import pkg_resources
 
         data_path = pkg_resources.resource_filename(__name__, "data/mask.py")
-        if not os.path.exists("book/notebooks/mask.py"):
-            copyfile(data_path, "book/notebooks/mask.py")
+        if not os.path.exists(f"{book_dir}/notebooks/mask.py"):
+            copyfile(data_path, f"{book_dir}/notebooks/mask.py")
 
         data_path = pkg_resources.resource_filename(__name__, "data/000_info.ipynb")
-        if not os.path.exists("book/notebooks/000_info.ipynb"):
-            copyfile(data_path, "book/notebooks/000_info.ipynb")
+        if not os.path.exists(f"{book_dir}/notebooks/000_info.ipynb"):
+            copyfile(data_path, f"{book_dir}/notebooks/000_info.ipynb")
 
         # data_path = files("ecoval.data").joinpath("toc.yml")
         data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
 
-        out = "book/" + os.path.basename(data_path)
+        out = f"{book_dir}/" + os.path.basename(data_path)
         copyfile(data_path, out)
 
         data_path = pkg_resources.resource_filename(__name__, "data/requirements.txt")
-        out = "book/" + os.path.basename(data_path)
+        out = f"{book_dir}/" + os.path.basename(data_path)
         copyfile(data_path, out)
 
         data_path = pkg_resources.resource_filename(__name__, "data/intro.md")
-        out = "book/" + os.path.basename(data_path)
+        out = f"{book_dir}/" + os.path.basename(data_path)
         copyfile(data_path, out)
 
         # copy config
 
         data_path = pkg_resources.resource_filename(__name__, "data/_config.yml")
-        out = "book/" + os.path.basename(data_path)
+        out = f"{book_dir}/" + os.path.basename(data_path)
         # change project_title in _config.yml to title
 
         with open(data_path, "r") as file:
@@ -325,9 +350,6 @@ def validate(title="Automated model evaluation", author=None):
             source = os.path.basename(pp).split("_")[0]
             variable = vv
             layer = os.path.basename(pp).split("_")[1].replace(".csv", "")
-            print("****************88")
-            print(variable)
-            print("****************88")
             if vv != "ph":
                 Variable = variable
             else:
@@ -338,11 +360,10 @@ def validate(title="Automated model evaluation", author=None):
                 Variable = Variable.upper()
             vv_file = pp
             vv_file_find = pp.replace("../../", "")
-            if not os.path.exists(vv_file_find):
-                print(f"Not finding {vv_file}")
+
             if os.path.exists(vv_file_find):
                 if (
-                    len(glob.glob(f"book/notebooks/*point_{layer}_{variable}.ipynb"))
+                    len(glob.glob(f"{book_dir}/notebooks/*point_{layer}_{variable}.ipynb"))
                     == 0
                 ):
                     file1 = pkg_resources.resource_filename(
@@ -352,7 +373,7 @@ def validate(title="Automated model evaluation", author=None):
                         filedata = file.read()
 
                     # Replace the target string
-                    out = f"book/notebooks/{source}_{layer}_{variable}.ipynb"
+                    out = f"{book_dir}/notebooks/{source}_{layer}_{variable}.ipynb"
                     filedata = filedata.replace("point_variable", Variable)
                     filedata = filedata.replace("point_layer", layer)
                     filedata = filedata.replace("template_title", Variable)
@@ -361,6 +382,8 @@ def validate(title="Automated model evaluation", author=None):
                     with open(out, "w") as file:
                         file.write(filedata)
                     variable = vv
+                    if variable in ["poc", "doc"]:
+                        variable = variable.upper()
                     path_df.append(
                         pd.DataFrame(
                             {
@@ -375,16 +398,14 @@ def validate(title="Automated model evaluation", author=None):
         # identify nsbc variables in matched data
         nsbc_paths = glob.glob("matched/gridded/**/**/**.nc")
         # nsbc_paths += glob.glob("matched/gridded/**/**.nc")
-        print(nsbc_paths)
 
         if len(nsbc_paths) > 0:
             # ds = nc.open_data("matched/gridded/nsbc/nsbc_model.nc")
             for vv in [
                 os.path.basename(x).split("_")[1].replace(".nc", "") for x in nsbc_paths
             ]:
-                print(vv)
                 variable = vv
-                if not os.path.exists(f"book/notebooks/nsbc_{variable}.ipynb"):
+                if not os.path.exists(f"{book_dir}/notebooks/nsbc_{variable}.ipynb"):
                     if variable == "ph":
                         Variable = "pH"
                     else:
@@ -396,7 +417,7 @@ def validate(title="Automated model evaluation", author=None):
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/nsbc_template.ipynb"
                     )
-                    if len(glob.glob(f"book/notebooks/*nsbc_{variable}.ipynb")) == 0:
+                    if len(glob.glob(f"{book_dir}/notebooks/*nsbc_{variable}.ipynb")) == 0:
                         with open(file1, "r") as file:
                             filedata = file.read()
 
@@ -405,7 +426,7 @@ def validate(title="Automated model evaluation", author=None):
                         filedata = filedata.replace("template_title", Variable)
 
                         # Write the file out again
-                        with open(f"book/notebooks/nsbc_{variable}.ipynb", "w") as file:
+                        with open(f"{book_dir}/notebooks/nsbc_{variable}.ipynb", "w") as file:
                             file.write(filedata)
 
                         variable = vv
@@ -413,7 +434,7 @@ def validate(title="Automated model evaluation", author=None):
                             pd.DataFrame(
                                 {
                                     "variable": [variable],
-                                    "path": [f"book/notebooks/nsbc_{variable}.ipynb"],
+                                    "path": [f"{book_dir}/notebooks/nsbc_{variable}.ipynb"],
                                 }
                             )
                         )
@@ -427,7 +448,7 @@ def validate(title="Automated model evaluation", author=None):
 
         i = 0
 
-        for ff in [x for x in glob.glob("book/notebooks/*.ipynb") if "info" not in x]:
+        for ff in [x for x in glob.glob("{book_dir}/notebooks/*.ipynb") if "info" not in x]:
             try:
                 i_ff = int(os.path.basename(ff).split("_")[0])
                 if i_ff > i:
@@ -443,7 +464,6 @@ def validate(title="Automated model evaluation", author=None):
 
         for i in range(len(path_df)):
             file1 = path_df.path.values[i]
-            print(file1)
             # pad i with zeros using zfill
             i_pad = str(i + 1).zfill(3)
             new_file = (
@@ -484,10 +504,10 @@ def validate(title="Automated model evaluation", author=None):
 
         if shelf:
             file1 = pkg_resources.resource_filename(__name__, "data/summary.ipynb")
-            if len(glob.glob(f"book/notebooks/*summary.ipynb")) == 0:
-                copyfile(file1, f"book/notebooks/{i_pad}_summary_shelf.ipynb")
+            if len(glob.glob(f"{book_dir}/notebooks/*summary.ipynb")) == 0:
+                copyfile(file1, f"{book_dir}/notebooks/{i_pad}_summary_shelf.ipynb")
                 # change domain_title to "Shelf"
-                with open(f"book/notebooks/{i_pad}_summary_shelf.ipynb", "r") as file:
+                with open(f"{book_dir}/notebooks/{i_pad}_summary_shelf.ipynb", "r") as file:
                     filedata = file.read()
 
                 # Replace the target string
@@ -496,7 +516,7 @@ def validate(title="Automated model evaluation", author=None):
                 filedata = filedata.replace("shelf_mask", "True")
 
                 # Write the file out again
-                with open(f"book/notebooks/{i_pad}_summary_shelf.ipynb", "w") as file:
+                with open(f"{book_dir}/notebooks/{i_pad}_summary_shelf.ipynb", "w") as file:
                     file.write(filedata)
 
                 i += 1
@@ -504,17 +524,17 @@ def validate(title="Automated model evaluation", author=None):
                 i_pad = str(i).zfill(3)
 
         file1 = pkg_resources.resource_filename(__name__, "data/summary.ipynb")
-        if len(glob.glob(f"book/notebooks/*summary.ipynb")) == 0:
-            copyfile(file1, f"book/notebooks/{i_pad}_summary.ipynb")
+        if len(glob.glob(f"{book_dir}/notebooks/*summary.ipynb")) == 0:
+            copyfile(file1, f"{book_dir}/notebooks/{i_pad}_summary.ipynb")
         else:
             if i > (i_orig + 1):
-                initial = glob.glob(f"book/notebooks/*summary.ipynb")[0]
-                copyfile(initial, f"book/notebooks/{i_pad}_summary.ipynb")
+                initial = glob.glob(f"{book_dir}/notebooks/*summary.ipynb")[0]
+                copyfile(initial, f"{book_dir}/notebooks/{i_pad}_summary.ipynb")
                 i += 1
 
         # change domain_title to "Full domain"
 
-        with open(f"book/notebooks/{i_pad}_summary.ipynb", "r") as file:
+        with open(f"{book_dir}/notebooks/{i_pad}_summary.ipynb", "r") as file:
             filedata = file.read()
 
         # Replace the target string
@@ -523,19 +543,19 @@ def validate(title="Automated model evaluation", author=None):
         filedata = filedata.replace("shelf_mask", "False")
 
         # Write the file out again
-        with open(f"book/notebooks/{i_pad}_summary.ipynb", "w") as file:
+        with open(f"{book_dir}/notebooks/{i_pad}_summary.ipynb", "w") as file:
             file.write(filedata)
 
         # pair the notebooks using jupyter text
 
-        os.system("jupytext --set-formats ipynb,py:percent book/notebooks/*.ipynb")
+        os.system(f"jupytext --set-formats ipynb,py:percent {book_dir}/notebooks/*.ipynb")
 
         # add the chunks
         add_chunks()
 
         # sync the notebooks
         #
-        os.system("jupytext --sync book/notebooks/*.ipynb")
+        os.system(f"jupytext --sync {book_dir}/notebooks/*.ipynb")
 
     #        return None
 
@@ -543,7 +563,7 @@ def validate(title="Automated model evaluation", author=None):
 
     # loop through notebooks and change fast_plot_value to fast_plot
 
-    for ff in glob.glob("book/notebooks/*.ipynb"):
+    for ff in glob.glob(f"{book_dir}/notebooks/*.ipynb"):
         with open(ff, "r") as file:
             filedata = file.read()
 
@@ -557,13 +577,13 @@ def validate(title="Automated model evaluation", author=None):
     # fix the toc using the function
 
     # raise ValueError("here")
-    fix_toc()
+    fix_toc(book_dir)
 
-    os.system("jupyter-book build book/")
+    os.system(f"jupyter-book build {book_dir}/")
 
     import os
 
-    stamps = [os.path.basename(x) for x in glob.glob("book/notebooks/.trackers/*")]
+    stamps = [os.path.basename(x) for x in glob.glob(f"{book_dir}/notebooks/.trackers/*")]
     stamps.append("nctoolkit_rwi_uhosarcenctoolkittmp")
 
     delete = []
@@ -574,7 +594,7 @@ def validate(title="Automated model evaluation", author=None):
         if os.path.exists(ff):
             if "nctoolkit" in x:
                 os.remove(ff)
-    webbrowser.open("file://" + os.path.abspath("book/_build/html/index.html"))
+    webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
 
 
 try:
