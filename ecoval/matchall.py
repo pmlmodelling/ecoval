@@ -367,11 +367,8 @@ def matchup(
     start=None,
     end=None,
     levels=2,
-    lon_lim=None,
-    lat_lim=None,
     exclude=[],
     fvcom=False,
-    point_surface = [],
     strict = True,
     **kwargs,
 ):
@@ -405,17 +402,48 @@ def matchup(
 
     """
 
-    add_point_surface = []
-    if len(point_surface) > 0:
+    point_surface = []
+    surf_dict = False
+
+    if isinstance(surface, str):
+        surface = [surface]
+        surface = {"gridded": surface, "point": []}
+    surf_all = False
+    if isinstance(surface, list):
+        surface = {"gridded": surface, "point": []}
+        surf_all = True
+    if isinstance(surface, dict):
+        # throw error if gridded and point not in surface
+        if "gridded" not in surface and "point" not in surface:
+            raise ValueError("Please provide gridded or point variables")
+        
+        if "gridded" not in surface:
+            surface["gridded"] = []
+        else:
+            if "point" not in surface:
+                surface["point"] = []
+
+        point_surface = surface["point"]
+        surface = surface["gridded"]
+        if isinstance(surface, str):
+            surface = [surface]
         if isinstance(point_surface, str):
             point_surface = [point_surface]
-        add_point_surface = copy.deepcopy(point_surface)
 
-    # add not implemented error if lon_lim or lat_lim is not None
-    if lon_lim is not None:
-        raise NotImplementedError("lon_lim not implemented")
-    if lat_lim is not None:
-        raise NotImplementedError("lat_lim not implemented")
+
+    valid_points = list(set([x for x in glob.glob(data_dir + "/point/nws/all/*")]))
+    # extract directory base name
+    valid_points = [os.path.basename(x) for x in valid_points]
+    for pp in point_surface:
+        if pp not in valid_points:
+            raise ValueError(f"{pp} is not a valid point dataset")
+
+    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/*/*")]
+
+    for pp in surface:
+        if pp not in valid_surface:
+            raise ValueError(f"{pp} is not a valid gridded dataset")
+    
 
     session["levels"] = levels
 
@@ -521,16 +549,12 @@ def matchup(
     point_bottom = []
     point_benthic = benthic
     
-
-    if surface is None:
-        surface = []
-    if isinstance(surface, str):
-        surface = [surface]
     if isinstance(bottom, str):
         bottom = [bottom]
     if bottom is None:
         bottom = []
-    var_choice = surface + bottom
+
+    var_choice = surface + bottom + point_surface
     var_choice = list(set(var_choice))
     for vv in var_choice:
         if vv not in valid_vars and vv != "all":
@@ -757,7 +781,6 @@ def matchup(
     pattern = all_df.iloc[0, :].pattern
 
     # get the units. File inspection could be randomized in case people have put loose files in there...
-    import glob
 
     print("********************************")
     print("Identifying whether it is a northwest European shelf domain")
@@ -797,10 +820,11 @@ def matchup(
     else:
         model_domain = "nws"
 
-    surf_all = False
-    if surface == ["all"]:
-        surface = all_vars
-        surf_all = True
+    if not surf_dict:
+        surf_all = False
+        if surface == ["all"]:
+            surface = all_vars
+            surf_all = True
 
     if "ph" in surface and model_domain == "nws":
         surface.remove("ph")
@@ -864,8 +888,6 @@ def matchup(
     df_mapping = all_df
     good_model_vars = [x for x in all_df.model_variable if x is not None]
 
-    for x in add_point_surface:
-        point_surface.append(x)
     point_surface = list(set(point_surface))
 
     # get rid of any rows where pattern is None
