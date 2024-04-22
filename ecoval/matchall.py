@@ -183,8 +183,6 @@ def mm_match(
                         .reset_index(drop=True)
                     )
             
-            print("getting here")
-
             if len(df_locs) > 0:
                 if top_layer:
                     df_ff = ds.match_points( df_locs, quiet=True, top=top_layer)
@@ -1041,7 +1039,6 @@ def matchup(
             point_vars = point_benthic
 
         for vv in point_vars:
-            print(vv)
             all_df = df_mapping
             all_df = all_df.query("model_variable in @good_model_vars").reset_index(
                 drop=True
@@ -1171,7 +1168,7 @@ def matchup(
 
                         if variable == "doc":
                             # go from mole to g of C
-                            df = df.assign(observaation = lambda x: x.observation * 12.011)
+                            df = df.assign(observation = lambda x: x.observation * 12.011)
                         if not strict:
                             if "year" in df.columns:
                                 df = df.drop(columns = "year")
@@ -1328,6 +1325,8 @@ def matchup(
                         os.makedirs(os.path.dirname(out))
                     out1 = out.replace(os.path.basename(out), "paths.csv")
                     pd.DataFrame({"path": paths}).to_csv(out1, index=False)
+                    if variable == "doc":
+                        df_all = df_all.assign(model = lambda x: x.model + 40*12.011)
                     df_all.to_csv(out, index=False)
 
                 print("**********************")
@@ -1370,6 +1369,7 @@ def matchup(
         sim_end=sim_end,
         e3t=e3t,
         domain=model_domain,
+        strict= strict
     )
 
     os.system("pandoc matchup_report.md -o matchup_report.pdf")

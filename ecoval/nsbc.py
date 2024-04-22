@@ -32,6 +32,7 @@ def gridded_matchup(
     sim_end=None,
     e3t=None,
     domain="nws",
+    strict = True
 ):
     """
     Function to create NSBC matchups for a given set of variables
@@ -351,12 +352,15 @@ def gridded_matchup(
                 # dir_var = f"{data_dir}/gridded/{domain}/{vv}"
                 # if vv not in ["poc", "temperature"]:
                 if vv in ["poc", "doc"]:
-                    ds_obs.subset(years=years)
+                    if strict:
+                        ds_obs.subset(years=years)
                     ds_obs.merge("time")
                     ds_obs.tmean("month")
                     ds.tmean("month")
 
                 if vv in ["temperature"]:
+                    if strict:
+                        ds_obs.subset(years=years)
                     ds_obs.subset(years=years)
                     ds_obs.tmean(["year", "month"])
                     ds_obs.merge("time")
@@ -477,6 +481,10 @@ def gridded_matchup(
 
                 ds_obs.run()
                 ds.run()
+
+                if vv == "doc":
+                    ds_obs * 12.011
+                    ds + 40
 
                 ds_obs.append(ds)
 
