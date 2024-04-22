@@ -484,7 +484,7 @@ def gridded_matchup(
 
                 if vv == "doc":
                     ds_obs * 12.011
-                    ds + 40
+                    ds + (40 * 12.011)
 
                 ds_obs.append(ds)
 

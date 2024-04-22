@@ -1326,7 +1326,7 @@ def matchup(
                     out1 = out.replace(os.path.basename(out), "paths.csv")
                     pd.DataFrame({"path": paths}).to_csv(out1, index=False)
                     if variable == "doc":
-                        df_all = df_all.assign(model = lambda x: x.model + 40*12.011)
+                        df_all = df_all.assign(model = lambda x: x.model + (40*12.011))
                     df_all.to_csv(out, index=False)
 
                 print("**********************")
