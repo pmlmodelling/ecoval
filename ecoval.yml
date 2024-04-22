@@ -6,14 +6,18 @@ dependencies:
   - cdo>2.1.0
   - cmocean
   - nco
+  - notebook
+  - jellyfish
   - nctoolkit>=1.1.1
   - pandoc
   - python=3.9.16=h2782a2a_0_cpython
+  - rpy2
   - r-base
   - r-cowplot
   - r-ggthemes
   - r-dplyr
   - r-ggplot2
+  - r-ggridges
   - r-maps
   - r-plotrix
   - r-tibble

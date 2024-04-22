@@ -1,19 +1,14 @@
-import ecoval.ices as ices
-import ecoval.noaa as noaa
-from ecoval.ices import match_ices
-from ecoval.matchall import matchup
-from ecoval.fixers import tidy_name
-from ecoval.regionals import global_regionals
 from ecoval.utils import get_datadir
 import pandas as pd
 import glob
-
 import nctoolkit as nc
+from ecoval.matchall import matchup
+from ecoval.fixers import tidy_name
+from ecoval.regionals import global_regionals
 import webbrowser
 from ecoval.chunkers import add_chunks
-import glob
 import os
-import pandas as pd
+
 
 def fix_toc():
     paths = glob.glob("book/notebooks/*.ipynb")
@@ -24,19 +19,26 @@ def fix_toc():
     for vv in variables:
         if vv != "ph":
             vv_paths = [os.path.basename(x) for x in paths if vv in x]
-            if len(vv_paths) > 0: 
+            if len(vv_paths) > 0:
                 vv_dict[vv] = vv_paths
         else:
-            vv_paths = [os.path.basename(x) for x in paths if vv in x and "phos" not in x and "chlo" not in x and "occci" not in x]
-            if len(vv_paths) > 0: 
+            vv_paths = [
+                os.path.basename(x)
+                for x in paths
+                if vv in x and "phos" not in x and "chlo" not in x and "occci" not in x
+            ]
+            if len(vv_paths) > 0:
                 vv_dict[vv] = vv_paths
     # get summary docs
     ss_paths = [os.path.basename(x) for x in paths if "summary" in x]
+    print("*****************")
+    print(vv_dict)
+    print("*****************")
 
     out = "book/_toc.yml"
     # write line by line to out
     with open(out, "w") as f:
-        #"format: jb-book"
+        # "format: jb-book"
         x = f.write("format: jb-book\n")
         x = f.write("root: intro\n")
         x = f.write("parts:\n")
@@ -65,11 +67,25 @@ def fix_toc():
             x = f.write(f"  - file: notebooks/{file}\n")
 
 
+def fix_toc_comparison():
+
+    out = "book/compare/_toc.yml"
+    # write line by line to out
+    with open(out, "w") as f:
+        # "format: jb-book"
+        x = f.write("format: jb-book\n")
+        x = f.write("root: intro\n")
+        x = f.write("parts:\n")
+        x = f.write(f"- caption: Comparisons with gridded surface observations\n")
+        x = f.write("  chapters:\n")
+        x = f.write(f"  - file: notebooks/comparison_bias.ipynb\n")
+        x = f.write(f"  - file: notebooks/comparison_spatial.ipynb\n")
+        x = f.write(f"  - file: notebooks/comparison_seasonal.ipynb\n")
 
 
-def compare(model_dict = None):
+def compare(model_dict=None):
     """
-    This function will compare the validition output from multiple models. 
+    This function will compare the validition output from multiple models.
     """
 
     # make a folder called book/compare
@@ -77,13 +93,13 @@ def compare(model_dict = None):
 
     import pkg_resources
     import os
+
     data_path = pkg_resources.resource_filename(__name__, "data/mask.py")
     if not os.path.exists("book/compare/notebooks/mask.py"):
         if not os.path.exists("book/compare/notebooks"):
             # create directory recursively
             os.makedirs("book/compare/notebooks")
         shutil.copyfile(data_path, "book/compare/notebooks/mask.py")
-
 
     if not os.path.exists("book/compare"):
         # create directory recursively
@@ -96,6 +112,8 @@ def compare(model_dict = None):
     out = "book/compare/" + os.path.basename(data_path)
 
     shutil.copyfile(data_path, out)
+
+    fix_toc_comparison()
 
     data_path = pkg_resources.resource_filename(__name__, "data/requirements.txt")
 
@@ -117,7 +135,6 @@ def compare(model_dict = None):
 
     shutil.copyfile(data_path, out)
 
-
     # copy the comparison_seasonal notebook
 
     # make sure the directory exists
@@ -138,12 +155,10 @@ def compare(model_dict = None):
     # Replace the target string
     filedata = filedata.replace("model_dict_str", model_dict_str)
 
-
     # Write the file out again
 
     with open("book/compare/notebooks/comparison_seasonal.ipynb", "w") as file:
         file.write(filedata)
-
 
     # now sort out the comparison_spatial notebook
 
@@ -163,7 +178,6 @@ def compare(model_dict = None):
 
     with open("book/compare/notebooks/comparison_spatial.ipynb", "w") as file:
         file.write(filedata)
-
 
     # now to comparison_bias
 
@@ -187,7 +201,6 @@ def compare(model_dict = None):
 
     # add the chunks
 
-
     # sync the notebooks
 
     os.system("jupytext --set-formats ipynb,py:percent book/compare/notebooks/*.ipynb")
@@ -210,14 +223,10 @@ def compare(model_dict = None):
         with open(ff, "w") as file:
             file.write(filedata)
 
-
     os.system("jupyter-book build book/compare/")
     import webbrowser
+
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
-
-
-
-
 
 
 def validate(title="Automated model evaluation", author=None):
@@ -236,9 +245,10 @@ def validate(title="Automated model evaluation", author=None):
     -------
     None
     """
+    data_dir = get_datadir()
+    path_df = []
 
     fast_plot = False
-
 
     # figure out of "book/notebooks" has ipynb files
 
@@ -303,260 +313,90 @@ def validate(title="Automated model evaluation", author=None):
 
         # copyfile(data_path, out)
 
-        books = [
-            "co2fluxes.ipynb",
-            "ices_template.ipynb",
-            "nsbc_template.ipynb",
-            "nsbc_template_verticals.ipynb",
-            "pco2.ipynb",
-            "pco2fluxes.ipynb",
-            "woa_template.ipynb",
-        ]
-
         path_df = []
 
-        if os.path.exists("matched/gridded/occci/occci_model.nc"):
-            file1 = pkg_resources.resource_filename(__name__, "data/occci_chl.ipynb")
-            if len(glob.glob("book/notebooks/*occci_chl.ipynb")) == 0:
-                copyfile(file1, "book/notebooks/occci_chl.ipynb")
-                variable = "chl"
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": [variable],
-                            "path": [f"book/notebooks/occci_chl.ipynb"],
-                        }
-                    )
-                )
+        # loop through the point matchups and generate notebooks
 
-        if os.path.exists("matched/gridded/ostia/ostia_model.nc"):
-            file1 = pkg_resources.resource_filename(
-                __name__, "data/ostia_temperature.ipynb"
-            )
-            if len(glob.glob("book/notebooks/*ostia_temperature.ipynb")) == 0:
-                copyfile(file1, "book/notebooks/ostia_temperature.ipynb")
-                variable = "temperature"
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": [variable],
-                            "path": [f"book/notebooks/ostia_temperature.ipynb"],
-                        }
-                    )
-                )
-
-        if os.path.exists("matched/gridded/pco2/pco2.nc"):
-            file1 = pkg_resources.resource_filename(__name__, "data/pco2.ipynb")
-            if len(glob.glob("book/notebooks/*pco2.ipynb")) == 0:
-                copyfile(file1, "book/notebooks/pco2.ipynb")
-                variable = "pco2"
-                path_df.append(
-                    pd.DataFrame(
-                        {"variable": [variable], "path": [f"book/notebooks/pco2.ipynb"]}
-                    )
-                )
-
-        # co2 fluxes
-
-        if os.path.exists("matched/gridded/co2fluxes/co2fluxes.nc"):
-            file1 = pkg_resources.resource_filename(__name__, "data/co2fluxes.ipynb")
-            if len(glob.glob("book/notebooks/*co2fluxes.ipynb")) == 0:
-                copyfile(file1, "book/notebooks/co2fluxes.ipynb")
-                variable = "co2fluxes"
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": [variable],
-                            "path": [f"book/notebooks/co2fluxes.ipynb"],
-                        }
-                    )
-                )
-
-        # cobe2 sst
-
-        if os.path.exists("matched/gridded/cobe2/cobe2_model.nc"):
-            file1 = pkg_resources.resource_filename(
-                __name__, "data/cobe2_temperature.ipynb"
-            )
-            if len(glob.glob("book/notebooks/*cobe2_temperature.ipynb")) == 0:
-                copyfile(file1, "book/notebooks/cobe2_temperature.ipynb")
-                variable = "temperature"
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": [variable],
-                            "path": [f"book/notebooks/cobe2_temperature.ipynb"],
-                        }
-                    )
-                )
-
-        for vv in [
-            "salinity",
-            "silicate",
-            "nitrate",
-            "oxygen",
-            "phosphate",
-            "temperature",
-        ]:
+        point_paths = glob.glob("matched/point/**/**/**/**.csv")
+        point_paths = [x for x in point_paths if "paths.csv" not in x]
+        # loop through the paths
+        for pp in point_paths:
+            vv = os.path.basename(pp).split("_")[2].replace(".csv", "")
+            source = os.path.basename(pp).split("_")[0]
             variable = vv
-            Variable = variable.title()
-            if os.path.exists(f"matched/woa/woa_{vv}.nc"):
-                file1 = pkg_resources.resource_filename(
-                    __name__, "data/woa_template.ipynb"
-                )
-                if len(glob.glob(f"book/notebooks/*woa_{variable}.ipynb")) == 0:
-                    count = 0
-                    with open(file1, "r") as file:
-                        filedata = file.read()
-
-                    # Replace the target string
-                    filedata = filedata.replace("template_variable", variable)
-                    filedata = filedata.replace("template_title", Variable)
-
-                    # Write the file out again
-                    with open(f"book/notebooks/woa_{variable}.ipynb", "w") as file:
-                        file.write(filedata)
-
-                    variable = vv
-                    path_df.append(
-                        pd.DataFrame(
-                            {
-                                "variable": [variable],
-                                "path": [f"book/notebooks/woa_{variable}.ipynb"],
-                            }
-                        )
-                    )
-
-        # ices notebooks
-
-        for vv in ["ph", "alkalinity", "doc"]:
-            variable = vv
+            layer = os.path.basename(pp).split("_")[1].replace(".csv", "")
+            print("****************88")
+            print(variable)
+            print("****************88")
             if vv != "ph":
-                Variable = variable.title()
+                Variable = variable
             else:
                 Variable = "pH"
-            vv_file = "../../" + f"matched/ices/all/ices_all_{vv}.csv"
-            vv_file_find = f"matched/ices/all/ices_all_{vv}.csv"
+            if vv == "co2flux":
+                Variable = "Air-sea CO2 fluxes"
+            if vv in ["poc", "doc"]:
+                Variable = Variable.upper()
+            vv_file = pp
+            vv_file_find = pp.replace("../../", "")
             if not os.path.exists(vv_file_find):
                 print(f"Not finding {vv_file}")
             if os.path.exists(vv_file_find):
-                if len(glob.glob(f"book/notebooks/*ices_{variable}.ipynb")) == 0:
+                if (
+                    len(glob.glob(f"book/notebooks/*point_{layer}_{variable}.ipynb"))
+                    == 0
+                ):
                     file1 = pkg_resources.resource_filename(
-                        __name__, "data/ices_template.ipynb"
+                        __name__, "data/point_template.ipynb"
                     )
-                    count = 0
                     with open(file1, "r") as file:
                         filedata = file.read()
 
                     # Replace the target string
-                    out = f"book/notebooks/ices_{variable}.ipynb"
-                    filedata = filedata.replace("template_file_name", vv_file)
+                    out = f"book/notebooks/{source}_{layer}_{variable}.ipynb"
+                    filedata = filedata.replace("point_variable", Variable)
+                    filedata = filedata.replace("point_layer", layer)
                     filedata = filedata.replace("template_title", Variable)
 
                     # Write the file out again
-                    with open(f"book/notebooks/ices_{variable}.ipynb", "w") as file:
+                    with open(out, "w") as file:
                         file.write(filedata)
                     variable = vv
                     path_df.append(
                         pd.DataFrame(
                             {
                                 "variable": [variable],
-                                "path": [f"book/notebooks/ices_{variable}.ipynb"],
-                            }
-                        )
-                    )
-        
-        # set up the ices_bottom notebooks
-
-        #ices_vars = ['temperature', 'salinity', 'oxygen', 'phosphate', 'silicate', 'nitrate', 'ammonium']   
-        for vv in ["temperature", "salinity", "oxygen", "phosphate", "silicate", "nitrate", "ammonium", "ph"]:
-        # for vv in [ "nitrate"]:
-            variable = vv
-            if vv != "ph":
-                Variable = variable.title()
-            else:
-                Variable = "pH"
-            vv_file = "../../" + f"matched/ices/bottom/ices_bottom_{vv}.csv"
-            vv_file_find = f"matched/ices/bottom/ices_bottom_{vv}.csv"
-            if not os.path.exists(vv_file_find):
-                print(f"Not finding {vv_file}")
-            if os.path.exists(vv_file_find):
-                if len(glob.glob(f"book/notebooks/*ices_bottom_{variable}.ipynb")) == 0:
-                    file1 = pkg_resources.resource_filename(
-                        __name__, "data/ices_bottom.ipynb"
-                    )
-                    count = 0
-                    with open(file1, "r") as file:
-                        filedata = file.read()
-
-                    # Replace the target string
-                    out = f"book/notebooks/ices_bottom_{variable}.ipynb"
-                    filedata = filedata.replace("ices_variable", vv)
-                    filedata = filedata.replace("template_title", Variable)
-
-                    # Write the file out again
-                    with open(f"book/notebooks/ices_bottom_{variable}.ipynb", "w") as file:
-                        file.write(filedata)
-                    variable = vv
-                    path_df.append(
-                        pd.DataFrame(
-                            {
-                                "variable": [variable],
-                                "path": [f"book/notebooks/ices_bottom_{variable}.ipynb"],
+                                "path": out,
                             }
                         )
                     )
 
 
-        # see if the ices temperature matchups exist.
-        if os.path.exists(f"matched/ices/all/ices_all_temperature.csv"):
-            if len(glob.glob(f"book/notebooks/temperature_vertical.ipynb")) == 0:
-                file1 = pkg_resources.resource_filename(
-                    __name__, "data/temperature_vertical.ipynb"
-                )
-                count = 0
-                with open(file1, "r") as file:
-                    filedata = file.read()
+        # Loop through the gridded matchups and generate notebooks
+        # identify nsbc variables in matched data
+        nsbc_paths = glob.glob("matched/gridded/**/**/**.nc")
+        # nsbc_paths += glob.glob("matched/gridded/**/**.nc")
+        print(nsbc_paths)
 
-                # Replace the target string
-                vv_file = "../../" + f"matched/ices_temperature.csv"
-                filedata = filedata.replace("template_file_name", vv_file)
-                filedata = filedata.replace("template_title", "Temperature")
-
-                # Write the file out again
-                with open(
-                    f"book/notebooks/temperature_vertical.ipynb", "w"
-                ) as file:
-                    file.write(filedata)
-                variable = vv
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": ["temperature"],
-                            "path": [f"book/notebooks/temperature_vertical.ipynb"],
-                        }
-                    )
-                )
-
-        # nsbc notebooks
-
-        import nctoolkit as nc
-
-        if os.path.exists("matched/gridded/nsbc/nsbc_model.nc"):
-            ds = nc.open_data("matched/gridded/nsbc/nsbc_model.nc")
-
-            for vv in ds.variables:
+        if len(nsbc_paths) > 0:
+            # ds = nc.open_data("matched/gridded/nsbc/nsbc_model.nc")
+            for vv in [
+                os.path.basename(x).split("_")[1].replace(".nc", "") for x in nsbc_paths
+            ]:
+                print(vv)
                 variable = vv
                 if not os.path.exists(f"book/notebooks/nsbc_{variable}.ipynb"):
                     if variable == "ph":
                         Variable = "pH"
                     else:
-                        Variable = variable.title()
+                        Variable = variable
+                    if variable == "co2flux":
+                        Variable = "air-sea CO2 flux"
+                    if variable in ["poc", "doc"]:
+                        Variable = Variable.upper()
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/nsbc_template.ipynb"
                     )
                     if len(glob.glob(f"book/notebooks/*nsbc_{variable}.ipynb")) == 0:
-                        count = 0
                         with open(file1, "r") as file:
                             filedata = file.read()
 
@@ -578,122 +418,6 @@ def validate(title="Automated model evaluation", author=None):
                             )
                         )
 
-            # repeate for the verticals version
-        if os.path.exists("matched/gridded/nsbc/nsbc_model_verticalmean.nc"):
-            ds = nc.open_data("matched/gridded/nsbc/nsbc_model_verticalmean.nc")
-
-            for vv in ds.variables:
-                variable = vv
-                if not os.path.exists(
-                    f"book/notebooks/nsbc_{variable}_verticals.ipynb"
-                ):
-                    if variable == "ph":
-                        Variable = "pH"
-                    else:
-                        Variable = variable.title()
-                    file1 = pkg_resources.resource_filename(
-                        __name__, "data/nsbc_template_verticals.ipynb"
-                    )
-                    if (
-                        len(
-                            glob.glob(
-                                f"book/notebooks/*nsbc_{variable}_verticals.ipynb"
-                            )
-                        )
-                        == 0
-                    ):
-                        count = 0
-                        with open(file1, "r") as file:
-                            filedata = file.read()
-
-                        # Replace the target string
-                        filedata = filedata.replace("template_variable", variable)
-                        filedata = filedata.replace("template_title", Variable)
-
-                        # Write the file out again
-                        with open(
-                            f"book/notebooks/nsbc_{variable}_verticals.ipynb", "w"
-                        ) as file:
-                            file.write(filedata)
-
-                        variable = vv
-                        path_df.append(
-                            pd.DataFrame(
-                                {
-                                    "variable": [variable],
-                                    "path": [
-                                        f"book/notebooks/nsbc_{variable}_verticals.ipynb"
-                                    ],
-                                }
-                            )
-                        )
-
-        # glodap notebooks
-
-        # glodap alkalinity
-
-        if os.path.exists("matched/gridded/glodap/glodap_alkalinity.nc"):
-            variable = "alkalinity"
-            Variable = variable.title()
-            file1 = pkg_resources.resource_filename(
-                __name__, "data/glodap_template.ipynb"
-            )
-            if len(glob.glob(f"book/notebooks/*glodap_{variable}.ipynb")) == 0:
-                count = 0
-                with open(file1, "r") as file:
-                    filedata = file.read()
-
-                # Replace the target string
-                filedata = filedata.replace("template_variable", variable)
-                filedata = filedata.replace("template_title", Variable)
-
-                # Write the file out again
-                with open(f"book/notebooks/glodap_{variable}.ipynb", "w") as file:
-                    file.write(filedata)
-
-                variable = "alkalinity"
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": [variable],
-                            "path": [f"book/notebooks/glodap_{variable}.ipynb"],
-                        }
-                    )
-                )
-
-        # glodap ph
-
-        if os.path.exists("matched/gridded/glodap/glodap_ph.nc"):
-            variable = "pH"
-            if variable == "ph":
-                Variable = variable.title()
-            else:
-                Variable = "pH"
-            file1 = pkg_resources.resource_filename(
-                __name__, "data/glodap_template.ipynb"
-            )
-            if len(glob.glob(f"book/notebooks/*glodap_{variable}.ipynb")) == 0:
-                count = 0
-                with open(file1, "r") as file:
-                    filedata = file.read()
-
-                # Replace the target string
-                filedata = filedata.replace("template_variable", variable)
-                filedata = filedata.replace("template_title", Variable)
-
-                # Write the file out again
-                with open(f"book/notebooks/glodap_{variable}.ipynb", "w") as file:
-                    file.write(filedata)
-
-                variable = "pH"
-                path_df.append(
-                    pd.DataFrame(
-                        {
-                            "variable": [variable],
-                            "path": [f"book/notebooks/glodap_{variable}.ipynb"],
-                        }
-                    )
-                )
 
         # loop through all notebooks and replace paths
 
@@ -702,14 +426,12 @@ def validate(title="Automated model evaluation", author=None):
         # need to start by figuring out whether anything has already been run...
 
         i = 0
-        tried = False
 
         for ff in [x for x in glob.glob("book/notebooks/*.ipynb") if "info" not in x]:
             try:
                 i_ff = int(os.path.basename(ff).split("_")[0])
                 if i_ff > i:
                     i = i_ff
-                    tried = True
             except:
                 pass
 
@@ -738,9 +460,7 @@ def validate(title="Automated model evaluation", author=None):
         shelf = False
         # figure out if we need the shelf
         try:
-            ds_regions = nc.open_data(
-                f"{data_dir}/amm7_val_subdomains.nc"
-            )
+            ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
             ds_xr = ds_regions.to_xarray()
             lon_size = len(ds_xr.lon)
             lat_size = len(ds_xr.lat)
@@ -836,6 +556,7 @@ def validate(title="Automated model evaluation", author=None):
 
     # fix the toc using the function
 
+    # raise ValueError("here")
     fix_toc()
 
     os.system("jupyter-book build book/")

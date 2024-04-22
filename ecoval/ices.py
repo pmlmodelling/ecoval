@@ -93,6 +93,7 @@ def generate_mapping(ds, fvcom = False):
      "co2flux",
      "pco2",
      "doc",
+     "carbon",
      'alkalinity']
     ds1 = nc.open_data(ds[0], checks = False)
     try:
@@ -125,6 +126,14 @@ def generate_mapping(ds, fvcom = False):
 
             the_vars = [x for x in the_vars if " loss " not in x] 
             the_vars = [x for x in the_vars if "depth" not in x] 
+
+
+        if vv == "carbon":
+            the_vars = [x for x in ds_contents_top.long_name if "carbon" in x 
+                        and "benthic" in x.lower()
+                        and ("refractory" in x.lower() or "particul" in x.lower())
+                        and "penetr" not in x.lower()
+                       ]
 
         if vv == "ph":
             the_vars = [x for x in ds_contents.long_name if "pH" in x 
@@ -181,23 +190,31 @@ def generate_mapping(ds, fvcom = False):
                            ]
 
         
-        if vv != "co2flux" and vv != "pco2":
-            ersem_vars = ds_contents.query("long_name in @the_vars").variable
+        if vv == "carbon":
+            ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
         else:
-            if vv == "co2flux":
-                if fvcom == False:
-                    ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
-                else:
-                    ersem_vars = ds_contents.query("long_name in @the_vars").variable
+            if vv != "co2flux" and vv != "pco2":
+                ersem_vars = ds_contents.query("long_name in @the_vars").variable
             else:
-                if fvcom == False:
-                    ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
+                if vv == "co2flux":
+                    if fvcom == False:
+                        ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
+                    else:
+                        ersem_vars = ds_contents.query("long_name in @the_vars").variable
                 else:
-                    ersem_vars = ds_contents.query("long_name in @the_vars").variable
+                    if fvcom == False:
+                        ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
+                    else:
+                        ersem_vars = ds_contents.query("long_name in @the_vars").variable
 
         add = True
 
-        if len(ersem_vars) > 1 and vv not in  ["doc","chlorophyll"]:
+        if vv == "carbon":
+            print(ersem_vars)
+            print(the_vars)
+            # raise ValueError(the_vars)
+
+        if len(ersem_vars) > 1 and vv not in  ["doc","chlorophyll", "carbon"]:
             add = False
 
         if add:

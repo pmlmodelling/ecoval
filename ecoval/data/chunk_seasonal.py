@@ -48,20 +48,12 @@ df_cor.to_csv(out, index = False)
 # %% tags=["remove-input"]
 
 df_cor = ds_cor.to_dataframe().reset_index()
-# get range of lon and lat without missing values of cor in df_cor
-lon_min = df_cor.dropna().lon.min()
-lon_max = df_cor.dropna().lon.max()
-lat_min = df_cor.dropna().lat.min()
-lat_max = df_cor.dropna().lat.max()
-lon_range = [lon_min, lon_max]
-lat_range = [lat_min, lat_max]
-ds_cor.subset(lon = lon_range, lat = lat_range)
-ds_cor.pub_plot()
+ds_cor.pub_plot("cor")
 
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Seasonal temporal correlation between model and observations for {variable}. This is the Pearson correlation coefficient between climatology monthly mean values in the model and observations.")
+md(f"**Figure {i_figure}**: Seasonal temporal correlation between model and observations for {layer} {vv_name}. This is the Pearson correlation coefficient between climatology monthly mean values in the model and observations.")
 i_figure += 1
 
 # %% tags=["remove-cell"]
@@ -72,22 +64,31 @@ ds_regions.run()
 ds_regions.regrid(ds_model)
 regions_contents = ds_regions.contents
 
+# figure out if you can sensibly do a regional analysis for nws
+grid = pd.read_csv("../../matched/model_grid.csv")
+lon = grid.loc[:,[x for x in grid.columns if "lon" in x]].values
+lon = np.unique(lon)
+lon.sort()
+lat = grid.loc[:,[x for x in grid.columns if "lat" in x]].values
+lat = np.unique(lat)
+lat.sort()
+# get unique values in grid and sort them
+lon = np.unique(lon)
+lon.sort()
+lon_min = lon.min()
+lon_max = lon.max()
+lat_min = lat.min()
+lat_max = lat.max()
+regional = False
+if lon_min > -30:
+    if lon_max < 15:
+        if lat_min > 35:
+            if lat_max < 70:
+                regional = True
+
+
 # %% tags=["remove-cell"]
 
-lon_size = len(ds_regions.to_xarray().lon)
-lat_size = len(ds_regions.to_xarray().lat)
-region_size = lon_size * lat_size
-
-# get the model grid size
-
-lon_size = len(ds_model.to_xarray().lon)
-lat_size = len(ds_model.to_xarray().lat)
-model_size = lon_size * lat_size
-
-if model_size == region_size:
-    regional = True
-else:
-    regional = False
 
 
 
@@ -139,20 +140,31 @@ df_diff = (
     .assign(diff = lambda x: x.model - x.observation)
 )
 model_unit = ds_model.contents.unit[0]
+from ecoval.utils import get_extent
+raw_extent = get_extent(ds_annual[0])
+if np.abs(raw_extent[0] - df_model.lon.min()) > 3:
+    # convert longitude to -180-180
+    df_model["lon" ] = [x if x < 180 else x -360 for x in df_model.lon]
+    df_obs["lon" ] = [x if x < 180 else x -360 for x in df_obs.lon]
+    df_diff["lon" ] = [x if x < 180 else x -360 for x in df_diff.lon]
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot
+# %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot -i variable -i raw_extent
+
+
 library(ggplot2, warn.conflicts = FALSE)
 library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
 
+if("month" %in% colnames(df_model)){
+
 df_model_raw <- drop_na(df_model)
 df_obs_raw <- drop_na(df_obs)
 df_diff_raw <- drop_na(df_diff)
 
-if (model_unit == "degC")
+if (variable == "temperature" )
     model_unit = "°C"
 
 df_model <- drop_na(df_model)
@@ -263,15 +275,21 @@ df_diff$month <- factor(df_diff$month, levels = c("Jan", "Feb", "Mar", "Apr", "M
 
 
 
+# lon_label = c("20°W", "10°W", "0°", "10°E")
+# lat_label = c("45°N", "50°N", "55°N", "60°N", "65°N")
+# Create sensible lon/lat labels based on the min/min lon and lat
+# This needs to work on any data, including global data
+lon_breaks = c(xlim[1], xlim[1] + 10, 0, xlim[2] - 10)
+lat_breaks = c(ylim[1], ylim[1] + 5, ylim[1] + 10, ylim[1] + 15, ylim[2])
+lon_labels = c(paste0(round(xlim[1]), "°W"), paste0(round(xlim[1] + 10), "°W"), "0°", paste0(round(xlim[2] - 10), "°E"))
+lat_labels = c(paste0(round(ylim[1]), "°N"), paste0(round(ylim[1] + 5), "°N"), paste0(round(ylim[1] + 10), "°N"), paste0(round(ylim[1] + 15), "°N"), paste0(round(ylim[2]), "°N"))
 
 
 
 gg1 = ggplot(df_model)+
 geom_tile(aes(x = lon, y = lat, fill = model))+
 facet_wrap(~month, ncol = 6)+
-coord_cartesian(xlim = xlim,    ylim = ylim)+ 
-scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))+ 
+coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
 theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
@@ -284,12 +302,10 @@ if (fast_plot == FALSE)
 gg2 = ggplot(df_obs)+
 geom_tile(aes(x = lon, y = lat, fill = observation))+
 facet_wrap(~month, ncol = 6)+
-coord_cartesian(xlim = xlim,    ylim = ylim)+ 
-scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+coord_cartesian(xlim = xlim, ylim = ylim)+ 
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 theme_bw(base_size = 12)+
 theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
-scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))+ 
 labs(x = NULL, y = NULL, title = "Observation", fill = model_unit)
 
 if (fast_plot == FALSE)
@@ -300,9 +316,7 @@ if (fast_plot == FALSE)
 gg3 = ggplot(df_diff)+
 geom_tile(aes(x = lon, y = lat, fill = diff))+
 facet_wrap(~month, ncol = 6)+
-coord_cartesian(xlim = xlim,    ylim = ylim)+ 
-scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))+ 
+coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
 scale_fill_gradient2(guide  = guide_colourbar(title.position = "right"), low = "blue", high = "red")+
 theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
@@ -312,23 +326,76 @@ if (fast_plot == FALSE)
     gg3 <- gg3 + 
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
+gg1 <- gg1 + 
+   theme(plot.margin = margin(t = 0,  # Top margin
+                             r = 0,  # Right margin
+                             b = 0,  # Bottom margin
+                             l = 0)) # Left ggmargin 
 
+# figure out if it's a global file
+if(abs(raw_extent[1] - raw_extent[2]) > 350){
+    gg1 <- gg1 + 
+    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
+    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
+
+    gg2 <- gg2 +
+    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
+    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
+
+    gg3 <- gg3 +
+    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
+    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
+
+}
+
+# appropriate plotting for nws 
+if((raw_extent[1] > -30) & (raw_extent[2] < 20)){
+    gg1 + 
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+    gg2 + 
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+    gg3 +
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+}
+
+# gg1
+# reduce the size of the plot
+# options(repr.plot.width = 10, repr.plot.height = 3)
+# gg1
 cowplot::plot_grid(gg1, gg2, gg3, ncol = 1)
+
+}
 
 
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot
+# %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot -i variable -i raw_extent
+
 library(ggplot2, warn.conflicts = FALSE)
 library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
 
+if ("month" %in% colnames(df_model)){
+
 df_model_raw <- drop_na(df_model)
 df_obs_raw <- drop_na(df_obs)
 df_diff_raw <- drop_na(df_diff)
 
+if (variable == "temperature" )
+    model_unit = "°C"
+
+df_model <- drop_na(df_model)
+df_model <- df_model %>%
+    filter(month > 6) 
+df_obs <- df_obs %>%
+    filter(month > 6) 
+df_diff <- df_diff %>%
+    filter(month > 6) 
 
 df_model_raw %>%
     group_by(month) %>%
@@ -347,6 +414,11 @@ obs_98 <- df_obs_raw %>%
     pull(obs_98)
 
 
+df_model <- df_model %>%
+    mutate(model = ifelse(model > model_98, model_98, model))
+
+df_obs <- df_obs %>%
+    mutate(observation = ifelse(observation > obs_98, obs_98, observation))
 
 diff_02 <- df_diff_raw %>%
     group_by(month) %>%
@@ -364,30 +436,6 @@ diff_98 <- df_diff_raw %>%
     ungroup() %>%
     pull(diff_98)
 
-
-world_map <- map_data("world") %>% 
-    fortify()
-
-df_model <- df_model_raw
-df_obs <- df_obs_raw
-df_diff <- df_diff_raw 
-
-df_model <- df_model %>%
-    filter(month > 6) 
-df_obs <- df_obs %>%
-    filter(month > 6) 
-df_diff <- df_diff %>%
-    filter(month > 6) 
-# 
-
-
-df_model <- df_model %>%
-    mutate(model = ifelse(model > model_98, model_98, model))
-
-df_obs <- df_obs %>%
-    mutate(observation = ifelse(observation > obs_98, obs_98, observation))
-
-
 df_diff <- df_diff %>% 
     mutate(diff = ifelse(diff < diff_02, diff_02, diff)) %>%
     mutate(diff = ifelse(diff > diff_98, diff_98, diff))
@@ -397,8 +445,9 @@ df_diff <- df_diff %>%
 xlim = c(min(df_model$lon), max(df_model$lon))
 ylim = c(min(df_model$lat), max(df_model$lat))
 
-world_map <- map_data("world") %>% 
-    fortify()
+world_map <- map_data("world") 
+
+# get 98th percentile of df_model$
 
 # function to convert month number in int to month name
 month_name <- function(x){
@@ -424,7 +473,8 @@ df_obs <- df_obs %>%
 df_diff <- df_diff %>%
     mutate(month = month_name(month))
 
-    # select the final six months of the year in dataframes
+# first six months of the year in dataframes
+
 
 df_model <- df_model %>%    
     filter(month %in% c("Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
@@ -435,7 +485,7 @@ df_obs <- df_obs %>%
 df_diff <- df_diff %>%
     filter(month %in% c("Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
-    # convert month name to factor
+# change month to suitable factor in dataframes
 
 df_model$month <- factor(df_model$month, levels = c("Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
@@ -445,62 +495,103 @@ df_diff$month <- factor(df_diff$month, levels = c("Jul", "Aug", "Sep", "Oct", "N
 
 
 
-# get 98th percentile of df_model$
 
-gg4 = ggplot(df_model)+
+
+# lon_label = c("20°W", "10°W", "0°", "10°E")
+# lat_label = c("45°N", "50°N", "55°N", "60°N", "65°N")
+# Create sensible lon/lat labels based on the min/min lon and lat
+# This needs to work on any data, including global data
+lon_breaks = c(xlim[1], xlim[1] + 10, 0, xlim[2] - 10)
+lat_breaks = c(ylim[1], ylim[1] + 5, ylim[1] + 10, ylim[1] + 15, ylim[2])
+lon_labels = c(paste0(round(xlim[1]), "°W"), paste0(round(xlim[1] + 10), "°W"), "0°", paste0(round(xlim[2] - 10), "°E"))
+lat_labels = c(paste0(round(ylim[1]), "°N"), paste0(round(ylim[1] + 5), "°N"), paste0(round(ylim[1] + 10), "°N"), paste0(round(ylim[1] + 15), "°N"), paste0(round(ylim[2]), "°N"))
+
+
+
+gg1 = ggplot(df_model)+
 geom_tile(aes(x = lon, y = lat, fill = model))+
 facet_wrap(~month, ncol = 6)+
-coord_cartesian(xlim = xlim,    ylim = ylim)+ 
-scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))+ 
+coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
 theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 labs(x = NULL, y = NULL, title = "Model", fill = model_unit)
 
-
-if( fast_plot == FALSE)
-    gg4 <- gg4 + 
+if (fast_plot == FALSE)
+    gg1 <- gg1 + 
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
-
-
-gg5 = ggplot(df_obs)+
+gg2 = ggplot(df_obs)+
 geom_tile(aes(x = lon, y = lat, fill = observation))+
 facet_wrap(~month, ncol = 6)+
-coord_cartesian(xlim = xlim,    ylim = ylim)+ 
-scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+coord_cartesian(xlim = xlim, ylim = ylim)+ 
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 theme_bw(base_size = 12)+
 theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
-scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))+ 
 labs(x = NULL, y = NULL, title = "Observation", fill = model_unit)
 
 if (fast_plot == FALSE)
-    gg5 <- gg5 + 
-        geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")   
+    gg2 <-  gg2 + 
+        geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
 
-gg6 = ggplot(df_diff )+
+gg3 = ggplot(df_diff)+
 geom_tile(aes(x = lon, y = lat, fill = diff))+
 facet_wrap(~month, ncol = 6)+
-coord_cartesian(xlim = xlim,    ylim = ylim)+ 
-scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))+ 
+coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
 scale_fill_gradient2(guide  = guide_colourbar(title.position = "right"), low = "blue", high = "red")+
 theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Model - Observation", fill = model_unit)
 
-
 if (fast_plot == FALSE)
-    gg6 <- gg6 + 
+    gg3 <- gg3 + 
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
-cowplot::plot_grid( gg4, gg5, gg6, ncol = 1)
+gg1 <- gg1 + 
+   theme(plot.margin = margin(t = 0,  # Top margin
+                             r = 0,  # Right margin
+                             b = 0,  # Bottom margin
+                             l = 0)) # Left ggmargin 
 
+# figure out if it's a global file
+if(abs(raw_extent[1] - raw_extent[2]) > 350){
+    gg1 <- gg1 + 
+    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
+    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
+
+    gg2 <- gg2 +
+    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
+    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
+
+    gg3 <- gg3 +
+    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
+    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
+
+}
+
+# appropriate plotting for nws 
+if((raw_extent[1] > -30) & (raw_extent[2] < 20)){
+    gg1 + 
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+    gg2 + 
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+    gg3 +
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+}
+
+# gg1
+# reduce the size of the plot
+# options(repr.plot.width = 10, repr.plot.height = 3)
+# gg1
+cowplot::plot_grid(gg1, gg2, gg3, ncol = 1)
+
+}
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Monthly mean {variable} for the model, observation and the difference between model and observations. For clarity, the maximum values are capped to the 98th percentiles") 
+md(f"**Figure {i_figure}**: Monthly mean {layer} {vv_name} for the model, observation and the difference between model and observations. For clarity, the maximum values are capped to the 98th percentiles") 
 i_figure += 1

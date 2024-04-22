@@ -25,6 +25,46 @@ def global_regionals(ds_model, ds_obs, variable, i_figure):
 
 
     """
+    ds = ds_obs.to_xarray()
+    lon_name = [x for x in ds.coords if "lon" in x]
+    lat_name = [x for x in ds.coords if "lat" in x]
+    lon = ds[lon_name[0]].values
+    lat = ds[lat_name[0]].values
+    lon_max = lon.max()
+    lon_min = lon.min()
+    lat_max = lat.max()
+    lat_min = lat.min()
+
+    lons = [lon_min, lon_max]
+    lats = [lat_min, lat_max]
+    lon_vals = ds[lon_name[0]].values
+    lat_vals = ds[lat_name[0]].values
+    # make them unique and ordered, and 1d
+    lon_vals = np.unique(lon_vals)
+    # make a list
+    lon_vals = lon_vals.tolist()
+    diff_1 = lon_vals[1] - lon_vals[0]
+    diff_2 = lon_vals[2] - lon_vals[1]
+    diff_3 = lon_vals[2] - lon_vals[1]
+    if diff_1 /diff_2 > 10:
+        if diff_1 / diff_3 > 10:
+            lons[0] = lon_vals[1]
+    # do it for lats
+    lat_vals = np.unique(lat_vals)
+    lat_vals = lat_vals.tolist()
+    diff_1 = lat_vals[1] - lat_vals[0]
+    diff_2 = lat_vals[2] - lat_vals[1]
+    diff_3 = lat_vals[3] - lat_vals[2]
+    if diff_1 /diff_2 > 10:
+        if diff_1 / diff_3 > 10:
+            lats[0] = lat_vals[1]
+    
+    # figure out if it's global extent
+    if lats[1] - lats[0] < 350:
+        return None
+    if lons[1] - lons[0] < 170:
+        return None 
+    
     display(md(f"## Performance of the model in oceans"))
     Variable = ds_model.contents.long_name.values[0].title()
 

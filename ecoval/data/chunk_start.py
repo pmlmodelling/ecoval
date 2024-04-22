@@ -8,6 +8,8 @@ from IPython.display import Markdown as md
 %load_ext rpy2.ipython
 import jellyfish
 import ecoval
+import copy
+import calendar
 data_dir = ecoval.get_datadir(level = -2)
 import nctoolkit as nc
 import hvplot.xarray

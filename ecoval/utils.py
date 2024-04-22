@@ -6,6 +6,56 @@ import glob
 
 session = dict()
 
+import nctoolkit as nc
+import numpy as np
+def get_extent(ff):
+    # add docstring
+    """"
+    Get the extent of a netcdf file
+
+    Parameters
+    ----------
+    ff : str
+        The path to the netcdf file
+
+    Returns
+    -------
+    extent : list
+        A list of the form [lon_min, lon_max, lat_min, lat_max]
+
+    """
+
+
+
+    ds = nc.open_data(ff)
+    ds.top()
+    ds.subset(time = 0)
+    ds.subset(variables = ds.variables[0])
+    ds_xr = ds.to_xarray()
+    lon_name = [x for x in ds_xr.coords if 'lon' in x][0]
+    lat_name = [x for x in ds_xr.coords if 'lat' in x][0]
+    lons = ds_xr[lon_name].values
+    # as a unique, sorted list
+    lons = list(set(lons))
+    lats = ds_xr[lat_name].values
+    # as a unique, sorted list
+    lats = list(set(lats))
+    lon_res = np.abs(lons[2] - lons[1])
+    lat_res = np.abs(lats[2] - lats[1])
+    ds = nc.open_data(ff)
+    ds.top()
+    ds.tmax()
+    ds.to_latlon(lon = [-180, 180], lat = [-90, 90], res = [lon_res, lat_res])
+    df = ds.to_dataframe().dropna().reset_index()
+    lon_min = df.lon.min()
+    lon_max = df.lon.max()
+    lat_min = df.lat.min()
+    lat_max = df.lat.max()
+    lons = [lon_min, lon_max]
+    lats = [lat_min, lat_max]
+    extent = [lons[0]-lon_res, lons[1]+lon_res, lats[0] -lat_res, lats[1] + lat_res]
+    # 
+    return extent
 
 
 def find_config(level = 0):

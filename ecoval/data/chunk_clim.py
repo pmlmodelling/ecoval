@@ -53,7 +53,7 @@ if lon_max < 90:
 plot_model = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual mean {variable} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
+md(f"**Figure {i_figure}**: Annual mean {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
 i_figure += 1
 
 # %% tags=["remove-input"]
@@ -82,7 +82,8 @@ if lon_max < 90:
 plot_obs = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual mean {variable} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
+md(f"**Figure {i_figure}**: Annual {layer} mean {vv_name} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
+i_figure += 1
 
 # %% tags=["remove-cell"]
 # Plot them on the same scale
@@ -172,5 +173,5 @@ fig
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual mean {variable} from the model and observations.")
+md(f"**Figure {i_figure}**: Annual mean {layer} {vv_name} from the model and observations.")
 i_figure += 1
