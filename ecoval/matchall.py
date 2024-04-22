@@ -440,10 +440,22 @@ def matchup(
 
     valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/*/*")]
 
+    valid_benthic = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")]
+    print(valid_benthic)
+
+    for pp in benthic:
+        if pp not in valid_benthic:
+            raise ValueError(f"{pp} is not a valid benthic dataset")
+
     for pp in surface:
         if pp not in valid_surface:
             raise ValueError(f"{pp} is not a valid gridded dataset")
     
+    valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")]
+    print(valid_bottom)
+    for pp in bottom:
+        if pp not in valid_bottom:
+            raise ValueError(f"{pp} is not a valid bottom dataset") 
 
     session["levels"] = levels
 
