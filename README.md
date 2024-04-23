@@ -44,7 +44,7 @@ You can now build the docs in two steps. First, matchup the data in Python. You 
 
 ```sh
 import ecoval
-ecoval.matchup("/data/sthenno1/scratch/hpo/LOCATE/new_production_run/data/", cores = 6, spinup = 5, surface_levels = "top")
+ecoval.matchup("/data/sthenno1/scratch/hpo/LOCATE/new_production_run/data/", cores = 6, spinup = 5, surface_level = "top")
 
 ```
 This will put all relevant matchup data into a folder called matched. Note: this could take a couple of hours if you have a large simulation. Note: you will have to specify whether the surface is the top or bottom level in the file structure. This is almost always the top level.
