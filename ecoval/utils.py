@@ -35,9 +35,11 @@ def get_extent(ff):
     lon_name = [x for x in ds_xr.coords if 'lon' in x][0]
     lat_name = [x for x in ds_xr.coords if 'lat' in x][0]
     lons = ds_xr[lon_name].values
+    lons = lons.flatten()
     # as a unique, sorted list
     lons = list(set(lons))
     lats = ds_xr[lat_name].values
+    lats = lats.flatten()
     # as a unique, sorted list
     lats = list(set(lats))
     lon_res = np.abs(lons[2] - lons[1])
