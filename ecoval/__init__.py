@@ -350,48 +350,49 @@ def validate(title="Automated model evaluation", author=None):
             source = os.path.basename(pp).split("_")[0]
             variable = vv
             layer = os.path.basename(pp).split("_")[1].replace(".csv", "")
-            if vv != "ph":
-                Variable = variable
-            else:
-                Variable = "pH"
-            if vv == "co2flux":
-                Variable = "Air-sea CO2 fluxes"
-            if vv in ["poc", "doc"]:
-                Variable = Variable.upper()
-            vv_file = pp
-            vv_file_find = pp.replace("../../", "")
+            if layer != "all":
+                if vv != "ph":
+                    Variable = variable
+                else:
+                    Variable = "pH"
+                if vv == "co2flux":
+                    Variable = "Air-sea CO2 fluxes"
+                if vv in ["poc", "doc"]:
+                    Variable = Variable.upper()
+                vv_file = pp
+                vv_file_find = pp.replace("../../", "")
 
-            if os.path.exists(vv_file_find):
-                if (
-                    len(glob.glob(f"{book_dir}/notebooks/*point_{layer}_{variable}.ipynb"))
-                    == 0
-                ):
-                    file1 = pkg_resources.resource_filename(
-                        __name__, "data/point_template.ipynb"
-                    )
-                    with open(file1, "r") as file:
-                        filedata = file.read()
-
-                    # Replace the target string
-                    out = f"{book_dir}/notebooks/{source}_{layer}_{variable}.ipynb"
-                    filedata = filedata.replace("point_variable", Variable)
-                    filedata = filedata.replace("point_layer", layer)
-                    filedata = filedata.replace("template_title", Variable)
-
-                    # Write the file out again
-                    with open(out, "w") as file:
-                        file.write(filedata)
-                    variable = vv
-                    if variable in ["poc", "doc"]:
-                        variable = variable.upper()
-                    path_df.append(
-                        pd.DataFrame(
-                            {
-                                "variable": [variable],
-                                "path": out,
-                            }
+                if os.path.exists(vv_file_find):
+                    if (
+                        len(glob.glob(f"{book_dir}/notebooks/*point_{layer}_{variable}.ipynb"))
+                        == 0
+                    ):
+                        file1 = pkg_resources.resource_filename(
+                            __name__, "data/point_template.ipynb"
                         )
-                    )
+                        with open(file1, "r") as file:
+                            filedata = file.read()
+
+                        # Replace the target string
+                        out = f"{book_dir}/notebooks/{source}_{layer}_{variable}.ipynb"
+                        filedata = filedata.replace("point_variable", Variable)
+                        filedata = filedata.replace("point_layer", layer)
+                        filedata = filedata.replace("template_title", Variable)
+
+                        # Write the file out again
+                        with open(out, "w") as file:
+                            file.write(filedata)
+                        variable = vv
+                        if variable in ["poc", "doc"]:
+                            variable = variable.upper()
+                        path_df.append(
+                            pd.DataFrame(
+                                {
+                                    "variable": [variable],
+                                    "path": out,
+                                }
+                            )
+                        )
 
 
         # Loop through the gridded matchups and generate notebooks
@@ -438,6 +439,34 @@ def validate(title="Automated model evaluation", author=None):
                                 }
                             )
                         )
+
+        # figure out if mld needs to be calculated...
+
+        mld_paths = glob.glob("matched/point/**/all/temperature/**temperature**.csv")
+
+        if len(mld_paths) > 0:
+
+            if not os.path.exists(f"{book_dir}/notebooks/temperature_mld.ipynb"):
+                file1 = pkg_resources.resource_filename(__name__, "data/mld_template.ipynb")
+                with open(file1, "r") as file:
+                    filedata = file.read()
+
+                # Replace the target string
+                filedata = filedata.replace("template_variable", "temperature")
+                filedata = filedata.replace("template_title", "Mixed layer depth")
+
+                # Write the file out again
+                with open(f"{book_dir}/notebooks/temperature_mld.ipynb", "w") as file:
+                    file.write(filedata)
+
+                path_df.append(
+                    pd.DataFrame(
+                        {
+                            "variable": ["temperature"],
+                            "path": [f"{book_dir}/notebooks/temperature_mld.ipynb"],
+                        }
+                    )
+                )
 
 
         # loop through all notebooks and replace paths

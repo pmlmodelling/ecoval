@@ -370,6 +370,7 @@ def matchup(
     exclude=[],
     fvcom=False,
     strict = True,
+    mld = False,
     **kwargs,
 ):
     """
@@ -405,6 +406,7 @@ def matchup(
     point_surface = []
     surf_dict = False
 
+    surf_default = True
     if isinstance(surface, str):
         surface = [surface]
         surface = {"gridded": surface, "point": []}
@@ -429,6 +431,11 @@ def matchup(
             surface = [surface]
         if isinstance(point_surface, str):
             point_surface = [point_surface]
+    
+    if len(surface) > 0:
+        surf_default = False
+    if len(point_surface) > 0:
+        surf_default = False
 
 
     valid_points = list(set([x for x in glob.glob(data_dir + "/point/nws/all/*")]))
@@ -441,7 +448,6 @@ def matchup(
     valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/*/*")]
 
     valid_benthic = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")]
-    print(valid_benthic)
 
     for pp in benthic:
         if pp not in valid_benthic:
@@ -452,7 +458,6 @@ def matchup(
             raise ValueError(f"{pp} is not a valid gridded dataset")
     
     valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")]
-    print(valid_bottom)
     for pp in bottom:
         if pp not in valid_bottom:
             raise ValueError(f"{pp} is not a valid bottom dataset") 
@@ -558,6 +563,8 @@ def matchup(
 
     # create lists for working out which variables are needed for point matchups
     point_all = []
+    if mld:
+        point_all = ["temperature"]
     point_bottom = []
     point_benthic = benthic
     
@@ -832,7 +839,7 @@ def matchup(
     else:
         model_domain = "nws"
 
-    if not surf_dict:
+    if not surf_dict and surf_default:
         surf_all = False
         if surface == ["all"]:
             surface = all_vars
@@ -855,7 +862,7 @@ def matchup(
             if not os.path.exists(f"{data_dir}/gridded/globl/{vv}"):
                 surface.remove(vv)
     
-    if surf_all:
+    if surf_all and surf_default:
         point_surface.append("ph")
         point_surface.append("poc")
         point_surface.append("doc")
@@ -1221,7 +1228,7 @@ def matchup(
                             "lon >= @lon_min and lon <= @lon_max and lat >= @lat_min and lat <= @lat_max"
                         ).reset_index(drop=True)
 
-                        if variable == "temperature":
+                        if variable == "temperature" and mld:
                             df_include = pd.read_csv(
                                 f"{data_dir}/point/nws/mld_profiles.csv"
                             )
