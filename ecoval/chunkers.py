@@ -24,6 +24,10 @@ def is_chunk(x):
 
 def add_chunks():
 
+    nws = False
+    if len(glob.glob("matched/gridded/nws/**/*.nc")) > 0:
+        nws = True
+
     paths = glob.glob("book/notebooks/*.py")
     paths += glob.glob("book/compare/notebooks/*.py")
 
@@ -41,6 +45,9 @@ def add_chunks():
             if is_chunk(line):
                 # get the file names
                 chunk_file = line.replace("\n", "") + ".py"
+                if not nws:
+                    if "cdf" in chunk_file:
+                        continue
                 data_path = pkg_resources.resource_filename(__name__, f"data/{chunk_file}")
 
                 # read the chunk file in line by line
