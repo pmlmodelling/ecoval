@@ -21,4 +21,5 @@ dependencies:
   - r-maps
   - r-plotrix
   - r-tibble
-  - r-tidyr
+  - r-tidyverse
+  - wkhtmltopdf

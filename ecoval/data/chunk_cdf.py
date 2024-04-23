@@ -46,7 +46,8 @@ units = ds.contents.unit[0]
 
 %%capture --no-display
 %%R -i df -i units -i variable -w 10 -h 10 --units in -r 100
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(ggridges)
 library(ggthemes)
 
