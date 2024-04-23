@@ -76,9 +76,23 @@ Simulations should have at least one year of complete data. Matchups for gridded
 
 Point observation matchups will do a strict day/month/year matchup. If you have monthly output only, any point matchups will be relatively ineffective.
 
+
 ## Modifying jupyter notebooks produced
 
+If you want to tweak the analysis produced by ecoval, you can do so by changing the notebooks ecoval uses to produce the validation summary.
+
 Internally, ecoval will create a number of notebook, run them and then generate an html file. If you would like to work with one of the notebooks, you can open them in the book/notebooks directory. So long as you are using the conda environment created using the commands above, you should able to run the notebooks problem free. 
+
+Once you have modified notebooks, you can then rebuild the validation docs. Do this by running the following commands from the same directory as `validate` was run before::
+
+
+
+```sh
+import ecoval
+ecoval.rebuild()
+```
+
+
 
 
 
