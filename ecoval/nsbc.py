@@ -442,15 +442,16 @@ def gridded_matchup(
                     ds_obs.subset(lon=lons, lat=lats)
 
                 if domain == "global":
-                    model_extent = get_extent(ds[0])
-                    obs_extent = get_extent(ds_obs[0])
-                    lon_min = max(model_extent[0], obs_extent[0])
-                    lon_max = min(model_extent[1], obs_extent[1])
-                    lat_min = max(model_extent[2], obs_extent[2])
-                    lat_max = min(model_extent[3], obs_extent[3])
-                    lons = [lon_min, lon_max]
-                    lats = [lat_min, lat_max]
-                    ds.subset(lon=lons, lat=lats)
+                   model_extent = get_extent(ds[0])
+                   obs_extent = get_extent(ds_obs[0])
+                   lon_min = max(model_extent[0], obs_extent[0])
+                   lon_max = min(model_extent[1], obs_extent[1])
+                   lat_min = max(model_extent[2], obs_extent[2])
+                   lat_max = min(model_extent[3], obs_extent[3])
+                   lons = [lon_min, lon_max]
+                   lats = [lat_min, lat_max]
+                   ds.subset(lon=lons, lat=lats)
+                   ds_obs.subset(lon=lons, lat=lats)
                 
 
                 n1 = ds_obs.contents.npoints[0]
