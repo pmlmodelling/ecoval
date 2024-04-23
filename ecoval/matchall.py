@@ -344,6 +344,8 @@ def find_paths(folder, fvcom=False, exclude=[]):
 def matchup(
     folder=None,
     spinup=None,
+    start=None,
+    end=None,
     surface_level=None,
     surface = [
         "temperature",
@@ -364,13 +366,11 @@ def matchup(
     cores=None,
     e3t=None,
     mapping=None,
-    start=None,
-    end=None,
-    levels=2,
-    exclude=[],
     fvcom=False,
     strict = True,
     mld = False,
+    exclude=[],
+    levels=2,
     **kwargs,
 ):
     """
