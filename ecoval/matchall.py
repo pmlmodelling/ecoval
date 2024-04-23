@@ -1432,4 +1432,4 @@ def matchup(
         strict= strict
     )
 
-    os.system("pandoc matchup_report.md -o matchup_report.pdf")
+    os.system("pandoc matchup_report.md --pdf-engine wkhtmltopdf -o matchup_report.pdf")
