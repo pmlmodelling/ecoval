@@ -16,7 +16,7 @@ from tqdm import tqdm
 from ecoval.utils import get_datadir, session
 from ecoval.utils import extension_of_directory
 from ecoval.ices import generate_mapping
-from ecoval.nsbc import gridded_matchup
+from ecoval.gridded import gridded_matchup
 from ecoval.fixers import tidy_warnings
 
 nc.options(parallel=True)

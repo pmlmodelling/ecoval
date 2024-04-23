@@ -196,8 +196,6 @@ def compare(model_dict=None):
     with open("book/compare/notebooks/comparison_bias.ipynb", "w") as file:
         file.write(filedata)
 
-    # add the chunks
-
     # sync the notebooks
 
     os.system("jupytext --set-formats ipynb,py:percent book/compare/notebooks/*.ipynb")
@@ -396,17 +394,17 @@ def validate(title="Automated model evaluation", author=None):
 
 
         # Loop through the gridded matchups and generate notebooks
-        # identify nsbc variables in matched data
-        nsbc_paths = glob.glob("matched/gridded/**/**/**.nc")
-        # nsbc_paths += glob.glob("matched/gridded/**/**.nc")
+        # identify gridded variables in matched data
+        gridded_paths = glob.glob("matched/gridded/**/**/**.nc")
 
-        if len(nsbc_paths) > 0:
-            # ds = nc.open_data("matched/gridded/nsbc/nsbc_model.nc")
+        if len(gridded_paths) > 0:
             for vv in [
-                os.path.basename(x).split("_")[1].replace(".nc", "") for x in nsbc_paths
+                os.path.basename(x).split("_")[1].replace(".nc", "") for x in gridded_paths
             ]:
+                source = os.path.basename(glob.glob(f"matched/gridded/**/**/**_{vv}_**.nc")[0]).split("_")[0]
+
                 variable = vv
-                if not os.path.exists(f"{book_dir}/notebooks/nsbc_{variable}.ipynb"):
+                if not os.path.exists(f"{book_dir}/notebooks/{source}_{variable}.ipynb"):
                     if variable == "ph":
                         Variable = "pH"
                     else:
@@ -416,9 +414,9 @@ def validate(title="Automated model evaluation", author=None):
                     if variable in ["poc", "doc"]:
                         Variable = Variable.upper()
                     file1 = pkg_resources.resource_filename(
-                        __name__, "data/nsbc_template.ipynb"
+                        __name__, "data/gridded_template.ipynb"
                     )
-                    if len(glob.glob(f"{book_dir}/notebooks/*nsbc_{variable}.ipynb")) == 0:
+                    if len(glob.glob(f"{book_dir}/notebooks/*{source}_{variable}.ipynb")) == 0:
                         with open(file1, "r") as file:
                             filedata = file.read()
 
@@ -427,7 +425,7 @@ def validate(title="Automated model evaluation", author=None):
                         filedata = filedata.replace("template_title", Variable)
 
                         # Write the file out again
-                        with open(f"{book_dir}/notebooks/nsbc_{variable}.ipynb", "w") as file:
+                        with open(f"{book_dir}/notebooks/{source}_{variable}.ipynb", "w") as file:
                             file.write(filedata)
 
                         variable = vv
@@ -435,7 +433,7 @@ def validate(title="Automated model evaluation", author=None):
                             pd.DataFrame(
                                 {
                                     "variable": [variable],
-                                    "path": [f"{book_dir}/notebooks/nsbc_{variable}.ipynb"],
+                                    "path": [f"{book_dir}/notebooks/{source}_{variable}.ipynb"],
                                 }
                             )
                         )
@@ -624,6 +622,10 @@ def validate(title="Automated model evaluation", author=None):
             if "nctoolkit" in x:
                 os.remove(ff)
     webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
+
+def rebuild():
+    os.system(f"jupyter-book build book/")
+    webbrowser.open("file://" + os.path.abspath("book/_build/html/index.html"))
 
 
 try:
