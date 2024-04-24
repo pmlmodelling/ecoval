@@ -274,7 +274,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None):
+def validate(title="Automated model evaluation", author=None, variables = "all"):
     # docstring
     """
     This function will run the model evaluation for all of the available datasets.
@@ -285,6 +285,8 @@ def validate(title="Automated model evaluation", author=None):
         The title of the book. Default is "Automated model evaluation"
     author : str
         The author of the book. Default is None
+    variables : str or list
+        The variables to run the model evaluation for. Default is "all"
 
     Returns
     -------
@@ -331,6 +333,10 @@ def validate(title="Automated model evaluation", author=None):
                     # break
 
     import os
+
+    if variables != "all":
+        if isinstance(variables, str):
+            variables = [variables]
 
     if empty:
         from shutil import copyfile
@@ -395,6 +401,9 @@ def validate(title="Automated model evaluation", author=None):
         # loop through the paths
         for pp in point_paths:
             vv = os.path.basename(pp).split("_")[2].replace(".csv", "")
+            if variables != "all":
+                if vv not in variables:
+                    continue
             source = os.path.basename(pp).split("_")[0]
             variable = vv
             layer = os.path.basename(pp).split("_")[1].replace(".csv", "")
@@ -454,6 +463,9 @@ def validate(title="Automated model evaluation", author=None):
                 source = os.path.basename(glob.glob(f"matched/gridded/**/**/**_{vv}_**.nc")[0]).split("_")[0]
 
                 variable = vv
+                if variables != "all":
+                    if vv not in variables:
+                        continue
                 if not os.path.exists(f"{book_dir}/notebooks/{source}_{variable}.ipynb"):
                     if variable == "ph":
                         Variable = "pH"
@@ -492,7 +504,11 @@ def validate(title="Automated model evaluation", author=None):
 
         mld_paths = glob.glob("matched/point/**/all/temperature/**temperature**.csv")
 
-        if len(mld_paths) > 0:
+        run = True
+        if variables != "all":
+            if "mld" not in variables:
+                run = False
+        if len(mld_paths) > 0 and run:
 
             if not os.path.exists(f"{book_dir}/notebooks/temperature_mld.ipynb"):
                 file1 = pkg_resources.resource_filename(__name__, "data/mld_template.ipynb")
