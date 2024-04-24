@@ -153,7 +153,7 @@ if np.abs(raw_extent[0] - df_model.lon.min()) > 3:
 # %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot -i variable -i raw_extent
 
 
-library(ggplot2, warn.conflicts = FALSE)
+library(tidyverse, warn.conflicts = FALSE)
 library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
@@ -375,7 +375,7 @@ cowplot::plot_grid(gg1, gg2, gg3, ncol = 1)
 # %%capture --no-display
 # %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot -i variable -i raw_extent
 
-library(ggplot2, warn.conflicts = FALSE)
+library(tidyverse, warn.conflicts = FALSE)
 library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
