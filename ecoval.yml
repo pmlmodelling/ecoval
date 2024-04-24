@@ -22,4 +22,5 @@ dependencies:
   - r-plotrix
   - r-tibble
   - r-tidyverse
+  - r-ggridges
   - wkhtmltopdf
