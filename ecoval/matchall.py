@@ -359,6 +359,8 @@ def matchup(
         "ph",
         "chlorophyll",
         "doc",
+        "pco2",
+        "co2flux",
         "poc",
     ],
     bottom= ["ph", "oxygen"],
@@ -881,7 +883,7 @@ def matchup(
 
     for vv in surface:
         if not os.path.exists(f"{data_dir}/gridded/{model_domain}/{vv}"):
-            if not os.path.exists(f"{data_dir}/gridded/globl/{vv}"):
+            if not os.path.exists(f"{data_dir}/gridded/global/{vv}"):
                 surface.remove(vv)
     
     if surf_all and surf_default:
@@ -1419,6 +1421,8 @@ def matchup(
                     point_match(vv, ds_depths = ds_depths)
 
         # def nsbc_matchup(df_mapping = None, folder = None, var_choice = None, exclude = None, surface = None, start = None, spinup = None, sim_start = None, sim_end = None, e3t = None, report = None):
+
+    print(surface)
 
     gridded_matchup(
         df_mapping=df_mapping,

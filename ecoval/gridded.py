@@ -98,6 +98,7 @@ def gridded_matchup(
         ds_all = nc.open_data()
 
         for vv in vars:
+            print(vv)
             # figure out the data source
             dir_var = f"{data_dir}/gridded/{domain}/{vv}"
             # check if it exists

@@ -155,8 +155,9 @@ def generate_mapping(ds, fvcom = False):
 
         if vv == "pco2":
             if fvcom == False:
-                the_vars = [x for x in ds_contents.long_name if "pco2" in x.lower() 
-                            and "carbonate"  in x.lower()
+                the_vars = [x for x in ds_contents.long_name 
+                            if "carbonate"  in x.lower()
+                            and "partial"  in x.lower()
                             and "river" not in x.lower()
                            ]
             else:
@@ -202,7 +203,7 @@ def generate_mapping(ds, fvcom = False):
                     else:
                         ersem_vars = ds_contents.query("long_name in @the_vars").variable
                 else:
-                    if fvcom == False:
+                    if fvcom :
                         ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
                     else:
                         ersem_vars = ds_contents.query("long_name in @the_vars").variable
