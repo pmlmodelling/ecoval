@@ -1,6 +1,7 @@
 from ecoval.utils import get_datadir
 import pkg_resources
 import pandas as pd
+import shutil
 import glob
 import nctoolkit as nc
 from ecoval.matchall import matchup
@@ -68,7 +69,8 @@ def fix_toc(book_dir):
             x = f.write(f"  - file: notebooks/{file}\n")
 
 
-def fix_toc_comparison(book_dir):
+def fix_toc_comparison():
+    book_dir = "book"
 
     out = f"{book_dir}/compare/_toc.yml"
     # write line by line to out
@@ -82,12 +84,36 @@ def fix_toc_comparison(book_dir):
         x = f.write(f"  - file: notebooks/comparison_bias.ipynb\n")
         x = f.write(f"  - file: notebooks/comparison_spatial.ipynb\n")
         x = f.write(f"  - file: notebooks/comparison_seasonal.ipynb\n")
+        x = f.write(f"  - file: notebooks/comparison_regional.ipynb\n")
 
 
 def compare(model_dict=None):
     """
     This function will compare the validition output from multiple models.
     """
+    if os.path.exists("book"):
+        #get user input to decide if it should be removed
+        user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
+        if user_input.lower() == "y":
+            while True:
+                files = glob.glob("book/**/**/**", recursive=True)
+                # list all files in book, recursively
+                for ff in files:
+                    if ff.startswith("book"):
+                        try:
+                            os.remove(ff)
+                        except:
+                            pass
+                files = glob.glob("book/**/**/**", recursive=True)
+                # only list files
+                files = [x for x in files if os.path.isfile(x)]
+                if len(files) == 0:
+                    break
+        else:
+            print("Exiting")
+            return None
+                # if not os.path.exists(book_dir):
+                    # break
 
     # make a folder called book/compare
 
@@ -162,6 +188,8 @@ def compare(model_dict=None):
     file1 = pkg_resources.resource_filename(__name__, "data/comparison_spatial.ipynb")
     if len(glob.glob("book/compare/notebooks/*comparison_spatial.ipynb")) == 0:
         shutil.copyfile(file1, "book/compare/notebooks/comparison_spatial.ipynb")
+    
+
 
     model_dict_str = str(model_dict)
 
@@ -175,6 +203,28 @@ def compare(model_dict=None):
 
     with open("book/compare/notebooks/comparison_spatial.ipynb", "w") as file:
         file.write(filedata)
+
+    # move the regional book
+
+    file1 = pkg_resources.resource_filename(__name__, "data/comparison_regional.ipynb")
+    if len(glob.glob("book/compare/notebooks/*comparison_regional.ipynb")) == 0:
+        shutil.copyfile(file1, "book/compare/notebooks/comparison_regional.ipynb")
+
+    model_dict_str = str(model_dict)
+
+    with open("book/compare/notebooks/comparison_regional.ipynb", "r") as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("model_dict_str", model_dict_str)
+
+    # Write the file out again
+
+    with open("book/compare/notebooks/comparison_regional.ipynb", "w") as file:
+        file.write(filedata)
+
+
+
 
     # now to comparison_bias
 
