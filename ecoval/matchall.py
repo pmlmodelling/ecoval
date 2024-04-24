@@ -1238,9 +1238,10 @@ def matchup(
                             if "year" in df.columns:
                                 df = df.drop(columns = "year")
                         if depths == "surface":
-                            df = df.query("depth < 5").reset_index(drop=True)
-                            # drop depth
-                            df = df.drop(columns="depth")
+                            if "depth" in df.columns:
+                                df = df.query("depth < 5").reset_index(drop=True)
+                                # drop depth
+                                df = df.drop(columns="depth")
                             # add in a nominal depth
                             # df = df.assign(depth=2.5)
                         # restrict the lon_lat
