@@ -422,6 +422,9 @@ def matchup(
 
     """
 
+    if isinstance(benthic, str):
+        benthic = [benthic]
+
     point_surface = []
     surf_dict = False
 
