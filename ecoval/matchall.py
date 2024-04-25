@@ -42,6 +42,7 @@ ices_variables = [
     "doc",
     "poc",
     "alkalinity",
+    "benbio"
 ]
 data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
 
@@ -188,10 +189,11 @@ def mm_match(
                     df_ff = ds.match_points( df_locs, quiet=True, top=top_layer)
                 else:
                     df_ff = ds.match_points( df_locs, depths=ds_depths, quiet=True, top=top_layer)
-                valid_vars = ["lon", "lat", "year", "month", "day", "depth", ds.variables[0]]
-                valid_vars = [x for x in valid_vars if x in df_ff.columns]
-                df_ff = df_ff.loc[:, valid_vars]
-                df_all.append(df_ff)
+                if df_ff is not None:
+                    valid_vars = ["lon", "lat", "year", "month", "day", "depth", ds.variables[0]]
+                    valid_vars = [x for x in valid_vars if x in df_ff.columns]
+                    df_ff = df_ff.loc[:, valid_vars]
+                    df_all.append(df_ff)
         tidy_warnings(w)
 
     except Exception as e:
@@ -273,13 +275,19 @@ def find_paths(folder, fvcom=False, exclude=[]):
     for exc in exclude:
         options = [x for x in options if f"{exc}" not in os.path.basename(x)]
 
+
+
     for ff in options:
         ds = nc.open_data(ff, checks=False)
+        stop = True
         try:
             ds_dict = generate_mapping(ds, fvcom=fvcom)
+            stop = False
         # output error and ff
         except:
             pass
+        if stop:
+            continue
 
         ds_vars = ds.variables
         # vosaline and votemper are special cases
@@ -364,7 +372,7 @@ def matchup(
         "poc",
     ],
     bottom= ["ph", "oxygen"],
-    benthic = ["carbon"],
+    benthic = ["carbon", "benbio"],
     cores=None,
     e3t=None,
     mapping=None,
@@ -567,6 +575,7 @@ def matchup(
         "doc",
         "poc",
         "carbon"
+        "benbio"
     ]
 
     # type check for spinup
@@ -1261,7 +1270,7 @@ def matchup(
                         sel_these = ["year", "month", "day"]
                         if not strict:
                             sel_these = ["month", "day"]
-                        if variable != "carbon":
+                        if variable not in ["carbon", "benbio"]:
                             paths = list(
                                 set(
                                     df.loc[:, sel_these]
@@ -1423,7 +1432,6 @@ def matchup(
 
         # def nsbc_matchup(df_mapping = None, folder = None, var_choice = None, exclude = None, surface = None, start = None, spinup = None, sim_start = None, sim_end = None, e3t = None, report = None):
 
-    print(surface)
 
     gridded_matchup(
         df_mapping=df_mapping,

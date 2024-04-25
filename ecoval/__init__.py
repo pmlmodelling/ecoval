@@ -416,6 +416,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                     Variable = "Air-sea CO2 fluxes"
                 if vv in ["poc", "doc"]:
                     Variable = Variable.upper()
+                if vv == "benbio":
+                    Variable = "macrobenthos biomass"
                 vv_file = pp
                 vv_file_find = pp.replace("../../", "")
 
@@ -432,7 +434,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
 
                         # Replace the target string
                         out = f"{book_dir}/notebooks/{source}_{layer}_{variable}.ipynb"
-                        filedata = filedata.replace("point_variable", Variable)
+                        filedata = filedata.replace("point_variable", variable)
                         filedata = filedata.replace("point_layer", layer)
                         filedata = filedata.replace("template_title", Variable)
 
@@ -475,6 +477,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                         Variable = "air-sea CO2 flux"
                     if variable in ["poc", "doc"]:
                         Variable = Variable.upper()
+                    if variable == "benbio":
+                        Variable = "macrobenthos biomass"
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/gridded_template.ipynb"
                     )

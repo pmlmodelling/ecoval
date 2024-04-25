@@ -94,6 +94,7 @@ def generate_mapping(ds, fvcom = False):
      "pco2",
      "doc",
      "carbon",
+     "benbio",
      'alkalinity']
     ds1 = nc.open_data(ds[0], checks = False)
     try:
@@ -132,6 +133,12 @@ def generate_mapping(ds, fvcom = False):
             the_vars = [x for x in ds_contents_top.long_name if "carbon" in x 
                         and "benthic" in x.lower()
                         and ("refractory" in x.lower() or "particul" in x.lower())
+                        and "penetr" not in x.lower()
+                       ]
+                    
+        if vv == "benbio":
+            the_vars = [x for x in ds_contents_top.long_name if "carbon" in x 
+                        and "feeder" in x.lower()
                         and "penetr" not in x.lower()
                        ]
 
@@ -191,7 +198,7 @@ def generate_mapping(ds, fvcom = False):
                            ]
 
         
-        if vv == "carbon":
+        if vv in ["carbon", "benbio"]:
             ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
         else:
             if vv != "co2flux" and vv != "pco2":
@@ -210,7 +217,8 @@ def generate_mapping(ds, fvcom = False):
 
         add = True
 
-        if len(ersem_vars) > 1 and vv not in  ["doc","chlorophyll", "carbon"]:
+
+        if len(ersem_vars) > 1 and vv not in  ["doc","chlorophyll", "carbon", "benbio"]:
             add = False
 
         if add:
@@ -232,7 +240,6 @@ def generate_mapping(ds, fvcom = False):
 
                 if vv not in ersem_dict.keys():
                     ersem_dict[vv] = None 
-
     return ersem_dict
 
 
@@ -295,7 +302,7 @@ def match_ices(path, out_dir = None, mapping = None):
 
     if not os.path.isdir(out_dir):
         raise ValueError("out is not a directory")
-
+    
     if mapping is None:
         if isinstance(path, list):
             ds = nc.open_data(path[0])
