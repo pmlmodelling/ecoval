@@ -1,4 +1,15 @@
 import warnings
+import numpy as np
+
+
+# function to convert list to string with , separator, with an "and" at the end
+def list_to_string(lst):
+    if len(lst) == 1:
+        return lst[0]
+    elif len(lst) == 2:
+        return " and ".join(lst)
+    else:
+        return ", ".join(lst[:-1]) + ", and " + lst[-1]
 
 def ignore_warning(x):
     """
@@ -22,24 +33,47 @@ def ignore_warning(x):
         return True
     return False
 
-def tidy_name(x):
+def tidy_name_1(x, lower = False):
     """
     A function to create a better name for tables etc.
 
     """
 
     if "flux" in x.lower():
-        return "Air-sea CO2 flux"
+        if lower:
+            return "air-sea CO2 flux"
+        else:
+            return "Air-sea CO2 flux"
+
     if "pco2" in x.lower():
         return "pCO2"
     if "sst" in x.lower():
         return "SST"
     if "nitrate" in x.lower():
-        return "Nitrate"
+        if lower:
+            return "nitrate"
+        else:
+            return "Nitrate"
+    if "poc" in x.lower():
+        return "POC"
+    if x.lower() == "doc":
+        return "DOC" 
     if x.lower() == "ph":
         return "pH"
-    
-    return x.title()
+    if lower:
+        return x.lower()
+    else:
+        return x.title()
+# vectorize the function
+def tidy_name(x, lower = False):
+    if isinstance(x, str):
+        x = [x]
+    out = [tidy_name_1(xx, lower = lower) for xx in x]
+        # sort
+    out = sorted(out)
+    out = list_to_string(out)
+    return out
+
 
 def tidy_warnings(w):
     # A function to tidy up the warnings
