@@ -881,6 +881,9 @@ def matchup(
     if "ph" in surface and model_domain == "nws":
         surface.remove("ph")
         point_surface.append("ph")
+    if "alkalinity" in surface and model_domain == "nws":
+        surface.remove("alkalinity")
+        point_surface.append("alkalinity")
     # do the same for alkalinity, poc and doc
     if "poc" in surface and model_domain == "nws":
         point_surface.append("poc")
