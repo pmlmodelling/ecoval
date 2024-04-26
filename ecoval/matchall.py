@@ -245,6 +245,9 @@ def find_paths(folder, fvcom=False, exclude=[]):
         new_directory = folder + "/"
         for i in range(levels):
             dir_glob = glob.glob(new_directory + "/**")
+            # randomize dir_glob
+            import random
+            random.shuffle(dir_glob)
             for x in dir_glob:
                 # figure out if the the base directory is an integer
                 try:
@@ -252,7 +255,6 @@ def find_paths(folder, fvcom=False, exclude=[]):
                     new_directory = x + "/"
                 except:
                     blah = "blah"
-
         options = glob.glob(new_directory + "/**.nc")
         if not fvcom:
             options = [x for x in options if "part" not in os.path.basename(x)]
@@ -634,6 +636,7 @@ def matchup(
             point_bottom = bottom
 
     if all_df is None:
+        print(folder)
         all_df = find_paths(folder, fvcom=fvcom, exclude=exclude)
 
         # add in anything that is missing
