@@ -1,5 +1,5 @@
-# %% [markdown]
-# ## Assessing model bias 
+# %% tags=["remove-input"]
+md(f"## Assessing model bias for {layer} {vv_name}")
 #
 # A critical metric for model performance is the bias between model and observed values. Here the bias is calculated as the mean difference between model and observed values. A positive bias indicates that the model overestimates the observed values, while a negative bias indicates that the model underestimates the observed values. 
 

@@ -148,9 +148,22 @@ if np.abs(raw_extent[0] - df_model.lon.min()) > 3:
     df_obs["lon" ] = [x if x < 180 else x -360 for x in df_obs.lon]
     df_diff["lon" ] = [x if x < 180 else x -360 for x in df_diff.lon]
 
+# generate a temporary csv file name in /tmp
+# create adhoc dir if not
+if not os.path.exists("adhoc/tmp"):
+    os.makedirs("adhoc/tmp")
+tmp_csv = f"adhoc/df_obs_model.feather"
+df_obs.to_feather(tmp_csv)
+tmp_csv = f"adhoc/df_model_model.feather"
+df_model.to_feather(tmp_csv)
+tmp_csv = f"adhoc/df_diff_model.feather"
+df_diff.to_feather(tmp_csv)
+
+
+
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot -i variable -i raw_extent
+# %%R -i model_unit  -w 800 -h 600 -i fast_plot -i variable -i raw_extent
 
 
 library(tidyverse, warn.conflicts = FALSE)
@@ -158,9 +171,17 @@ library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
 
+df_model <- arrow::read_feather("adhoc/df_model_model.feather")
+
+
 if("month" %in% colnames(df_model)){
 
-df_model_raw <- drop_na(df_model)
+    df_model_raw <- drop_na(df_model)
+    df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
+    df_diff <- arrow::read_feather("adhoc/df_diff_model.feather")
+
+
+#df_model_raw <- drop_na(df_model)
 df_obs_raw <- drop_na(df_obs)
 df_diff_raw <- drop_na(df_diff)
 
@@ -373,16 +394,22 @@ cowplot::plot_grid(gg1, gg2, gg3, ncol = 1)
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i model_unit -i df_model -i df_obs -i df_diff -w 800 -h 600 -i fast_plot -i variable -i raw_extent
+# %%R -i model_unit -w 800 -h 600 -i fast_plot -i variable -i raw_extent
 
 library(tidyverse, warn.conflicts = FALSE)
 library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
 
+df_model <- arrow::read_feather("adhoc/df_model_model.feather")
+
 if ("month" %in% colnames(df_model)){
 
-df_model_raw <- drop_na(df_model)
+    df_model_raw <- drop_na(df_model)
+    df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
+    df_diff <- arrow::read_feather("adhoc/df_diff_model.feather")
+
+
 df_obs_raw <- drop_na(df_obs)
 df_diff_raw <- drop_na(df_diff)
 

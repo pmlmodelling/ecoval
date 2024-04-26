@@ -55,6 +55,8 @@ def fix_toc(book_dir):
                 vv_out = vv.capitalize()
             if vv.lower() in ["poc", "doc"]:
                 vv_out = vv.upper() 
+            if vv == "pco2":
+                vv_out = "pCO2"
             # correct ph
             if vv == "ph":
                 vv_out = "pH"
@@ -416,6 +418,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                     Variable = "Air-sea CO2 fluxes"
                 if vv in ["poc", "doc"]:
                     Variable = Variable.upper()
+                if vv == "pco2":
+                    Variable = "pCO2"
                 if vv == "benbio":
                     Variable = "macrobenthos biomass"
                 vv_file = pp
@@ -444,6 +448,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                         variable = vv
                         if variable in ["poc", "doc"]:
                             variable = variable.upper()
+                        if variable == "pco2":
+                            variable = "pCO2"
                         path_df.append(
                             pd.DataFrame(
                                 {
