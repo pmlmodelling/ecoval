@@ -485,6 +485,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                         Variable = Variable.upper()
                     if variable == "benbio":
                         Variable = "macrobenthos biomass"
+                    if variable == "pco2":
+                        Variable = "pCO2"
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/gridded_template.ipynb"
                     )

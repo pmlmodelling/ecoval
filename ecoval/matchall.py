@@ -481,6 +481,14 @@ def matchup(
 
     valid_benthic = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")]
 
+    # fix benthic if something like "benthic biomass" is an element
+    for pp in benthic:
+        if "ben" in pp and "bio" in pp:
+            benthic.remove(pp)
+            benthic.append("benbio")
+
+
+
     for pp in benthic:
         if pp not in valid_benthic:
             raise ValueError(f"{pp} is not a valid benthic dataset")
