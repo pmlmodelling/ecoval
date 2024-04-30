@@ -126,7 +126,7 @@ def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
 
 
 def mm_match(
-    ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all, top_layer=False
+    ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all, top_layer=False, bottom_layer = False
 ):
     """
     Parameters
@@ -1380,6 +1380,9 @@ def matchup(
                         if depths == "surface":
                             ds_depths = None
                         # raise ValueError("stoping")
+                        if surface_level == "bottom":
+                            bottom_layer = True
+                            top_layer = False
 
     #ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all, top_layer=False
                         temp = pool.apply_async(
@@ -1394,6 +1397,7 @@ def matchup(
                                 point_variable,
                                 df_all,
                                 top_layer,
+                                bottom_layer
                             ],
                         )
 
