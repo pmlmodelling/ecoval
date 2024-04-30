@@ -48,7 +48,12 @@ df_cor.to_csv(out, index = False)
 # %% tags=["remove-input"]
 
 df_cor = ds_cor.to_dataframe().reset_index()
-ds_cor.pub_plot("cor")
+if fix_grid:
+    ds_cor_plot = ds_cor.copy()
+    ds_cor_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
+    ds_cor_plot.pub_plot("cor")
+else:
+    ds_cor.pub_plot("cor")
 
 
 
@@ -99,6 +104,8 @@ mod_var = ds_model.variables[0]
 obs_var = ds_obs.variables[0]
 # create xlim using mod_var
 time_name = [x for x in list(ds_model.to_xarray().coords) if "time" in x][0]
+lon_name = [x for x in list(ds_obs.to_xarray().coords) if "lon" in x][0]
+lat_name = [x for x in list(ds_obs.to_xarray().coords) if "lat" in x][0]
 time_name
 
 df_model = (
@@ -106,6 +113,8 @@ df_model = (
     .to_dataframe()
     .reset_index()
     .rename(columns = {time_name: "time"})
+    .rename(columns = {lon_name: "lon"})
+    .rename(columns = {lat_name: "lat"})
     .assign(month = lambda x: x.time.dt.month)
     .loc[:,["lon", "lat", "month", mod_var ]]
     .rename(columns = {mod_var: "model"})
@@ -122,11 +131,15 @@ df_obs = (
 )
 
 time_name = [x for x in list(ds_obs.to_xarray().coords) if "time" in x][0]
+lon_name = [x for x in list(ds_obs.to_xarray().coords) if "lon" in x][0]
+lat_name = [x for x in list(ds_obs.to_xarray().coords) if "lat" in x][0]
 
 
 df_obs = (
     df_obs
     .rename(columns = {time_name: "time"}  )
+    .rename(columns = {lon_name: "lon"}  )
+    .rename(columns = {lat_name: "lat"}  )
     .assign(month = lambda x: x.time.dt.month)
     .loc[:,["lon", "lat", "month", obs_var ]]
     .rename(columns = {obs_var: "observation"})

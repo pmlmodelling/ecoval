@@ -32,12 +32,18 @@ df = (
     )
 time_name = [x for x in df.columns if "time" in x][0]
 df.rename(columns = {time_name: "time"}, inplace = True)
+lon_name = [x for x in df.columns if "lon" in x][0]
+lat_name = [x for x in df.columns if "lat" in x][0]
+df.rename(columns = {lon_name: "lon", lat_name: "lat"}, inplace = True)
 df = (
     df
     .assign(month = lambda x: x.time.dt.month)
     .loc[:,["lon", "lat", "model", "observation", "month"]]
     .drop_duplicates()
     )
+lon_name = [x for x in df.columns if "lon" in x][0]
+lat_name = [x for x in df.columns if "lat" in x][0]
+# rename
 df = df.melt(["lon", "lat", "month"])
 units = ds.contents.unit[0]
 

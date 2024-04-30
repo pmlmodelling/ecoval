@@ -16,6 +16,7 @@
 
 # %% tags=["remove-input"]
 
+
 if variable == "chlorophyll":
     transformation = "log10"
 else:
@@ -38,6 +39,14 @@ coord_ranges = (
     .to_dataframe()
     .reset_index()
     .dropna()
+)
+lon_name = [x for x in coord_ranges.columns if "lon" in x][0]
+lat_name = [x for x in coord_ranges.columns if "lat" in x][0]
+coord_ranges = (
+    coord_ranges
+    # rename the columns to lon and lat
+    .rename(columns = {lon_name: "lon", lat_name: "lat"})
+    #
     .loc[:,["lon", "lat"]]
     .agg(["min", "max"])
     .to_dict()
@@ -49,8 +58,28 @@ lat_min = coord_ranges["lat"]["min"]
 lat_max = coord_ranges["lat"]["max"]
 if lon_max < 90:
     ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
-
-plot_model = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
+fix_grid = False
+try:
+    plot_model = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
+except:
+    # this needs to be regridded
+    ds_plot = ds_annual.copy()
+    lons = ds_plot.to_xarray()[lon_name].values
+    # flatten
+    lons = list(set(lons.flatten()))
+    lons.sort()
+    lon_res = np.abs(lons[0] - lons[1])
+    # do the same for lats
+    lats = ds_plot.to_xarray()[lat_name].values
+    # flatten
+    lats = list(set(lats.flatten()))
+    lats.sort()
+    lat_res = np.abs(lats[0] - lats[1])
+    # regrid
+    ds_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res]) 
+    ds_plot.run()
+    plot_model = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
+    fix_grid = True 
 
 # %% tags=["remove-input"]
 md(f"**Figure {i_figure}**: Annual mean {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
@@ -62,15 +91,26 @@ ds_annual.tmean()
 
 #get the min/max lon lat with actual values in ds_annual
 # save as [lon_min, lon_max] and [lat_min, lat_max]
+
 coord_ranges = (
     ds_annual
     .to_dataframe()
     .reset_index()
     .dropna()
+)
+lon_name = [x for x in coord_ranges.columns if "lon" in x][0]
+lat_name = [x for x in coord_ranges.columns if "lat" in x][0]
+coord_ranges = (
+    coord_ranges
+    # rename the columns to lon and lat
+    .rename(columns = {lon_name: "lon", lat_name: "lat"})
+    #
     .loc[:,["lon", "lat"]]
     .agg(["min", "max"])
     .to_dict()
 )
+
+
 
 lon_min = coord_ranges["lon"]["min"]
 lon_max = coord_ranges["lon"]["max"]
@@ -79,7 +119,12 @@ lat_max = coord_ranges["lat"]["max"]
 if lon_max < 90:
     ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 
-plot_obs = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
+if not fix_grid:
+    plot_obs = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
+else:
+    ds_plot = ds_annual.copy()
+    ds_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
+    plot_obs = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
 # %% tags=["remove-input"]
 md(f"**Figure {i_figure}**: Annual {layer} mean {vv_name} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
@@ -102,18 +147,26 @@ coord_ranges = (
     .to_dataframe()
     .reset_index()
     .dropna()
+)
+lon_name = [x for x in coord_ranges.columns if "lon" in x][0]
+lat_name = [x for x in coord_ranges.columns if "lat" in x][0]
+coord_ranges = (
+    coord_ranges
+    # rename the columns to lon and lat
+    .rename(columns = {lon_name: "lon", lat_name: "lat"})
+    #
     .loc[:,["lon", "lat"]]
     .agg(["min", "max"])
     .to_dict()
 )
 
-lon_min = coord_ranges["lon"]["min"]
-lon_max = coord_ranges["lon"]["max"]
 lat_min = coord_ranges["lat"]["min"]
 lat_max = coord_ranges["lat"]["max"]
 if lon_max < 90:
     ds_both.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 
+if fix_grid:
+    ds_both.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
 
 
 # %% tags=["remove-cell"]
