@@ -1163,6 +1163,12 @@ def matchup(
                     )
                 df_times = pd.concat(df_times)
 
+                # figure out if it is monthly or daily data
+                daily = False
+                df_check = df_times.groupby(["year", "month"]).size()
+                if df_check.max() > 27:
+                    daily = True
+
                 df_times = df_times.query(
                     "year >= @sim_start and year <= @sim_end"
                 ).reset_index(drop=True)
@@ -1260,6 +1266,8 @@ def matchup(
                         if not strict:
                             if "year" in df.columns:
                                 df = df.drop(columns = "year")
+                        if not daily:
+                            df = df.drop(columns = "day").drop_duplicates().reset_index(drop = True)
                         if depths == "surface":
                             if "depth" in df.columns:
                                 df = df.query("depth < 5").reset_index(drop=True)
@@ -1284,6 +1292,7 @@ def matchup(
                         sel_these = ["year", "month", "day"]
                         if not strict:
                             sel_these = ["month", "day"]
+                        sel_these = [x for x in df.columns if x in sel_these]
                         if variable not in ["carbon", "benbio"]:
                             paths = list(
                                 set(
