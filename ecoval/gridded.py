@@ -98,7 +98,6 @@ def gridded_matchup(
         ds_all = nc.open_data()
 
         for vv in vars:
-            print(vv)
             # figure out the data source
             dir_var = f"{data_dir}/gridded/{domain}/{vv}"
             # check if it exists
@@ -231,33 +230,35 @@ def gridded_matchup(
 
                 # figure out if cdo or nco is faster....
 
-                try:
-                    with warnings.catch_warnings(record=True) as w:
+                use_nco = False
+                if surface == "top":
+                    try:
+                        with warnings.catch_warnings(record=True) as w:
+                            use_nco = False
+                            cdo_time = time.time()
+
+                            ds = nc.open_data(paths[0], checks=False)
+                            ds.subset(variables=selection)
+                            if surface == "top":
+                                ds.top()
+                            else:
+                                ds.bottom()
+                            ds.run()
+                            cdo_time = time.time() - cdo_time
+
+                            nco_time = time.time()
+                            ds = nc.open_data(paths[0], checks=False)
+                            nco_selection = ",".join(selection)
+                            ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
+                            ds.run()
+                            nco_time = time.time() - nco_time
+
+                            if nco_time < cdo_time:
+                                use_nco = True
+                        tidy_warnings(w)
+
+                    except:
                         use_nco = False
-                        cdo_time = time.time()
-
-                        ds = nc.open_data(paths[0], checks=False)
-                        ds.subset(variables=selection)
-                        if surface == "top":
-                            ds.top()
-                        else:
-                            ds.bottom()
-                        ds.run()
-                        cdo_time = time.time() - cdo_time
-
-                        nco_time = time.time()
-                        ds = nc.open_data(paths[0], checks=False)
-                        nco_selection = ",".join(selection)
-                        ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
-                        ds.run()
-                        nco_time = time.time() - nco_time
-
-                        if nco_time < cdo_time:
-                            use_nco = True
-                    tidy_warnings(w)
-
-                except:
-                    use_nco = False
 
                 with warnings.catch_warnings(record=True) as w:
                     ds = nc.open_data(paths, checks=False)
