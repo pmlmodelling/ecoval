@@ -323,6 +323,7 @@ def gridded_matchup(
 
                     ds.run()
                     ds.merge("time")
+                    ds.subset(years = years)
                     ds.run()
 
                 tidy_warnings(w)
