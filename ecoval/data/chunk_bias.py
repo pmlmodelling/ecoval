@@ -19,6 +19,7 @@ else:
 if fix_grid:
     ds_bias_1 = ds_bias.copy()
     ds_bias_1.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
+    ds_bias_1.pub_plot(robust = True)
 else:
     ds_bias.pub_plot(robust = True)
 
