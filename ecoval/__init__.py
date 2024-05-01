@@ -87,6 +87,11 @@ def fix_toc_comparison():
         x = f.write(f"  - file: notebooks/comparison_spatial.ipynb\n")
         x = f.write(f"  - file: notebooks/comparison_seasonal.ipynb\n")
         x = f.write(f"  - file: notebooks/comparison_regional.ipynb\n")
+        x = f.write(f"- caption: Comparisons with point observations\n")
+        x = f.write("  chapters:\n")
+        x = f.write(f"  - file: notebooks/comparison_point_surface.ipynb\n")
+        x = f.write(f"  - file: notebooks/comparison_point_benthic.ipynb\n")
+        x = f.write(f"  - file: notebooks/comparison_point_bottom.ipynb\n")
 
 
 def compare(model_dict=None):
@@ -226,8 +231,6 @@ def compare(model_dict=None):
         file.write(filedata)
 
 
-
-
     # now to comparison_bias
 
     file1 = pkg_resources.resource_filename(__name__, "data/comparison_bias.ipynb")
@@ -247,6 +250,42 @@ def compare(model_dict=None):
 
     with open("book/compare/notebooks/comparison_bias.ipynb", "w") as file:
         file.write(filedata)
+
+    # figure out if both simulations have point data
+
+    i = 0    
+    
+    if i == 0:
+        for ss in ["surface", "bottom", "benthic"]:
+            file1 = pkg_resources.resource_filename(__name__, "data/comparison_point.ipynb")
+
+            if len(glob.glob(f"book/compare/notebooks/*comparison_point_{ss}.ipynb")) == 0:
+                shutil.copyfile(file1, f"book/compare/notebooks/comparison_point_{ss}.ipynb")
+
+            model_dict_str = str(model_dict)
+
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "r") as file:
+                filedata = file.read()
+
+            # Replace the target string
+            filedata = filedata.replace("model_dict_str", model_dict_str)
+
+            # Write the file out again
+
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "w") as file:
+                file.write(filedata)
+            # replace layer in the notebook with ss
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "r") as file:
+                filedata = file.read()
+
+            # Replace the target string
+            filedata = filedata.replace("layer", ss)
+
+            # Write the file out again
+
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "w") as file:
+                file.write(filedata)
+
 
     # sync the notebooks
 
