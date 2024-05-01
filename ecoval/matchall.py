@@ -1129,6 +1129,7 @@ def matchup(
             point_vars = point_benthic
 
         for vv in point_vars:
+            print(vv)
             all_df = df_mapping
             all_df = all_df.query("model_variable in @good_model_vars").reset_index(
                 drop=True
@@ -1150,10 +1151,13 @@ def matchup(
                 time_name = [x for x in list(ds.dims) if "time" in x][0]
 
                 df_times = []
+                daily = False
+                days = []
                 for ff in ensemble:
                     ds = xr.open_dataset(ff)
                     ff_month = [int(x.dt.month) for x in ds[time_name]][0]
                     ff_year = [int(x.dt.year) for x in ds[time_name]][0]
+                    days += [int(x.dt.day) for x in ds[time_name]]
                     df_times.append(
                         pd.DataFrame(
                             {
@@ -1163,12 +1167,12 @@ def matchup(
                             }
                         )
                     )
+                n_days = len(list(set(days)))
                 df_times = pd.concat(df_times)
 
                 # figure out if it is monthly or daily data
-                daily = False
                 df_check = df_times.groupby(["year", "month"]).size()
-                if df_check.max() > 27:
+                if n_days > 27:
                     daily = True
 
                 df_times = df_times.query(
@@ -1181,6 +1185,7 @@ def matchup(
                     min_year = df_times.year.min()
 
                 df_times = df_times.query("year >= @min_year").reset_index(drop=True)
+
 
                 # ersem paths
 
@@ -1386,9 +1391,11 @@ def matchup(
                         if depths == "surface":
                             ds_depths = None
                         # raise ValueError("stoping")
+                        bottom_layer = False
                         if surface_level == "bottom":
-                            bottom_layer = True
-                            top_layer = False
+                            if layer == "surface":
+                                bottom_layer = True
+                                top_layer = False
                         if vv == "benbio":
                             bottom_layer = False
                             top_layer = False
