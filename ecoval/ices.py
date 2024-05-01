@@ -138,7 +138,7 @@ def generate_mapping(ds, fvcom = False):
                     
         if vv == "benbio":
             the_vars = [x for x in ds_contents_top.long_name if "carbon" in x 
-                        and "feeder" in x.lower()
+                        and ("feeder" in x.lower() or "predator" in x.lower())
                         and "penetr" not in x.lower()
                        ]
 
