@@ -153,6 +153,8 @@ def mm_match(
             ds.subset(variables=var_match)
             if top_layer:
                 ds.top()
+            if bottom_layer:
+                ds.bottom()
             ds.as_missing(0)
             ds.run()
             if len(var_match) > 1:
@@ -1267,12 +1269,16 @@ def matchup(
                             if "year" in df.columns:
                                 df = df.drop(columns = "year")
                         if not daily:
-                            df = df.drop(columns = "day").drop_duplicates().reset_index(drop = True)
+                            if "day" in df.columns:
+                                df = df.drop(columns = "day").drop_duplicates().reset_index(drop = True)
                         if depths == "surface":
                             if "depth" in df.columns:
                                 df = df.query("depth < 5").reset_index(drop=True)
+                                # grouping
                                 # drop depth
                                 df = df.drop(columns="depth")
+                                grouping = [x for x in df.columns if x in ["lon", "lat", "year", "month", "day", "source"]]
+                                df = df.groupby(grouping).mean().reset_index()
                             # add in a nominal depth
                             # df = df.assign(depth=2.5)
                         # restrict the lon_lat
@@ -1382,6 +1388,9 @@ def matchup(
                         # raise ValueError("stoping")
                         if surface_level == "bottom":
                             bottom_layer = True
+                            top_layer = False
+                        if vv == "benbio":
+                            bottom_layer = False
                             top_layer = False
 
     #ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all, top_layer=False
