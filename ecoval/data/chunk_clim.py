@@ -182,6 +182,8 @@ gs = fig.add_gridspec(nrows=1, ncols=2, wspace = 0.35, hspace = 0)
 
 # get limits..
 
+ds_both.tmean()
+
 z_min = (
     ds_both
     .to_dataframe()
@@ -205,7 +207,6 @@ z_max = (
     .quantile(0.98)
     .max()
 )
-ds_both.tmean()
 # fix the units
 
 ds_both.set_units({"observation": ds_both.contents.query("variable == 'model'").reset_index().unit.values[0]})
