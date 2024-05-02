@@ -97,6 +97,15 @@ def fix_toc_comparison():
 def compare(model_dict=None):
     """
     This function will compare the validition output from multiple models.
+
+    Parameters
+    ----------
+    model_dict : dict
+        A dictionary of model names and the paths to the validation output. Default is None.
+        Example: {"model1": "/path/to/model1", "model2": "/path/to/model2"}
+        If the models have different grids, put the model with the smallest grid first.
+
+
     """
     if os.path.exists("book"):
         #get user input to decide if it should be removed
