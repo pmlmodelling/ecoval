@@ -385,6 +385,7 @@ def matchup(
     mld = False,
     exclude=[],
     levels=2,
+    daily_match = True,
     **kwargs,
 ):
     """
@@ -1174,6 +1175,8 @@ def matchup(
                 df_check = df_times.groupby(["year", "month"]).size()
                 if n_days > 27:
                     daily = True
+                if not daily_match:
+                    daily = False
 
                 df_times = df_times.query(
                     "year >= @sim_start and year <= @sim_end"
