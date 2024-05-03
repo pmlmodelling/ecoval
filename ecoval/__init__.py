@@ -46,6 +46,11 @@ def fix_toc(book_dir):
         x = f.write("  chapters:\n")
         x = f.write(f"  - file: notebooks/000_info.ipynb\n")
 
+        x = f.write(f"- caption: Summaries\n")
+        x = f.write("  chapters:\n")
+        for file in ss_paths:
+            x = f.write(f"  - file: notebooks/{file}\n")
+
         # loop over variables in each vv_dict
         # value is the file in the chapter section
         # key is the variable name, so is the section
@@ -60,15 +65,13 @@ def fix_toc(book_dir):
             # correct ph
             if vv == "ph":
                 vv_out = "pH"
+            if vv.lower() == "benbio":
+                vv_out = "Benthos"
             x = f.write(f"- caption: {vv_out}\n")
             x = f.write("  chapters:\n")
             for file in vv_dict[vv]:
                 x = f.write(f"  - file: notebooks/{file}\n")
 
-        x = f.write(f"- caption: Summaries\n")
-        x = f.write("  chapters:\n")
-        for file in ss_paths:
-            x = f.write(f"  - file: notebooks/{file}\n")
 
 
 def fix_toc_comparison():
