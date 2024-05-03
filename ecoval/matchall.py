@@ -386,6 +386,8 @@ def matchup(
     exclude=[],
     levels=2,
     daily_match = True,
+    lon_lim = None,
+    lat_lim = None, 
     **kwargs,
 ):
     """
@@ -436,6 +438,13 @@ def matchup(
 
 
     """
+
+    # check that lon_lim and lat_lim and valid when either is not None
+
+    if lon_lim is not None or lat_lim is not None:
+        # check both are lists
+        if not isinstance(lon_lim, list) or not isinstance(lat_lim, list):
+            raise ValueError("lon_lim and lat_lim must be lists")
 
     if isinstance(benthic, str):
         benthic = [benthic]
@@ -1327,7 +1336,9 @@ def matchup(
                         ds_grid.subset(variables=ds_grid.variables[0])
                         ds_grid.top()
                         ds_grid.subset(time=0)
+                        amm7 = False
                         if max(ds_grid.contents.npoints) == 111375:
+                            amm7 = True
                             ds_grid.fix_amm7_grid()
                         ds_xr = ds_grid.to_xarray()
                         # extract the minimum latitude and longitude
@@ -1434,11 +1445,25 @@ def matchup(
                         return None
 
                     df_all = pd.concat(df_all)
+                    if amm7:
+                        df_all = (
+                            df_all.query("lon > -19")
+                            .query("lon < 9")
+                            .query("lat > 41")
+                            .query("lat < 64.3")
+                        )
                     change_this = [x for x in df_all.columns if x not in ["lon", "lat", "year", "month", "day", "depth", "observation"]][0]
                     df_all = df_all.rename(columns={change_this: "model"}).merge(
                         df
                     )
                     df_all = df_all.dropna().reset_index(drop=True)
+                    grouping = ["lon", "lat", "day", "month", "year", "depth"]
+                    grouping = [x for x in grouping if x in df_all.columns]
+                    if not daily:
+                        if "day" in df_all.columns:
+                            grouping = [x for x in grouping if x != "day"]
+                            df_all = df_all.drop(columns="day").drop_duplicates().reset_index(drop=True)
+                            df_all = df_all.groupby(grouping).mean().reset_index()
                     
                     out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
                     # create directory for out if it does not exists
@@ -1448,7 +1473,15 @@ def matchup(
                     pd.DataFrame({"path": paths}).to_csv(out1, index=False)
                     if variable == "doc":
                         df_all = df_all.assign(model = lambda x: x.model + (40*12.011))
-                    df_all.to_csv(out, index=False)
+                    if lon_lim is not None:
+                        df_all = df_all.query(f"lon > {lon_lim[0]} and lon < {lon_lim[1]}")
+                    if lat_lim is not None:
+                        df_all = df_all.query(f"lat > {lat_lim[0]} and lat < {lat_lim[1]}")
+
+                    if len(df_all) > 0:
+                        df_all.to_csv(out, index=False)
+                    else:
+                        print(f"No data for {variable}")
 
                 print("**********************")
                 vv_variable = vv
@@ -1491,7 +1524,9 @@ def matchup(
         sim_end=sim_end,
         e3t=e3t,
         domain=model_domain,
-        strict= strict
+        strict= strict,
+        lon_lim = lon_lim,
+        lat_lim = lat_lim
     )
 
     os.system("pandoc matchup_report.md --pdf-engine wkhtmltopdf -o matchup_report.pdf")

@@ -32,7 +32,9 @@ def gridded_matchup(
     sim_end=None,
     e3t=None,
     domain="nws",
-    strict = True
+    strict = True,
+    lon_lim = None,
+    lat_lim = None
 ):
     """
     Function to create NSBC matchups for a given set of variables
@@ -351,6 +353,8 @@ def gridded_matchup(
                     ds.fix_amm7_grid()
                     amm7 = True
                     ds.subset(lon=[-19, 9], lat=[41, 64.3])
+                if lon_lim is not None and lat_lim is not None:
+                    ds.subset(lon=lon_lim, lat = lat_lim)
 
                 # dir_var = f"{data_dir}/gridded/{domain}/{vv}"
                 # if vv not in ["poc", "temperature"]:
