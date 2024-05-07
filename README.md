@@ -1,5 +1,9 @@
-# ecoval
+# ecoVal
 Marine ecosystem model validation made easy in Python
+
+ecoVal is a fully automated marine ecosystem model tool that reduces model simulation validation to a simple to follow step-by-step producedure. It is designed to validate ecosystem models stored in NetCDF format against a range of in-situ and gridded observations. Currently, it uses curated data sets for validations of models on the northwest European shelf, and global datasets elsewhere. 
+
+If you are interested in a demo and discussions of how it can be used for your purposes, please contact [Robert Wilson](mailto:rwi@pml.ac.uk).
 
 
 ## Steps to carry out automated validation of model output 
