@@ -108,7 +108,7 @@ In-situ  and gridded historical observations are used for the following variable
 | Plankton Functional Types | [Cefas](https://www.cefas.co.uk/data-and-publications/dois/north-sea-phytoplankton-pigments-2010-to-2011/) |  |
 | pH | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | |
 | Phosphate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
-| Particulate Organic Carbon | PANGAEA | |
+| Particulate Organic Carbon | PANGAEA | [NCEO](https://catalogue.ceda.ac.uk/uuid/480394782006415897d7715dd3f5ceda) |
 | Salinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
 | Silicate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx)| [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
 | Temperature | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [CMEMS](https://data.marine.copernicus.eu/product/SST_GLO_SST_L4_REP_OBSERVATIONS_010_011/description) |
