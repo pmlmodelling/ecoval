@@ -111,7 +111,7 @@ In-situ observations are used for the following variables and sources for Europe
 | Particulate Organic Carbon | PANGAEA | |
 | Salinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
 | Silicate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx)|
-| Temperature | [ICES] (https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Temperature | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
 
 
 
