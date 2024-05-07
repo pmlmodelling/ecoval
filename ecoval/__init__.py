@@ -15,6 +15,8 @@ import os
 def fix_toc(book_dir):
     paths = glob.glob(f"{book_dir}/notebooks/*.ipynb")
     variables = list(pd.read_csv("matched/mapping.csv").variable)
+    if len([x for x in paths if "pft" in x]) > 0:
+        variables.append("pft")
     variables.sort()
 
     vv_dict = dict()
@@ -67,6 +69,8 @@ def fix_toc(book_dir):
                 vv_out = "pH"
             if vv.lower() == "benbio":
                 vv_out = "Benthos"
+            if vv.lower() == "pft":
+                vv_out = "Plankton Functional Types"
             x = f.write(f"- caption: {vv_out}\n")
             x = f.write("  chapters:\n")
             for file in vv_dict[vv]:
@@ -451,6 +455,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
 
         point_paths = glob.glob("matched/point/**/**/**/**.csv")
         point_paths = [x for x in point_paths if "paths.csv" not in x]
+        point_paths = [x for x in point_paths if "pft" not in x]
         # loop through the paths
         for pp in point_paths:
             vv = os.path.basename(pp).split("_")[2].replace(".csv", "")
@@ -473,6 +478,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                     Variable = "pCO2"
                 if vv == "benbio":
                     Variable = "macrobenthos biomass"
+                if vv == "pft":
+                    Variable = "Plankton Functional Types"
                 vv_file = pp
                 vv_file_find = pp.replace("../../", "")
 
@@ -538,6 +545,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                         Variable = "macrobenthos biomass"
                     if variable == "pco2":
                         Variable = "pCO2"
+                    if variable == "pft":
+                        Variable = "PFT"
                     file1 = pkg_resources.resource_filename(
                         __name__, "data/gridded_template.ipynb"
                     )
@@ -594,6 +603,32 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
                         }
                     )
                 )
+        
+
+        # copy pft ntoebook over
+
+        if not os.path.exists(f"{book_dir}/notebooks/surface_pft.ipynb"):
+            file1 = pkg_resources.resource_filename(__name__, "data/pft_template.ipynb")
+            with open(file1, "r") as file:
+                filedata = file.read()
+
+            # Replace the target string
+            filedata = filedata.replace("template_variable", "pft")
+            filedata = filedata.replace("template_title", "Primary production")
+
+            # Write the file out again
+            with open(f"{book_dir}/notebooks/surface_pft.ipynb", "w") as file:
+                file.write(filedata)
+
+            path_df.append(
+                pd.DataFrame(
+                    {
+                        "variable": ["pft"],
+                        "path": [f"{book_dir}/notebooks/surface_pft.ipynb"],
+                    }
+                )
+            )
+
 
 
         # loop through all notebooks and replace paths
@@ -750,6 +785,17 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
         if os.path.exists(ff):
             if "nctoolkit" in x:
                 os.remove(ff)
+    # create a symlink  
+    out_ff = f"{book_dir}/_build/html/index.html"
+    #if os.path.exists("validation.html"):
+    #    os.remove("validation.html")
+    #os.symlink(out_ff, "validation.html")
+    # clean up with the python files that are now useless
+    for ff in glob.glob(f"{book_dir}/notebooks/*.ipynb"):
+        ff_clean = ff.replace(".ipynb", ".py")
+        if os.path.exists(ff_clean):
+            os.remove(ff_clean)
+
     webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
 
 def rebuild():
