@@ -94,7 +94,7 @@ ecoval.rebuild()
 
 ## Validation data sources
 
-In-situ observations
+In-situ observations are used for the following variables and sources for European seas.
 
 | Variable | Source |
 | --- | --- | 
