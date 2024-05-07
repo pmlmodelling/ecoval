@@ -97,7 +97,7 @@ ecoval.rebuild()
 In-situ  and gridded historical observations are used for the following variables for the northwest European shelf.
 
 | Variable | In-situ data | Gridded data source |
-| --- | --- | 
+| --- | --- | --- | 
 | Alkalinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | |
 | Ammonium | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
 | Chlorophyll | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
