@@ -92,6 +92,31 @@ import ecoval
 ecoval.rebuild()
 ```
 
+## Validation data sources
+
+In-situ observations
+
+| Variable | Source |
+| --- | --- | 
+| Alkalinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Ammonium | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Chlorophyll | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Dissolved Inorganic Carbon | PANGAEA | |
+| Nitrate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Oxygen | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| pCO2 | [SOCAT]( https://www.socat.info/) |
+| Plankton Functional Types | [Cefas](https://www.cefas.co.uk/data-and-publications/dois/north-sea-phytoplankton-pigments-2010-to-2011/) | 
+| pH | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Phosphate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Particulate Organic Carbon | PANGAEA | |
+| Salinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Silicate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx)|
+| Temperature | [ICES] (https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+
+
+
+
+
 
 
 
