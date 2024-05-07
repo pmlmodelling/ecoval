@@ -92,26 +92,27 @@ import ecoval
 ecoval.rebuild()
 ```
 
-## Validation data sources
+## Validation data sources for the northwest European Shelf
 
-In-situ observations are used for the following variables and sources for European seas.
+In-situ  and gridded historical observations are used for the following variables for the northwest European shelf.
 
-| Variable | Source |
+| Variable | In-situ data | Gridded data source |
 | --- | --- | 
-| Alkalinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
-| Ammonium | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
-| Chlorophyll | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Alkalinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | |
+| Ammonium | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
+| Chlorophyll | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
 | Dissolved Inorganic Carbon | PANGAEA | |
-| Nitrate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
-| Oxygen | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
-| pCO2 | [SOCAT]( https://www.socat.info/) |
-| Plankton Functional Types | [Cefas](https://www.cefas.co.uk/data-and-publications/dois/north-sea-phytoplankton-pigments-2010-to-2011/) | 
-| pH | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
-| Phosphate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Nitrate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
+| Oxygen | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |[NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
+| pCO2 | [SOCAT]( https://www.socat.info/) | |
+| Plankton Functional Types | [Cefas](https://www.cefas.co.uk/data-and-publications/dois/north-sea-phytoplankton-pigments-2010-to-2011/) |  |
+| pH | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | |
+| Phosphate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
 | Particulate Organic Carbon | PANGAEA | |
-| Salinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
-| Silicate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx)|
-| Temperature | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) |
+| Salinity | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
+| Silicate | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx)| [NSBC](https://www.cen.uni-hamburg.de/en/icdc/data/ocean/nsbc.html) |
+| Temperature | [ICES](https://www.ices.dk/data/data-portals/Pages/ocean.aspx) | [CMEMS](https://data.marine.copernicus.eu/product/SST_GLO_SST_L4_REP_OBSERVATIONS_010_011/description) |
+
 
 
 
