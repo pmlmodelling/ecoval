@@ -1,8 +1,6 @@
 # ecoval
 Marine ecosystem model validation made easy in Python
 
-<video src=static/demo.mp4 width=180/>
-
 
 ## Steps to carry out automated validation of model output 
 
