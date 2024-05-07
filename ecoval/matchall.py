@@ -126,7 +126,7 @@ def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
 
 
 def mm_match(
-    ff, ersem_variable, df, df_times, ds_depths, ices_variable, df_all, top_layer=False, bottom_layer = False
+    ff, ersem_variable, df, df_times, ds_depths, variable, df_all, top_layer=False, bottom_layer = False
 ):
     """
     Parameters
@@ -157,8 +157,9 @@ def mm_match(
                 ds.bottom()
             ds.as_missing(0)
             ds.run()
-            if len(var_match) > 1:
-                ds.sum_all()
+            if variable != "pft":
+                if len(var_match) > 1:
+                    ds.sum_all()
             valid_locs = ["lon", "lat", "year", "month", "day", "depth"]
             valid_locs = [x for x in valid_locs if x in df.columns]
 
@@ -192,7 +193,9 @@ def mm_match(
                 else:
                     df_ff = ds.match_points( df_locs, depths=ds_depths, quiet=True, top=top_layer)
                 if df_ff is not None:
-                    valid_vars = ["lon", "lat", "year", "month", "day", "depth", ds.variables[0]]
+                    valid_vars = ["lon", "lat", "year", "month", "day", "depth"]
+                    for vv in ds.variables:
+                        valid_vars.append(vv)
                     valid_vars = [x for x in valid_vars if x in df_ff.columns]
                     df_ff = df_ff.loc[:, valid_vars]
                     df_all.append(df_ff)
@@ -377,6 +380,7 @@ def matchup(
     ],
     bottom= ["ph", "oxygen"],
     benthic = ["carbon", "benbio"],
+    pft = False,
     cores=None,
     e3t=None,
     mapping=None,
@@ -500,8 +504,6 @@ def matchup(
         if "ben" in pp and "bio" in pp:
             benthic.remove(pp)
             benthic.append("benbio")
-
-
 
     for pp in benthic:
         if pp not in valid_benthic:
@@ -648,7 +650,6 @@ def matchup(
             point_bottom = bottom
 
     if all_df is None:
-        print(folder)
         all_df = find_paths(folder, fvcom=fvcom, exclude=exclude)
 
         # add in anything that is missing
@@ -913,6 +914,9 @@ def matchup(
     if "doc" in surface and model_domain == "nws":
         point_surface.append("doc")
 
+    if pft:
+        point_surface.append("pft")
+
     if type(surface) is str:
         surface = [surface]
 
@@ -1146,7 +1150,10 @@ def matchup(
             )
 
             all_df = all_df.dropna()
-            all_df = all_df.query("variable == @vv").reset_index(drop=True)
+            if vv != "pft":
+                all_df = all_df.query("variable == @vv").reset_index(drop=True)
+            else:
+                all_df = all_df.query("variable == 'chlorophyll'").reset_index(drop=True)
             patterns = list(set(all_df.pattern))
 
             for pattern in patterns:
@@ -1258,19 +1265,26 @@ def matchup(
                 def point_match(variable, layer="all", ds_depths = None):
                     with warnings.catch_warnings(record=True) as w:
                         point_variable = variable
+                        if variable == "pft":
+                            point_variable = "chlorophyll"
                         ersem_variable = list(
                             all_df.query("variable == @point_variable").model_variable
                         )[0]
                         paths = glob.glob(
                             f"{data_dir}/point/nws/**/{variable}/**{variable}**.csv"
                         )
+                        if variable == "pft":
+                            point_variable = "pft"
                         source = os.path.basename(paths[0]).split("_")[0]
                         if depths == "surface":
                             paths = [x for x in paths if "all" in x]
                         else:
                             paths = [x for x in paths if depths in x]
 
-                        paths = [x for x in paths if f"{point_variable}/" in x]
+                        if variable == "pft":
+                            paths = [x for x in paths if "pft" in x]
+                        else:
+                            paths = [x for x in paths if f"{point_variable}/" in x]
                         for exc in exclude:
                             paths = [
                                 x for x in paths if f"{exc}" not in os.path.basename(x)
@@ -1356,7 +1370,8 @@ def matchup(
                     # valid_cols = ["lon", "lat",	"day"	month	year	depth	model	observation	
                     valid_cols = ["lon", "lat", "day", "month", "year", "depth", "observation"]
                     select_these = [x for x in df.columns if x in valid_cols]
-                    df = df.loc[:, select_these]
+                    if variable != "pft":
+                        df = df.loc[:, select_these]
 
                     df_all = manager.list()
 
@@ -1453,9 +1468,12 @@ def matchup(
                             .query("lat < 64.3")
                         )
                     change_this = [x for x in df_all.columns if x not in ["lon", "lat", "year", "month", "day", "depth", "observation"]][0]
-                    df_all = df_all.rename(columns={change_this: "model"}).merge(
-                        df
-                    )
+                    # 
+                    if vv != "pft":
+                        df_all = df_all.rename(columns={change_this: "model"}).merge(
+                            df
+                        )
+                        # add model to name column names with frac in them
                     df_all = df_all.dropna().reset_index(drop=True)
                     grouping = ["lon", "lat", "day", "month", "year", "depth"]
                     grouping = [x for x in grouping if x in df_all.columns]
@@ -1477,6 +1495,37 @@ def matchup(
                         df_all = df_all.query(f"lon > {lon_lim[0]} and lon < {lon_lim[1]}")
                     if lat_lim is not None:
                         df_all = df_all.query(f"lat > {lat_lim[0]} and lat < {lat_lim[1]}")
+                    
+                    if vv == "pft":
+                        print("Fixing pft")
+                        # We now need to convert Chl to PFTs
+                        print(df_all)
+                        ds = nc.open_data(ff, checks = False)
+                        ds_contents = ds.contents
+                        nano = [x for x in ds_contents.long_name if "chloroph" in x and "nano" in x]
+                        nano = ds.contents.query("long_name in @nano").variable
+                        pico = [x for x in ds_contents.long_name if "chloroph" in x and "pico" in x]
+                        pico = ds.contents.query("long_name in @pico").variable
+                        micro = [x for x in ds_contents.long_name if "chloroph" in x and ("micro" in x or "diatom" in x)]
+                        micro = ds.contents.query("long_name in @micro").variable
+                        # convert to lists
+                        nano = nano.tolist()
+                        pico = pico.tolist()
+                        micro = micro.tolist()
+                        # do a row sum
+                        df_all["nano_frac"] = df_all.loc[:,nano].sum(axis = 1)
+                        df_all["pico_frac"] = df_all.loc[:,pico].sum(axis = 1)
+                        df_all["micro_frac"] = df_all.loc[:,micro].sum(axis = 1)
+                        valid_vars = ["lon", "lat", "year", "month", "day", "nano_frac", "pico_frac", "micro_frac"]
+                        valid_vars = [x for x in valid_vars if x in df_all.columns]
+                        df_all = df_all.loc[:, valid_vars]
+                        df_all.rename(columns = {"nano_frac": "nano_frac_model", "pico_frac": "pico_frac_model", "micro_frac": "micro_frac_model"}, inplace = True)
+                        
+                        df = df.rename(columns = {"nano_frac": "nano_frac_obs", "pico_frac": "pico_frac_obs", "micro_frac": "micro_frac_obs"})
+
+                        print(df)
+
+                        df_all = df_all.merge(df)
 
                     if len(df_all) > 0:
                         df_all.to_csv(out, index=False)

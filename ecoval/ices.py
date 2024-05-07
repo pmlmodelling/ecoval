@@ -95,7 +95,11 @@ def generate_mapping(ds, fvcom = False):
      "doc",
      "carbon",
      "benbio",
-     'alkalinity']
+     'alkalinity',
+     "micro",
+     "nano",
+     "pico"
+     ]
     ds1 = nc.open_data(ds[0], checks = False)
     try:
         ds_contents = ds1.contents

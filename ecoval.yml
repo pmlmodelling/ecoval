@@ -15,6 +15,7 @@ dependencies:
   - r-base
   - r-cowplot
   - r-ggthemes
+  - r-ggtern
   - r-dplyr
   - r-ggplot2
   - r-ggridges
