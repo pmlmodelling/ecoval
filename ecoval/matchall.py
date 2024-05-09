@@ -8,10 +8,18 @@ import pandas as pd
 import string
 import random
 import warnings
+# A custom format for warnings.
+def custom_formatwarning(msg, *args, **kwargs):
+    # ignore everything except the message
+    return "Warning: " + str(msg) + "\n"
+
+warnings.formatwarning = custom_formatwarning
 import numpy as np
 import xarray as xr
 
+
 from multiprocessing import Manager
+session_warnings = Manager().list() 
 from tqdm import tqdm
 from ecoval.utils import get_datadir, session
 from ecoval.utils import extension_of_directory
@@ -117,7 +125,9 @@ def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
         df_out = ds.match_points(
             df_locs, variables=variable, depths=depths_file, quiet=True
         )
-    tidy_warnings(w)
+    for ww in w:
+        if str(ww.message) not in session_warnings:
+            session_warnings.append(str(ww.message))
 
     df_out.rename(columns={variable: "model"}, inplace=True)
     df_out = df_out.merge(df_wod)
@@ -199,7 +209,9 @@ def mm_match(
                     valid_vars = [x for x in valid_vars if x in df_ff.columns]
                     df_ff = df_ff.loc[:, valid_vars]
                     df_all.append(df_ff)
-        tidy_warnings(w)
+        for ww in w:
+            if str(ww.message) not in session_warnings:
+                session_warnings.append(str(ww.message))
 
     except Exception as e:
         print(e)
@@ -1143,7 +1155,6 @@ def matchup(
             point_vars = point_benthic
 
         for vv in point_vars:
-            print(vv)
             all_df = df_mapping
             all_df = all_df.query("model_variable in @good_model_vars").reset_index(
                 drop=True
@@ -1260,7 +1271,10 @@ def matchup(
                             ds_depths.cdo_command("invertlev")
                         ds_depths.run()
 
-                    tidy_warnings(w)
+                    #tidy_warnings(w)
+                    for ww in w:
+                        if str(ww.message) not in session_warnings:
+                            session_warnings.append(str(ww.message))
                 
                 def point_match(variable, layer="all", ds_depths = None):
                     with warnings.catch_warnings(record=True) as w:
@@ -1271,7 +1285,7 @@ def matchup(
                             all_df.query("variable == @point_variable").model_variable
                         )[0]
                         paths = glob.glob(
-                            f"{data_dir}/point/nws/**/{variable}/**{variable}**.csv"
+                            f"{data_dir}/point/nws/**/{variable}/**{variable}**.feather"
                         )
                         if variable == "pft":
                             point_variable = "pft"
@@ -1291,7 +1305,7 @@ def matchup(
                             ]
 
 
-                        df = pd.concat([pd.read_csv(x) for x in paths])
+                        df = pd.concat([pd.read_feather(x) for x in paths])
 
                         if variable == "doc":
                             # go from mole to g of C
@@ -1322,8 +1336,8 @@ def matchup(
                         ).reset_index(drop=True)
 
                         if variable == "temperature" and mld:
-                            df_include = pd.read_csv(
-                                f"{data_dir}/point/nws/mld_profiles.csv"
+                            df_include = pd.read_feather(
+                                f"{data_dir}/point/nws/mld_profiles.feather"
                             )
                             df = df.merge(df_include).reset_index(drop=True)
                         sel_these = ["year", "month", "day"]
@@ -1346,15 +1360,20 @@ def matchup(
 
                         manager = Manager()
                         # time to subset the df to the lon/lat ranges
-                        ds_grid = nc.open_data(paths[0], checks=False)
-                        ds_grid.subset(variables=ds_grid.variables[0])
-                        ds_grid.top()
-                        ds_grid.subset(time=0)
-                        amm7 = False
-                        if max(ds_grid.contents.npoints) == 111375:
-                            amm7 = True
-                            ds_grid.fix_amm7_grid()
-                        ds_xr = ds_grid.to_xarray()
+
+                        with warnings.catch_warnings(record=True) as w:
+                            ds_grid = nc.open_data(paths[0], checks=False)
+                            ds_grid.subset(variables=ds_grid.variables[0])
+                            ds_grid.top()
+                            ds_grid.subset(time=0)
+                            amm7 = False
+                            if max(ds_grid.contents.npoints) == 111375:
+                                amm7 = True
+                                ds_grid.fix_amm7_grid()
+                            ds_xr = ds_grid.to_xarray()
+                        for ww in w:
+                            if str(ww.message) not in session_warnings:
+                                session_warnings.append(str(ww.message))
                         # extract the minimum latitude and longitude
                         lon_name = [x for x in list(ds_xr.coords) if "lon" in x][0]
                         lon_min = ds_xr[lon_name].values.min()
@@ -1365,7 +1384,9 @@ def matchup(
                         df = df.query(
                             "lon >= @lon_min and lon <= @lon_max and lat >= @lat_min and lat <= @lat_max"
                         ).reset_index(drop=True)
-                    tidy_warnings(w)
+                    for ww in w:
+                        if str(ww.message) not in session_warnings:
+                            session_warnings.append(str(ww.message))
 
                     # valid_cols = ["lon", "lat",	"day"	month	year	depth	model	observation	
                     valid_cols = ["lon", "lat", "day", "month", "year", "depth", "observation"]
@@ -1410,7 +1431,9 @@ def matchup(
                                     df_grid.to_csv(
                                         "matched/model_grid.csv", index=False
                                     )
-                                tidy_warnings(w)
+                                for ww in w:
+                                    if str(ww.message) not in session_warnings:
+                                        session_warnings.append(str(ww.message))
 
                         grid_setup = True
                         if layer == "surface":
@@ -1523,8 +1546,6 @@ def matchup(
                         
                         df = df.rename(columns = {"nano_frac": "nano_frac_obs", "pico_frac": "pico_frac_obs", "micro_frac": "micro_frac_obs"})
 
-                        print(df)
-
                         df_all = df_all.merge(df)
 
                     if len(df_all) > 0:
@@ -1532,7 +1553,6 @@ def matchup(
                     else:
                         print(f"No data for {variable}")
 
-                print("**********************")
                 vv_variable = vv
                 if vv == "ph":
                     vv_variable = "pH"
@@ -1552,14 +1572,31 @@ def matchup(
                         print(
                             f"Matching up model {vv_variable} with near-bottom point {vv_variable} data"
                         )
+                if depths == "benthic":
+                    print(
+                        f"Matching up model {vv_variable} with benthic point data"
+                    )
                 print("**********************")
                 if depths == "surface":
                     point_match(vv, layer="surface")
                 else:
                     point_match(vv, ds_depths = ds_depths)
 
-        # def nsbc_matchup(df_mapping = None, folder = None, var_choice = None, exclude = None, surface = None, start = None, spinup = None, sim_start = None, sim_end = None, e3t = None, report = None):
+                output_warnings = []
+                for ww in session_warnings:
+                    if ww is not None:
+                        if ww in output_warnings:
+                            continue
+                        output_warnings.append(str(ww))
 
+                if len(output_warnings) > 0:
+                    output_warnings = list(set(output_warnings))
+                    print(f"Warnings for {vv_variable}")
+                    for ww in output_warnings:
+                       warnings.warn(message = ww)
+                # empty session warnings
+    while len(session_warnings) > 0:
+        session_warnings.pop()
 
     gridded_matchup(
         df_mapping=df_mapping,
