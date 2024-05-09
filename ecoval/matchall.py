@@ -450,6 +450,15 @@ def matchup(
         Strict temporal matching. Default is True. Set this to False if you want to match data up by month and day, but not year.
     mld: bool
         Matchup temperature data for mixed layer depth validation. Default is False.
+    daily_match: bool
+        Matchup data daily. Default is True. Set this to False if you want to match data up monthly.
+    lon_lim: list
+        List of two floats. The first is the minimum longitude, the second is the maximum longitude. Default is None.
+    lat_lim: list
+        List of two floats. The first is the minimum latitude, the second is the maximum latitude. Default is None.
+    data_dir: str
+        Path to data directory. Default is 'default'. If 'default', the data directory is taken from the session_info dictionary.
+    
     kwargs: dict
         Additional arguments
 
