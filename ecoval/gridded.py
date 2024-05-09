@@ -7,9 +7,9 @@ import numpy as np
 import nctoolkit as nc
 
 from ecoval.fixers import tidy_warnings
-from ecoval.utils import get_datadir, extension_of_directory, get_extent
+from ecoval.utils import extension_of_directory, get_extent
+from ecoval.session import session_info
 
-data_dir = get_datadir()
 
 
 def write_report(x):
@@ -66,6 +66,7 @@ def gridded_matchup(
         This indicates whether the matchups use northwest European shelf data or global data
 
     """
+    data_dir = session_info["data_dir"] 
 
     all_df = df_mapping
     # if model_variable is None remove from all_df

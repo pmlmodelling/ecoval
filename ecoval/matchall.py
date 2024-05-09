@@ -16,12 +16,13 @@ def custom_formatwarning(msg, *args, **kwargs):
 warnings.formatwarning = custom_formatwarning
 import numpy as np
 import xarray as xr
+from ecoval.session import session_info
 
 
 from multiprocessing import Manager
 session_warnings = Manager().list() 
 from tqdm import tqdm
-from ecoval.utils import get_datadir, session
+from ecoval.utils import session
 from ecoval.utils import extension_of_directory
 from ecoval.ices import generate_mapping
 from ecoval.gridded import gridded_matchup
@@ -101,7 +102,7 @@ if config_file is not None:
 
 
 def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
-    data_dir = get_datadir()
+    data_dir = session_info["data_dir"] 
     ds = nc.open_data(ff, checks=False)
     years = list(set(ds.years))
     # read in the WOD data
@@ -404,6 +405,7 @@ def matchup(
     daily_match = True,
     lon_lim = None,
     lat_lim = None, 
+    data_dir = "default",
     **kwargs,
 ):
     """
@@ -454,6 +456,15 @@ def matchup(
 
 
     """
+
+    if data_dir != "default":
+        if not os.path.exists(data_dir):
+            raise ValueError(f"{data_dir} does not exist")
+        session_info["data_dir"] = data_dir
+    else:
+        data_dir = session_info["data_dir"]
+    
+    print(data_dir)
 
     # check that lon_lim and lat_lim and valid when either is not None
 

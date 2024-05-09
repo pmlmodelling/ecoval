@@ -4,6 +4,7 @@ import os
 import glob
 
 
+
 session = dict()
 
 import nctoolkit as nc
@@ -86,6 +87,8 @@ def find_config(level = 0):
     return None
 
 def get_datadir(level = 0):
+
+
 
     data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
     config_file = find_config(level = level)
