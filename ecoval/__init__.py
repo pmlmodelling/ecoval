@@ -5,6 +5,7 @@ import shutil
 import glob
 import nctoolkit as nc
 from ecoval.matchall import matchup
+from ecoval.trends import trends
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
 import webbrowser
@@ -770,6 +771,11 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
     # raise ValueError("here")
     fix_toc(book_dir)
 
+    for ff in glob.glob(f"{book_dir}/notebooks/*.ipynb"):
+        ff_clean = ff.replace(".ipynb", ".py")
+        if os.path.exists(ff_clean):
+            os.remove(ff_clean)
+
     os.system(f"jupyter-book build {book_dir}/")
 
     import os
@@ -791,10 +797,6 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
     #    os.remove("validation.html")
     #os.symlink(out_ff, "validation.html")
     # clean up with the python files that are now useless
-    for ff in glob.glob(f"{book_dir}/notebooks/*.ipynb"):
-        ff_clean = ff.replace(".ipynb", ".py")
-        if os.path.exists(ff_clean):
-            os.remove(ff_clean)
 
     webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
 
