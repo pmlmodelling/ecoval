@@ -62,8 +62,7 @@ md(f"**Figure {i_figure}**: Seasonal temporal correlation between model and obse
 i_figure += 1
 
 # %% tags=["remove-cell"]
-#ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
-data_path = pkg_resources.resource_filename(__name__, "data/amm7_val_subdomains.nc")
+data_path = pkg_resources.resource_filename("ecoval", "data/amm7_val_subdomains.nc")
 ds_regions = nc.open_data(data_path, checks = False)
 # pull this in from the package data
 
@@ -103,7 +102,7 @@ if lon_min > -30:
 
 
 # %% tags=["remove-cell"]
-shape = gpd.read_file(f"{data_dir}/mapping/TM_WORLD_BORDERS-0.3.shp")
+#shape = gpd.read_file(f"{data_dir}/mapping/TM_WORLD_BORDERS-0.3.shp")
 mod_var = ds_model.variables[0]
 obs_var = ds_obs.variables[0]
 # create xlim using mod_var

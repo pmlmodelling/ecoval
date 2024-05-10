@@ -19,7 +19,10 @@
 # %% tags=["remove-input"]
 md(f"The ability of the model to reproduce the broad-scale statistical distribution of {layer} {vv_name} is assessed by comparing the cumulative distribution function (CDF) of the modelled and observed {vv_name}. The CDF is a function that maps the probability that a random variable is less than or equal to a given value. The CDF is calculated by counting the number of values less than or equal to a given value and dividing by the total number of values. The CDF is a non-parametric measure of the statistical distribution of a random variable. It is a more robust measure of the statistical distribution than the mean and standard deviation, which are sensitive to outliers.")
 ds = nc.open_data(f"../../results/monthly_mean/monthlymean_{variable}.nc")
-ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
+data_path = pkg_resources.resource_filename("ecoval", "data/amm7_val_subdomains.nc")
+ds_regions = nc.open_data(data_path, checks = False)
+
+
 ds_regions.subset(variable = "Shelf")
 ds_regions.as_missing(0)
 ds_regions.regrid(ds)
