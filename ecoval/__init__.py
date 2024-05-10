@@ -611,27 +611,29 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
         # copy pft ntoebook over
 
-        if not os.path.exists(f"{book_dir}/notebooks/surface_pft.ipynb"):
-            file1 = pkg_resources.resource_filename(__name__, "data/pft_template.ipynb")
-            with open(file1, "r") as file:
-                filedata = file.read()
+        #/data/proteus1/scratch/rwi/pygetm/pft/matched/point/nws/surface/pft/cefas_surface_pft.csv
+        if os.path.exists("matched/point/nws/surface/pft/cefas_surface_pft.csv"):
+            if not os.path.exists(f"{book_dir}/notebooks/surface_pft.ipynb"):
+                file1 = pkg_resources.resource_filename(__name__, "data/pft_template.ipynb")
+                with open(file1, "r") as file:
+                    filedata = file.read()
 
-            # Replace the target string
-            filedata = filedata.replace("template_variable", "pft")
-            filedata = filedata.replace("template_title", "Primary production")
+                # Replace the target string
+                filedata = filedata.replace("template_variable", "pft")
+                filedata = filedata.replace("template_title", "Primary production")
 
-            # Write the file out again
-            with open(f"{book_dir}/notebooks/surface_pft.ipynb", "w") as file:
-                file.write(filedata)
+                # Write the file out again
+                with open(f"{book_dir}/notebooks/surface_pft.ipynb", "w") as file:
+                    file.write(filedata)
 
-            path_df.append(
-                pd.DataFrame(
-                    {
-                        "variable": ["pft"],
-                        "path": [f"{book_dir}/notebooks/surface_pft.ipynb"],
-                    }
+                path_df.append(
+                    pd.DataFrame(
+                        {
+                            "variable": ["pft"],
+                            "path": [f"{book_dir}/notebooks/surface_pft.ipynb"],
+                        }
+                    )
                 )
-            )
 
 
 
