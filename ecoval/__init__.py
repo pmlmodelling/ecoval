@@ -333,7 +333,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", data_dir = None):
+def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False):
     # docstring
     """
     This function will run the model evaluation for all of the available datasets.
@@ -346,16 +346,15 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         The author of the book. Default is None
     variables : str or list
         The variables to run the model evaluation for. Default is "all"
+    r_warnings : bool
+        Whether to suppress R warnings. Default is False
+
 
     Returns
     -------
     None
     """
     import os
-    if data_dir is None:
-        data_dir = get_datadir()
-    else:
-        session_info["data_dir"] = data_dir
     path_df = []
 
     fast_plot = False
@@ -748,6 +747,32 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
         # add the chunks
         add_chunks()
+
+        # loop through the notebooks and set r warnings options
+        for ff in glob.glob(f"{book_dir}/notebooks/*.py"):
+            with open(ff, "r") as file:
+                filedata = file.read()
+        
+            # loop through line by line, and rewrite the original file
+            lines = filedata.split("\n")
+            new_lines = []
+            for line in lines:
+                if "%%R" in line:
+                    new_lines.append(line)
+                    new_lines.append("options(warn=-1)")
+                else:
+                    new_lines.append(line)
+            
+            # write the new lines to the file
+            with open(ff, "w") as file:
+                for line in new_lines:
+                    file.write(line + "\n")
+
+
+
+
+
+
 
         # sync the notebooks
         #
