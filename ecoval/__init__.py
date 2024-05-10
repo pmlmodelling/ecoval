@@ -5,7 +5,7 @@ import shutil
 import glob
 import nctoolkit as nc
 from ecoval.matchall import matchup
-from ecoval.trends import trends
+#from ecoval.trends import trends
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
 from ecoval.session import session_info
