@@ -52,7 +52,6 @@ units = ds.contents.unit[0]
 
 
 # %% tags=["remove-input"]
-
 %%capture --no-display
 %%R -i df -i units -i variable -w 10 -h 10 --units in -r 100
 library(dplyr)
