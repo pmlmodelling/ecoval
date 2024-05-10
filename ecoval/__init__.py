@@ -333,7 +333,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", data_dir):
+def validate(title="Automated model evaluation", author=None, variables = "all", data_dir = None):
     # docstring
     """
     This function will run the model evaluation for all of the available datasets.
