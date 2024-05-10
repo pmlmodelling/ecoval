@@ -460,6 +460,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         point_paths = glob.glob("matched/point/**/**/**/**.csv")
         point_paths = [x for x in point_paths if "paths.csv" not in x]
         point_paths = [x for x in point_paths if "pft" not in x]
+        point_paths = [x for x in point_paths if "unit" not in x]
         # loop through the paths
         for pp in point_paths:
             vv = os.path.basename(pp).split("_")[2].replace(".csv", "")

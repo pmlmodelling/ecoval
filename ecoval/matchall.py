@@ -1574,6 +1574,12 @@ def matchup(
 
                     if len(df_all) > 0:
                         df_all.to_csv(out, index=False)
+                        out_unit = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}_unit.csv"
+                        ds = nc.open_data(paths[0], checks = False)
+                        ds_contents = ds.contents
+                        ersem_variable = ersem_variable.split("+")[0]
+                        ds_contents = ds_contents.query("variable == @ersem_variable")
+                        ds_contents.to_csv(out_unit, index = False)
                     else:
                         print(f"No data for {variable}")
 
