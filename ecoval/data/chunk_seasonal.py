@@ -62,7 +62,11 @@ md(f"**Figure {i_figure}**: Seasonal temporal correlation between model and obse
 i_figure += 1
 
 # %% tags=["remove-cell"]
-ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
+#ds_regions = nc.open_data(f"{data_dir}/amm7_val_subdomains.nc")
+data_path = pkg_resources.resource_filename(__name__, "data/amm7_val_subdomains.nc")
+ds_regions = nc.open_data(data_path, checks = False)
+# pull this in from the package data
+
 ds_regions.as_missing(0)
 ds_regions.set_fill(-9999)
 ds_regions.run()
