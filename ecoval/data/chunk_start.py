@@ -1,6 +1,7 @@
 import nctoolkit as nc
 nc.options(parallel=True)
 import os
+import pkg_resources
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
