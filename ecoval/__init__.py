@@ -8,6 +8,7 @@ from ecoval.matchall import matchup
 from ecoval.trends import trends
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
+from ecoval.session import session_info
 import webbrowser
 from ecoval.chunkers import add_chunks
 import os
@@ -332,7 +333,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all"):
+def validate(title="Automated model evaluation", author=None, variables = "all", data_dir):
     # docstring
     """
     This function will run the model evaluation for all of the available datasets.
@@ -351,7 +352,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all")
     None
     """
     import os
-    data_dir = get_datadir()
+    if data_dir is None:
+        data_dir = get_datadir()
+    else:
+        session_info["data_dir"] = data_dir
     path_df = []
 
     fast_plot = False
