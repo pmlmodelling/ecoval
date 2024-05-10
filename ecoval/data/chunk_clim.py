@@ -1,18 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: ipynb,py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.14.6
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
 
 # %% tags=["remove-input"]
 
@@ -25,10 +10,10 @@ else:
 
 ds_annual = ds_model.copy()
 ds_annual.tmean()
-if "model" == ds_annual.variables[0]:
-    ds_annual.set_longnames({"model": Variable})
-else:
-    ds_annual.set_longnames({variable: Variable})
+# if "model" == ds_annual.variables[0]:
+#     ds_annual.set_longnames({"model": Variable})
+# else:
+#     ds_annual.set_longnames({variable: Variable})
 
 ds_annual.run()
 
@@ -82,7 +67,7 @@ except:
     fix_grid = True 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual mean {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
+md(f"**Figure {i_figure}**: Annual average {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
 i_figure += 1
 
 # %% tags=["remove-input"]
@@ -127,7 +112,7 @@ else:
     plot_obs = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual {layer} mean {vv_name} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
+md(f"**Figure {i_figure}**: Annual average {layer} {vv_name} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
 i_figure += 1
 
 # %% tags=["remove-cell"]
@@ -211,10 +196,10 @@ z_max = (
 
 ds_both.set_units({"observation": ds_both.contents.query("variable == 'model'").reset_index().unit.values[0]})
 # chang longname
-try:
-    ds_both.set_longnames({"observation": ds_both.contents.query("variable == 'model'").reset_index().long_name.values[0]}) 
-except:
-    ds_both.set_longnames({"observation": ds_both.contents.query("variable == 'observation'").reset_index().long_name.values[0]})  
+# try:
+#     ds_both.set_longnames({"observation": ds_both.contents.query("variable == 'model'").reset_index().long_name.values[0]}) 
+# except:
+#     ds_both.set_longnames({"observation": ds_both.contents.query("variable == 'observation'").reset_index().long_name.values[0]})  
 ds_both.pub_plot(variable  = "model", limits = [z_min, z_max], title = "Model", fig = fig, gs = gs[0,0], trans = transformation)
 
 
