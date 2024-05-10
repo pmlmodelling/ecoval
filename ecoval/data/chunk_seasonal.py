@@ -192,6 +192,8 @@ df_model <- arrow::read_feather("adhoc/df_model_model.feather")
 
 if("month" %in% colnames(df_model)){
 
+    model_unit = str_replace(model_unit, "/m\\^3", "m<sup>-3</sup>")
+
     df_model_raw <- drop_na(df_model)
     df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
     df_diff <- arrow::read_feather("adhoc/df_diff_model.feather")
@@ -328,7 +330,7 @@ geom_tile(aes(x = lon, y = lat, fill = model))+
 facet_wrap(~month, ncol = 6)+
 coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
-theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
+theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 labs(x = NULL, y = NULL, title = "Model", fill = model_unit)
 
@@ -342,7 +344,7 @@ facet_wrap(~month, ncol = 6)+
 coord_cartesian(xlim = xlim, ylim = ylim)+ 
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 theme_bw(base_size = 12)+
-theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
+theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Observation", fill = model_unit)
 
 if (fast_plot == FALSE)
@@ -356,7 +358,7 @@ facet_wrap(~month, ncol = 6)+
 coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
 scale_fill_gradient2(guide  = guide_colourbar(title.position = "right"), low = "blue", high = "red")+
-theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
+theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Model - Observation", fill = model_unit)
 
 if (fast_plot == FALSE)
@@ -431,6 +433,8 @@ df_diff_raw <- drop_na(df_diff)
 
 if (variable == "temperature" )
     model_unit = "°C"
+
+    model_unit = str_replace(model_unit, "/m\\^3", "m<sup>-3</sup>")
 
 df_model <- drop_na(df_model)
 df_model <- df_model %>%
@@ -556,7 +560,7 @@ geom_tile(aes(x = lon, y = lat, fill = model))+
 facet_wrap(~month, ncol = 6)+
 coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
-theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
+theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 labs(x = NULL, y = NULL, title = "Model", fill = model_unit)
 
@@ -570,7 +574,7 @@ facet_wrap(~month, ncol = 6)+
 coord_cartesian(xlim = xlim, ylim = ylim)+ 
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 theme_bw(base_size = 12)+
-theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
+theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Observation", fill = model_unit)
 
 if (fast_plot == FALSE)
@@ -584,7 +588,7 @@ facet_wrap(~month, ncol = 6)+
 coord_cartesian(xlim = xlim, ylim = ylim)+ 
 theme_bw(base_size = 12)+
 scale_fill_gradient2(guide  = guide_colourbar(title.position = "right"), low = "blue", high = "red")+
-theme(legend.title = element_text(angle = -90), legend.title.align = 0.5)+
+theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Model - Observation", fill = model_unit)
 
 if (fast_plot == FALSE)

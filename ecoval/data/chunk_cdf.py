@@ -84,14 +84,18 @@ df$month <- factor(df$month, levels = month.name)
 
 
 # edf plot
+#labs(y = "Cumulative probability", x = str_glue("{str_to_title(variable)} ({units})"))+
+x_lab = str_glue("{str_to_title(variable)} ({units})")
+x_lab <- str_replace(x_lab, "/m\\^3", "m<sup>-3</sup>")
 
 ggplot(df, aes(x = value, colour = variable)) +
     stat_ecdf()+
     facet_wrap(~month)+
-    labs(y = "Cumulative probability", x = str_glue("{str_to_title(variable)} ({units})"))+
+    labs(y = "Cumulative probability", x = x_lab)+ 
     theme_bw(base_size = 14)+
     theme(legend.position = "top")+
     labs(colour = NULL)+
+    theme(axis.title.x = ggtext::element_markdown())+
     scale_color_fivethirtyeight()
 
 
