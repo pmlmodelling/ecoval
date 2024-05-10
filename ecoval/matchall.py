@@ -466,6 +466,10 @@ def matchup(
 
     """
 
+    # coerce bottom to list
+    if isinstance(bottom, str):
+        bottom = [bottom]
+
     if data_dir != "default":
         if not os.path.exists(data_dir):
             raise ValueError(f"{data_dir} does not exist")
