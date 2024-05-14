@@ -373,6 +373,10 @@ def gridded_matchup(
                     ds_obs.tmean(["year", "month"])
                     ds_obs.merge("time")
                     ds_obs.tmean(["year", "month"])
+                if vv in ["salinity"] and domain != "nws":
+                    ds_obs.top()
+                    ds_obs.subset(years=years)
+
                 if vv not in ["poc", "temperature"]:
                     if len(ds_obs.times) > 12:
                         ds_obs.subset(years=years)
@@ -450,16 +454,28 @@ def gridded_matchup(
                     ds_obs.subset(lon=lons, lat=lats)
 
                 if domain == "global":
-                   model_extent = get_extent(ds[0])
-                   obs_extent = get_extent(ds_obs[0])
-                   lon_min = max(model_extent[0], obs_extent[0])
-                   lon_max = min(model_extent[1], obs_extent[1])
-                   lat_min = max(model_extent[2], obs_extent[2])
-                   lat_max = min(model_extent[3], obs_extent[3])
-                   lons = [lon_min, lon_max]
-                   lats = [lat_min, lat_max]
-                   ds.subset(lon=lons, lat=lats)
-                   ds_obs.subset(lon=lons, lat=lats)
+                    model_extent = get_extent(ds[0])
+                    obs_extent = get_extent(ds_obs[0])
+                    lon_min = max(model_extent[0], obs_extent[0])
+                    lon_max = min(model_extent[1], obs_extent[1])
+                    lat_min = max(model_extent[2], obs_extent[2])
+                    lat_max = min(model_extent[3], obs_extent[3])
+                   # make sure lon_min is greater than -180
+                    if lon_min < -180:
+                        lon_min = -180
+                    if lon_max > 180:
+                        lon_max = 180
+                    if lat_min < -90:
+                        lat_min = -90
+                    if lat_max > 90:
+                        lat_max = 90
+
+                    lons = [lon_min, lon_max]
+                    lats = [lat_min, lat_max]
+                    print(lons)
+                    print(lats)
+                    ds.subset(lon=lons, lat=lats)
+                    ds_obs.subset(lon=lons, lat=lats)
                 
 
                 n1 = ds_obs.contents.npoints[0]
@@ -535,6 +551,8 @@ def gridded_matchup(
                 if os.path.exists(out_file):
                     os.remove(out_file)
                 ds_obs.set_precision("F32")
+                if vv == "salinity" and domain != "nws":
+                    ds_obs.tmean("month")
                 ds_obs.to_nc(out_file, zip=True, overwrite=True)
 
                 # ds_all.append(ds)
