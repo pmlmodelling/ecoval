@@ -291,6 +291,7 @@ def gridded_matchup(
                     # essentially anything with a + in the mapping should be split out
                     # and then the command should be run for each variable
 
+                    var_unit = None
                     ignore_later = []
                     for vv in list(df.variable):
                         if "+" in mapping[vv]:
@@ -309,10 +310,11 @@ def gridded_matchup(
                             if mapping[key] in ds.variables:
                                 ds.rename({mapping[key]: key})
                     if "chlorophyll" in list(df.variable):
-                        ds.set_units({"chlorophyll": var_unit})
-                        ds.set_longnames(
-                            {"chlorophyll": "Total chlorophyll concentration"}
-                        )
+                        if var_unit is not None:
+                            ds.set_units({"chlorophyll": var_unit})
+                            ds.set_longnames(
+                                {"chlorophyll": "Total chlorophyll concentration"}
+                            )
                     if "poc" in list(df.variable):
                         ds.set_units({"poc": var_unit})
                         ds.set_longnames(
