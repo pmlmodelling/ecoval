@@ -1,8 +1,9 @@
-import nctoolkit as nc
 import copy
+import nctoolkit as nc
 import re
 import glob
 import multiprocessing
+import pathlib
 import os
 import pandas as pd
 import string
@@ -100,40 +101,6 @@ if config_file is not None:
         else:
             raise ValueError(f"{data_path} does not exist")
 
-
-def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
-    data_dir = session_info["data_dir"] 
-    ds = nc.open_data(ff, checks=False)
-    years = list(set(ds.years))
-    # read in the WOD data
-    df_wod = []
-
-    try:
-        for year in years:
-            ff_year = f"{data_dir}/wod/temp_csv/yearly/wod_temp_{year}.csv"
-            df_wod.append(pd.read_csv(ff_year))
-    except:
-        return None
-
-    df_wod = pd.concat(df_wod)
-
-    df_locs = df_wod.drop(columns="temperature")
-    df_wod = df_wod.rename(columns={"temperature": "observation"})
-
-    depths_file = ds.levels
-
-    with warnings.catch_warnings(record=True) as w:
-        df_out = ds.match_points(
-            df_locs, variables=variable, depths=depths_file, quiet=True
-        )
-    for ww in w:
-        if str(ww.message) not in session_warnings:
-            session_warnings.append(str(ww.message))
-
-    df_out.rename(columns={variable: "model"}, inplace=True)
-    df_out = df_out.merge(df_wod)
-
-    df_all.append(df_out)
 
 
 def mm_match(
@@ -725,212 +692,228 @@ def matchup(
 
             all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
 
-        print(f"** Inferred mapping of model variable names from {folder}")
-        print(all_df)
-        print("Are you happy with these matchups? Y/N")
-        x = input()
+            pattern = all_df.iloc[0, :].pattern
 
-        if x.lower() not in ["y", "n"]:
-            print("Provide Y or N")
+            # get the units. File inspection could be randomized in case people have put loose files in there...
+
+            print("********************************")
+            print("Identifying whether it is a northwest European shelf domain")
+            print("********************************")
+            #df = pd.read_csv("matched/mapping.csv")
+            df = all_df
+            df = df.dropna()
+            df = df.iloc[0:1, :]
+            pattern = list(df.pattern)[0]
+            pattern = pattern.replace("//", "/")
+
+            final_extension = extension_of_directory(folder)
+
+            if final_extension[0] == "/":
+                final_extension =  final_extension[1:] 
+
+            wild_card = final_extension + pattern
+            wild_card = wild_card.replace("**", "*")
+            for x in pathlib.Path(folder).glob(wild_card):
+                path = x
+                # convert to string
+                path = str(path)
+                break
+
+            ds = nc.open_data(path, checks=False).to_xarray()
+            lon_name = [x for x in ds.coords if "lon" in x]
+            lat_name = [x for x in ds.coords if "lat" in x]
+            lon = ds[lon_name[0]].values
+            lat = ds[lat_name[0]].values
+            lon_max = lon.max()
+            lon_min = lon.min()
+            lat_max = lat.max()
+            lat_min = lat.min()
+
+            global_grid = False
+            if lon_max - lon_min > 350:
+                global_grid = True
+            if lat_max - lat_min > 170:
+                global_grid = True
+            if lon_max > 50:
+                global_grid = True
+            if global_grid:
+                print("Grid is not NW European shelf")
+            else:
+                print("Grid is NW European shelf")
+
+            if global_grid:
+                model_domain = "global"
+            else:
+                model_domain = "nws"
+            print("********************************")
+
+                # add the global checker here
+
+            print(f"** Inferred mapping of model variable names from {folder}")
+            print(all_df)
+            print("Are you happy with these matchups? Y/N")
             x = input()
 
-        if x.lower() == "n":
-            out = get_out()
-            print(f"Inferred mapping saved as {out}")
-            all_df.to_csv(out, index=False)
-            return None
+            if x.lower() not in ["y", "n"]:
+                print("Provide Y or N")
+                x = input()
 
-    out = "matched/mapping.csv"
-    if not os.path.exists("matched"):
-        os.mkdir("matched")
-    df_out = all_df.dropna().reset_index(drop=True)
-    final_extension = extension_of_directory(folder)
-    df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
-    df_out.to_csv(out, index=False)
+            if x.lower() == "n":
+                out = get_out()
+                print(f"Inferred mapping saved as {out}")
+                all_df.to_csv(out, index=False)
+                return None
 
-    if fvcom:
+            out = "matched/mapping.csv"
+            if not os.path.exists("matched"):
+                os.mkdir("matched")
+            df_out = all_df.dropna().reset_index(drop=True)
+            final_extension = extension_of_directory(folder)
+            df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
+            df_out.to_csv(out, index=False)
 
-        # matching up when fvcom
-        print("Creating gridded data for NSBC matchups")
+    # if fvcom:
 
-        vars = [
-            "ammonium",
-            "chlorophyll",
-            "nitrate",
-            "phosphate",
-            "oxygen",
-            "silicate",
-            "temperature",
-            "salinity",
-        ]
-        vars = [x for x in vars if x in var_choice]
+    #     # matching up when fvcom
+    #     print("Creating gridded data for NSBC matchups")
 
-        ds_total = nc.open_data()
+    #     vars = [
+    #         "ammonium",
+    #         "chlorophyll",
+    #         "nitrate",
+    #         "phosphate",
+    #         "oxygen",
+    #         "silicate",
+    #         "temperature",
+    #         "salinity",
+    #     ]
+    #     vars = [x for x in vars if x in var_choice]
 
-        for vv in vars:
-            pattern = all_df.query("variable == @vv").reset_index(drop=True).pattern[0]
+    #     ds_total = nc.open_data()
 
-            good_to_go = True
+    #     for vv in vars:
+    #         pattern = all_df.query("variable == @vv").reset_index(drop=True).pattern[0]
 
-            if pattern is not None:
-                final_extension = extension_of_directory(folder)
-                ersem_paths = glob.glob(folder + final_extension + pattern)
-                if len(ersem_paths) > 0:
-                    good_to_go = True
+    #         good_to_go = True
 
-            if good_to_go:
-                final_extension = extension_of_directory(folder)
-                ersem_paths = glob.glob(folder + final_extension + pattern)
+    #         if pattern is not None:
+    #             final_extension = extension_of_directory(folder)
+    #             ersem_paths = glob.glob(folder + final_extension + pattern)
+    #             if len(ersem_paths) > 0:
+    #                 good_to_go = True
 
-                for exc in exclude:
-                    ersem_paths = [
-                        x for x in ersem_paths if f"{exc}" not in os.path.basename(x)
-                    ]
+    #         if good_to_go:
+    #             final_extension = extension_of_directory(folder)
+    #             ersem_paths = glob.glob(folder + final_extension + pattern)
 
-                ds_all = nc.open_data()
+    #             for exc in exclude:
+    #                 ersem_paths = [
+    #                     x for x in ersem_paths if f"{exc}" not in os.path.basename(x)
+    #                 ]
 
-                for ff in ersem_paths:
-                    drop_variables = ["siglay", "siglev"]
-                    ds_xr = xr.open_dataset(
-                        ff, drop_variables=drop_variables, decode_times=False
-                    )
-                    model_variables = (
-                        all_df.query("variable == @vv")
-                        .reset_index(drop=True)
-                        .model_variable
-                    )
-                    ds_xr = ds_xr[model_variables[0].split("+")]
-                    ds1 = nc.from_xarray(ds_xr)
-                    ds1.nco_command("ncks -d siglay,0,0")
-                    if vv == "temp":
-                        ds1.nco_command("ncks -O -C -v temp")
-                    lon = ds1.to_xarray().lon.values
-                    lat = ds1.to_xarray().lat.values
-                    grid = pd.DataFrame({"lon": lon, "lat": lat})
-                    out_grid = nc.generate_grid.generate_grid(grid)
-                    ds1.subset(variables=model_variables[0].split("+"))
-                    ds1.run()
-                    out_grid = nc.generate_grid.generate_grid(grid)
-                    nc.session.append_safe(out_grid)
-                    os.path.exists(out_grid)
-                    ds2 = ds1.copy()
-                    ds2.run()
-                    ds2.cdo_command(f"setgrid,{out_grid}")
-                    ds2.as_missing(0)
+    #             ds_all = nc.open_data()
 
-                    if vv == "doc":
-                        command = "-aexpr,doc=" + model_variables[0]
-                        ds2.cdo_command(command)
-                        drop_these = model_variables[0].split("+")
-                        ds_contents = ds2.contents
-                        ds_contents = ds_contents.query("variable in @drop_these")
-                        doc_unit = ds_contents.unit[0]
-                        ds2.set_units({"doc": doc_unit})
-                        ds2.drop(variables=drop_these)
+    #             for ff in ersem_paths:
+    #                 drop_variables = ["siglay", "siglev"]
+    #                 ds_xr = xr.open_dataset(
+    #                     ff, drop_variables=drop_variables, decode_times=False
+    #                 )
+    #                 model_variables = (
+    #                     all_df.query("variable == @vv")
+    #                     .reset_index(drop=True)
+    #                     .model_variable
+    #                 )
+    #                 ds_xr = ds_xr[model_variables[0].split("+")]
+    #                 ds1 = nc.from_xarray(ds_xr)
+    #                 ds1.nco_command("ncks -d siglay,0,0")
+    #                 if vv == "temp":
+    #                     ds1.nco_command("ncks -O -C -v temp")
+    #                 lon = ds1.to_xarray().lon.values
+    #                 lat = ds1.to_xarray().lat.values
+    #                 grid = pd.DataFrame({"lon": lon, "lat": lat})
+    #                 out_grid = nc.generate_grid.generate_grid(grid)
+    #                 ds1.subset(variables=model_variables[0].split("+"))
+    #                 ds1.run()
+    #                 out_grid = nc.generate_grid.generate_grid(grid)
+    #                 nc.session.append_safe(out_grid)
+    #                 os.path.exists(out_grid)
+    #                 ds2 = ds1.copy()
+    #                 ds2.run()
+    #                 ds2.cdo_command(f"setgrid,{out_grid}")
+    #                 ds2.as_missing(0)
 
-                    if vv == "chlorophyll":
-                        command = "-aexpr,chlorophyll=" + model_variables[0]
-                        ds2.cdo_command(command)
-                        drop_these = model_variables[0].split("+")
-                        ds_contents = ds2.contents
-                        ds_contents = ds_contents.query("variable in @drop_these")
-                        chl_unit = ds_contents.unit[0]
-                        ds2.set_units({"chlorophyll": chl_unit})
-                        ds2.drop(variables=drop_these)
+    #                 if vv == "doc":
+    #                     command = "-aexpr,doc=" + model_variables[0]
+    #                     ds2.cdo_command(command)
+    #                     drop_these = model_variables[0].split("+")
+    #                     ds_contents = ds2.contents
+    #                     ds_contents = ds_contents.query("variable in @drop_these")
+    #                     doc_unit = ds_contents.unit[0]
+    #                     ds2.set_units({"doc": doc_unit})
+    #                     ds2.drop(variables=drop_these)
 
-                    ds_nsbc = nc.open_data(
-                        f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
-                        checks=False,
-                    )
-                    ds2.regrid(ds_nsbc, "nn")
-                    # create a netcdf mask for the fvcom grid
-                    df_mask = grid.assign(value=1)
-                    bin_res = 0.25
-                    df_mask["lon"] = bin_value(df_mask["lon"], bin_res)
-                    df_mask["lat"] = bin_value(df_mask["lat"], bin_res)
-                    df_mask = df_mask.groupby(["lon", "lat"]).sum().reset_index()
-                    df_mask = df_mask.set_index(["lat", "lon"])
-                    ds_mask = nc.from_xarray(df_mask.to_xarray())
-                    os.system(f"cdo griddes {ds_mask[0]} > /tmp/mygrid")
-                    # open the text file text.txt and replace the string "generic" with "lonlat"
-                    with open("/tmp/mygrid", "r") as f:
-                        lines = f.readlines()
+    #                 if vv == "chlorophyll":
+    #                     command = "-aexpr,chlorophyll=" + model_variables[0]
+    #                     ds2.cdo_command(command)
+    #                     drop_these = model_variables[0].split("+")
+    #                     ds_contents = ds2.contents
+    #                     ds_contents = ds_contents.query("variable in @drop_these")
+    #                     chl_unit = ds_contents.unit[0]
+    #                     ds2.set_units({"chlorophyll": chl_unit})
+    #                     ds2.drop(variables=drop_these)
 
-                    # write line by line to /tmp/newgrid
+    #                 ds_nsbc = nc.open_data(
+    #                     f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
+    #                     checks=False,
+    #                 )
+    #                 ds2.regrid(ds_nsbc, "nn")
+    #                 # create a netcdf mask for the fvcom grid
+    #                 df_mask = grid.assign(value=1)
+    #                 bin_res = 0.25
+    #                 df_mask["lon"] = bin_value(df_mask["lon"], bin_res)
+    #                 df_mask["lat"] = bin_value(df_mask["lat"], bin_res)
+    #                 df_mask = df_mask.groupby(["lon", "lat"]).sum().reset_index()
+    #                 df_mask = df_mask.set_index(["lat", "lon"])
+    #                 ds_mask = nc.from_xarray(df_mask.to_xarray())
+    #                 os.system(f"cdo griddes {ds_mask[0]} > /tmp/mygrid")
+    #                 # open the text file text.txt and replace the string "generic" with "lonlat"
+    #                 with open("/tmp/mygrid", "r") as f:
+    #                     lines = f.readlines()
 
-                    with open("/tmp/newgrid", "w") as f:
-                        for ll in lines:
-                            f.write(ll.replace("generic", "lonlat"))
-                    ds_mask.cdo_command(f"setgrid,/tmp/newgrid")
-                    ds_mask.regrid(ds_nsbc, "bil")
-                    ds_mask > 0
+    #                 # write line by line to /tmp/newgrid
 
-                    ds4 = ds2.copy()
-                    # rename the variable to the correct name
-                    ds4.rename({ds4.variables[0]: vv})
-                    ds_all.append(ds4)
-                ds_all.merge("time")
+    #                 with open("/tmp/newgrid", "w") as f:
+    #                     for ll in lines:
+    #                         f.write(ll.replace("generic", "lonlat"))
+    #                 ds_mask.cdo_command(f"setgrid,/tmp/newgrid")
+    #                 ds_mask.regrid(ds_nsbc, "bil")
+    #                 ds_mask > 0
 
-                out = "matched/gridded/nsbc/nsbc_" + vv + ".nc"
-                if not os.path.exists(os.path.dirname(out)):
-                    os.makedirs(os.path.dirname(out))
+    #                 ds4 = ds2.copy()
+    #                 # rename the variable to the correct name
+    #                 ds4.rename({ds4.variables[0]: vv})
+    #                 ds_all.append(ds4)
+    #             ds_all.merge("time")
 
-                ds_total.append(ds_all)
+    #             out = "matched/gridded/nsbc/nsbc_" + vv + ".nc"
+    #             if not os.path.exists(os.path.dirname(out)):
+    #                 os.makedirs(os.path.dirname(out))
 
-        ds_year = min(ds_total.year)
+    #             ds_total.append(ds_all)
 
-        ds_total.merge("variables", ["year", "month", "day"])
-        ds_total.set_year(ds_year)
+    #     ds_year = min(ds_total.year)
 
-        out = "matched/gridded/nsbc/nsbc_model.nc"
-        if not os.path.exists(os.path.dirname(out)):
-            os.makedirs(os.path.dirname(out))
+    #     ds_total.merge("variables", ["year", "month", "day"])
+    #     ds_total.set_year(ds_year)
 
-        ds_total.to_nc(out, zip=True, overwrite=True)
+    #     out = "matched/gridded/nsbc/nsbc_model.nc"
+    #     if not os.path.exists(os.path.dirname(out)):
+    #         os.makedirs(os.path.dirname(out))
 
-        return None
+    #     ds_total.to_nc(out, zip=True, overwrite=True)
 
-    pattern = all_df.iloc[0, :].pattern
+    #     return None
 
-    # get the units. File inspection could be randomized in case people have put loose files in there...
-
-    print("********************************")
-    print("Identifying whether it is a northwest European shelf domain")
-    print("********************************")
-    df = pd.read_csv("matched/mapping.csv")
-    df = df.dropna()
-    df = df.iloc[0:1, :]
-    pattern = list(df.pattern)[0]
-    pattern = pattern.replace("//", "/")
-
-    paths = glob.glob(pattern)
-
-    ds = nc.open_data(paths[0], checks=False).to_xarray()
-    lon_name = [x for x in ds.coords if "lon" in x]
-    lat_name = [x for x in ds.coords if "lat" in x]
-    lon = ds[lon_name[0]].values
-    lat = ds[lat_name[0]].values
-    lon_max = lon.max()
-    lon_min = lon.min()
-    lat_max = lat.max()
-    lat_min = lat.min()
-
-    global_grid = False
-    if lon_max - lon_min > 350:
-        global_grid = True
-    if lat_max - lat_min > 170:
-        global_grid = True
-    if lon_max > 50:
-        global_grid = True
-    if global_grid:
-        print("Grid is not NW European shelf")
-    else:
-        print("Grid is NW European shelf")
-
-    if global_grid:
-        model_domain = "global"
-    else:
-        model_domain = "nws"
 
     if not surf_dict and surf_default:
         surf_all = False
@@ -1007,138 +990,6 @@ def matchup(
     good_model_vars = [x for x in all_df.model_variable if x is not None]
 
     point_surface = list(set(point_surface))
-
-    # get rid of any rows where pattern is None
-
-    # if True:
-
-    # # if "temperature" in var_choice and False:
-    #     vars = ["temperature"]
-
-    #     out_dir = "matched/gridded/cobe2/"
-
-    #     if not os.path.exists(out_dir):
-    #         os.makedirs(out_dir)
-
-    #     df = df_mapping.query("variable in @vars").reset_index(drop=True)
-    #     if len(df) > 0:
-    #         print("******************************")
-    #         print("Matching the vertically resolved temperature with NOAA World Ocean Database")
-    #         mapping = dict()
-    #         for vv in df.variable:
-    #             mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
-
-    #         selection = []
-    #         for vv in vars:
-    #             try:
-    #                 selection += mapping[vv].split("+")
-    #             except:
-    #                 selection = selection
-
-    #         patterns = set(df.pattern)
-    #         if len(patterns) > 1:
-    #             raise ValueError(
-    #                 "Something strange going on in the string patterns. Unable to handle this. Bug fix time!"
-    #             )
-    #         pattern = list(patterns)[0]
-
-    #         # extract the ERSEM paths
-    #         final_extension = extension_of_directory(folder)
-    #         paths = glob.glob(folder + final_extension + pattern)
-
-    #         for exc in exclude:
-    #             paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
-
-    #         import xarray as xr
-
-    #         time_name = [x for x in xr.open_dataset(paths[0]).dims if "time" in x][
-    #             0
-    #         ]
-    #         df_times = []
-
-    #         for ff in paths:
-    #             ff_times = xr.open_dataset(ff)[time_name]
-    #             ff_month = [int(x.dt.month) for x in ff_times]
-    #             ff_year = [int(x.dt.year) for x in ff_times]
-    #             df_times.append(
-    #                 pd.DataFrame({"year": ff_year, "month": ff_month}).assign(
-    #                     path=ff
-    #                 )
-    #             )
-    #         df_times = pd.concat(df_times)
-
-    #         ersem_paths = (
-    #             df_times.loc[:, ["year", "month"]]
-    #             .drop_duplicates()
-    #             .groupby("year")
-    #             .count()
-    #             .query("month == 12")
-    #             .reset_index()
-    #             .merge(df_times, on="year", how="left")
-    #             .loc[:, ["year", "path"]]
-    #             .drop_duplicates()
-    #             .reset_index(drop=True)
-    #         )
-
-    #         if spinup is not None:
-    #             min_year = ersem_paths.year.min() + spinup
-    #         if start is not None:
-    #             if spinup is None:
-    #                 min_year = start
-
-    #         ersem_paths = ersem_paths.query("year >= @min_year")
-    #         ersem_paths = ersem_paths.query(
-    #             "year >= @sim_start and year <= @sim_end"
-    #         ).reset_index(drop=True)
-
-    #         if end is not None:
-    #             max_year = end
-    #             ersem_paths = ersem_paths.query("year <= @max_year").reset_index(drop = True)
-
-    #         ersem_years = list(set(ersem_paths.year))
-
-    #         ersem_paths = ersem_paths.loc[:, ["path"]]
-
-    #         ersem_paths = list(ersem_paths.path)
-
-    #         wod_output = "matched/wod/wod_matchups.csv"
-
-    #         df_all = manager.list()
-
-    #         pool = multiprocessing.Pool(cores)
-
-    #         pbar = tqdm(total=len(ersem_paths), position=0, leave=True)
-
-    #         var_sel = list(df.model_variable)[0]
-    #         results = dict()
-    #         for ff in ersem_paths:
-    #             # matchup_wod(ff, var_sel, df_all, "fixed")
-    #             temp = pool.apply_async(
-    #                 matchup_wod,
-    #                 [
-    #                     ff,
-    #                     var_sel,
-    #                     df_all,
-    #                     "fixed"
-
-    #                 ],
-    #             )
-    #             results[ff] = temp
-
-    #         for k, v in results.items():
-    #             value = v.get()
-    #             pbar.update(1)
-
-    #         df_all = list(df_all)
-
-    #         df_all = pd.concat(df_all)
-    #         # make sure directory exists for wod_output
-    #         if not os.path.exists(os.path.dirname(wod_output)):
-    #             os.makedirs(os.path.dirname(wod_output))
-
-    #         df_all.to_csv(wod_output, index=False)
-
-    # raise ValueError("here")
 
     df_mapping = all_df
     if model_domain == "nws":
