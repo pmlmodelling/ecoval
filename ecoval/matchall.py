@@ -1183,6 +1183,14 @@ def matchup(
 
 
                             df = pd.concat([pd.read_feather(x) for x in paths])
+                            # if it exists, coerce year to int
+                            if "year" in df.columns:
+                                df = df.assign(year=lambda x: x.year.astype(int))
+                            if "month" in df.columns:
+                                df = df.assign(month=lambda x: x.month.astype(int))
+                            if "day" in df.columns:
+                                df = df.assign(day=lambda x: x.day.astype(int))
+
 
                             if variable == "doc":
                                 # go from mole to g of C
