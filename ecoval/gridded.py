@@ -59,7 +59,7 @@ def gridded_matchup(
         Start year for model simulations
     sim_end : int
         End year for model simulations
-    e3t : xarray.DataArray
+    e3t : nctoolkit DataSet or netCDF file 
         Vertical grid spacing for model data
     domain : str
         Domain to use for matchups. Either "NWS" or "global"
