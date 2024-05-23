@@ -5,7 +5,7 @@ import shutil
 import glob
 import nctoolkit as nc
 from ecoval.matchall import matchup
-#from ecoval.trends import trends
+from ecoval.trends import trends
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
 from ecoval.session import session_info
@@ -333,7 +333,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False):
+def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html"):
     # docstring
     """
     This function will run the model evaluation for all of the available datasets.
@@ -348,6 +348,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         The variables to run the model evaluation for. Default is "all"
     r_warnings : bool
         Whether to suppress R warnings. Default is False
+    build : str
+        Whether to build the book as "html" or "pdf". Default is "html"
 
 
     Returns
@@ -749,7 +751,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         os.system(f"jupytext --set-formats ipynb,py:percent {book_dir}/notebooks/*.ipynb")
 
         # add the chunks
-        add_chunks()
+        add_chunks(build)
 
         # loop through the notebooks and set r warnings options
         for ff in glob.glob(f"{book_dir}/notebooks/*.py"):
@@ -808,7 +810,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         if os.path.exists(ff_clean):
             os.remove(ff_clean)
 
-    os.system(f"jupyter-book build {book_dir}/")
+    if build == "html":
+        os.system(f"jupyter-book build {book_dir}/")
+    else:
+        os.system(f"jupyter-book build {book_dir}/ --builder pdflatex")
 
     import os
 
@@ -830,7 +835,11 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
     #os.symlink(out_ff, "validation.html")
     # clean up with the python files that are now useless
 
-    webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
+    if build == "html":
+        webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
+    else:
+        webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/latex/python.pdf"))
+
 
 def rebuild():
     os.system(f"jupyter-book build book/")

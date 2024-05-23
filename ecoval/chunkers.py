@@ -22,7 +22,7 @@ def is_chunk(x):
     except:
         return False
 
-def add_chunks():
+def add_chunks(build = "html"):
 
     nws = False
     if len(glob.glob("matched/gridded/nws/**/*.nc")) > 0:
@@ -59,7 +59,10 @@ def add_chunks():
                 # add the chunk lines to the new lines
                 for chunk_line in chunk_lines:
 
-                    new_lines.append(chunk_line)
+                    if build == "pdf":
+                        new_lines.append(chunk_line.replace("book_build", "pdf"))
+                    else:
+                        new_lines.append(chunk_line)
 
                 # close the chunk file
                 file2.close()

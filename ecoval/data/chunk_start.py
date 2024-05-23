@@ -21,6 +21,9 @@ from holteandtalley import HolteAndTalley
 import numpy as np
 from mask import mask_all, mask_shelf
 import pandas as pd
+build = "book_build"
+if build == "pdf":
+    pd.set_option('styler.render.repr', 'latex')
 import glob
 import cmocean as cm
 from tqdm import tqdm
