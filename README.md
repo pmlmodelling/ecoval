@@ -46,12 +46,12 @@ pip install .
 ```
 
 
-You can now build the docs in two steps. First, matchup the data in Python. You need to specify a spinup period, in this case 5 years. This process might take a couple of hours to run, depending on the size of the simulation. Increase the number of cores to get faster matchups.
+You can now build the docs in two steps. First, matchup the data in Python. You can specify a start and end years for the comparisons. In this only the years from 2000-2005 are validated. This process might take a couple of hours to run, depending on the size of the simulation. Increase the number of cores to get faster matchups.
 
 
 ```sh
 import ecoval
-ecoval.matchup("/data/sthenno1/scratch/hpo/LOCATE/new_production_run/data/", cores = 6, spinup = 5, surface_level = "top")
+ecoval.matchup("/data/sthenno1/scratch/hpo/LOCATE/new_production_run/data/", cores = 6, start = 2000, end = 2005, surface_level = "top")
 
 ```
 This will put all relevant matchup data into a folder called matched. Note: this could take a couple of hours if you have a large simulation. Note: you will have to specify whether the surface is the top or bottom level in the file structure. This is almost always the top level.
