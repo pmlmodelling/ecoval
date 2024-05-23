@@ -27,7 +27,6 @@ def gridded_matchup(
     exclude=None,
     surface=None,
     start=None,
-    spinup=None,
     sim_start=None,
     sim_end=None,
     e3t=None,
@@ -53,8 +52,6 @@ def gridded_matchup(
         Surface to use for matchups. Either "top" or "bottom"
     start : int
         Start year for matchups
-    spinup : int
-        Spinup time for matchups
     sim_start : int
         Start year for model simulations
     sim_end : int
@@ -189,9 +186,6 @@ def gridded_matchup(
                         os.makedirs("matched")
                     df_grid.to_csv("matched/model_grid.csv", index=False)
                 all_years = ds.years
-
-                if spinup is not None:
-                    years = [x for x in all_years if x >= min(all_years) + spinup]
 
                 sim_years = range(sim_start, sim_end + 1)
                 if start is not None:

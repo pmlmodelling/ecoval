@@ -338,7 +338,6 @@ def find_paths(folder, fvcom=False, exclude=[]):
 
 def matchup(
     folder=None,
-    spinup=None,
     start=None,
     end=None,
     surface_level=None,
@@ -382,8 +381,6 @@ def matchup(
     -------------
     folder: str
         Folder containing model output
-    spinup: int
-        Number of years to view as spinup. Default is None, which means the start year is used.
     surface_level: str
         Surface level of the model netCDF files. Either 'top' or 'bottom'. Default is None, so this must be supplied.
     surface: list
@@ -563,19 +560,12 @@ def matchup(
         if key[:3] == "fol":
             if folder is None:
                 folder = kwargs[key]
-        if key[:3] == "spi":
-            if spinup is None:
-                spinup = kwargs[key]
         if key[:3] == "map":
             if mapping is None:
                 mapping = kwargs[key]
         if key[:3] == "cor":
             if cores is None:
                 cores = kwargs[key]
-
-    if start is not None:
-        if spinup is not None:
-            raise ValueError("You can only provide one of start or spinup")
 
     if end is not None:
         sim_end = end
@@ -603,12 +593,6 @@ def matchup(
         "carbon"
         "benbio"
     ]
-
-    # type check for spinup
-
-    if not isinstance(spinup, int):
-        if start is None:
-            raise ValueError("Please set spinup to int")
 
     if not isinstance(cores, int):
         raise ValueError("Please set cores to int")
@@ -1085,11 +1069,6 @@ def matchup(
                         "year >= @sim_start and year <= @sim_end"
                     ).reset_index(drop=True)
 
-                    if spinup is not None:
-                        min_year = df_times.year.min() + spinup
-                    else:
-                        min_year = df_times.year.min()
-
                     df_times = df_times.query("year >= @min_year").reset_index(drop=True)
 
 
@@ -1493,7 +1472,6 @@ def matchup(
         exclude=exclude,
         surface=surface_level,
         start=start,
-        spinup=spinup,
         sim_start=sim_start,
         sim_end=sim_end,
         e3t=thickness,
