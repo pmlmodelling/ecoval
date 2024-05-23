@@ -255,14 +255,11 @@ def find_paths(folder, fvcom=False, exclude=[]):
 
     all_df = []
     print("********************************")
-    print("Identifying variables in model output")
-    print("********************************")
+    print("Parsing model information from netCDF files")
 
     # remove any files from options if parts of exclude are in them
     for exc in exclude:
         options = [x for x in options if f"{exc}" not in os.path.basename(x)]
-
-
 
     for ff in options:
         ds = nc.open_data(ff, checks=False)
@@ -330,9 +327,6 @@ def find_paths(folder, fvcom=False, exclude=[]):
     all_df = all_df.drop(columns="resolution")
     all_df = all_df.loc[:, ["variable", "model_variable", "pattern"]]
 
-    print("********************************")
-    print("Automatic variable identification complete")
-    print("********************************")
     return all_df
 
 
@@ -429,6 +423,12 @@ def matchup(
 
     """
 
+    if isinstance(surface, dict):
+        # make sure there are no more than 2 keys
+        if len(surface.keys()) > 2:
+            raise ValueError("surface dictionary can only have two keys")
+        # loop through the keys
+
     # coerce bottom to list
     if isinstance(bottom, str):
         bottom = [bottom]
@@ -439,8 +439,6 @@ def matchup(
         session_info["data_dir"] = data_dir
     else:
         data_dir = session_info["data_dir"]
-    
-    print(data_dir)
 
     # check that lon_lim and lat_lim and valid when either is not None
 
@@ -677,12 +675,6 @@ def matchup(
 
             pattern = all_df.iloc[0, :].pattern
 
-            # get the units. File inspection could be randomized in case people have put loose files in there...
-
-            print("********************************")
-            print("Identifying whether it is a northwest European shelf domain")
-            print("********************************")
-            #df = pd.read_csv("matched/mapping.csv")
             df = all_df
             df = df.dropna()
             df = df.iloc[0:1, :]
@@ -719,10 +711,6 @@ def matchup(
                 global_grid = True
             if lon_max > 50:
                 global_grid = True
-            if global_grid:
-                print("Grid is not NW European shelf")
-            else:
-                print("Grid is NW European shelf")
 
             if global_grid:
                 model_domain = "global"
@@ -731,10 +719,12 @@ def matchup(
             print("********************************")
 
                 # add the global checker here
+            # sort all_df alphabetically by variable
+            all_df = all_df.sort_values("variable").reset_index(drop=True)
 
             print(f"** Inferred mapping of model variable names from {folder}")
             print(all_df)
-            print("Are you happy with these matchups? Y/N")
+            print("Are you happy with these matchups? Y/N \nNote: all possible variables are listed, not just those requested. Non-requested variables will be ignored if you answer yes.")
             x = input()
 
             if x.lower() not in ["y", "n"]:
@@ -935,6 +925,44 @@ def matchup(
 
     point_surface = list(set(point_surface))
 
+    # combine all variables into a list
+    all_vars = surface + bottom + point_surface + benthic
+    all_vars = list(set(all_vars))
+
+    df_variables = all_df.query("variable in @all_vars").reset_index(drop=True)
+
+    patterns = list(set(df_variables.pattern))
+
+    times_dict = dict()
+
+    print("*************************************")
+    for pattern in patterns:
+        print(f"Indexing file time information for {pattern} files")
+        final_extension = extension_of_directory(folder)
+        ensemble = glob.glob(folder + final_extension + pattern)
+        for exc in exclude:
+            ensemble = [
+                x for x in ensemble if f"{exc}" not in os.path.basename(x)
+            ]
+
+        ds = xr.open_dataset(ensemble[0])
+        time_name = [x for x in list(ds.dims) if "time" in x][0]
+
+        daily = False
+        days = []
+        for ff in tqdm(ensemble):
+            ds = xr.open_dataset(ff)
+            ff_month = [int(x.dt.month) for x in ds[time_name]]
+            ff_year = [int(x.dt.year) for x in ds[time_name]]
+            days = [int(x.dt.day) for x in ds[time_name]]
+            df_ff = pd.DataFrame(
+                    {
+                        "year": ff_year,
+                        "month": ff_month,
+                        "day": days,
+                    })
+            times_dict[ff] = df_ff
+
     print("********************************")
     if True:
         # figure out the lon/lat extent in the model
@@ -946,6 +974,8 @@ def matchup(
         # so we will check if the step between the first lon/lat and the second lon/lat is
         # far bigger than the rest. If this is the case, the first should be ignored
         # get the lon/lat values
+        lon_name = [x for x in ds.coords if "lon" in x]
+        lat_name = [x for x in ds.coords if "lat" in x]
         lon_vals = ds[lon_name[0]].values
         lat_vals = ds[lat_name[0]].values
         # make them unique and ordered, and 1d
@@ -1035,31 +1065,25 @@ def matchup(
                             x for x in ensemble if f"{exc}" not in os.path.basename(x)
                         ]
 
-                    ds = xr.open_dataset(ensemble[0])
-                    time_name = [x for x in list(ds.dims) if "time" in x][0]
-
                     df_times = []
                     daily = False
                     days = []
                     for ff in ensemble:
-                        ds = xr.open_dataset(ff)
-                        ff_month = [int(x.dt.month) for x in ds[time_name]][0]
-                        ff_year = [int(x.dt.year) for x in ds[time_name]][0]
-                        days += [int(x.dt.day) for x in ds[time_name]]
+                        df_ff = times_dict[ff]
                         df_times.append(
                             pd.DataFrame(
                                 {
-                                    "path": [ff],
-                                    "month": [ff_month],
-                                    "year": [ff_year],
+                                    "month": df_ff.month,
+                                    "year": df_ff.year,
+                                    "day": df_ff.day,
                                 }
-                            )
+                            ).assign(path = ff)
                         )
-                    n_days = len(list(set(days)))
                     df_times = pd.concat(df_times)
 
                     # figure out if it is monthly or daily data
                     df_check = df_times.groupby(["year", "month"]).size()
+                    n_days = df_check.max()
                     if n_days > 27:
                         daily = True
                     if not daily_match:
@@ -1068,8 +1092,6 @@ def matchup(
                     df_times = df_times.query(
                         "year >= @sim_start and year <= @sim_end"
                     ).reset_index(drop=True)
-
-                    df_times = df_times.query("year >= @min_year").reset_index(drop=True)
 
 
                     # ersem paths
@@ -1124,7 +1146,6 @@ def matchup(
                                 ds_depths.cdo_command("invertlev")
                             ds_depths.run()
 
-                        #tidy_warnings(w)
                         for ww in w:
                             if str(ww.message) not in session_warnings:
                                 session_warnings.append(str(ww.message))
@@ -1186,7 +1207,6 @@ def matchup(
                                     grouping = [x for x in df.columns if x in ["lon", "lat", "year", "month", "day", "source"]]
                                     df = df.groupby(grouping).mean().reset_index()
                                 # add in a nominal depth
-                                # df = df.assign(depth=2.5)
                             # restrict the lon_lat
                             lon_min = lons[0]
                             lon_max = lons[1]
@@ -1214,7 +1234,7 @@ def matchup(
                                         .path
                                     )
                                 )
-                            paths = df_times.path
+                            paths = list(set(df_times.path))
                             if len(paths) == 0:
                                 print(f"No matching times for {variable}")
                                 return None
@@ -1249,14 +1269,12 @@ def matchup(
                             if str(ww.message) not in session_warnings:
                                 session_warnings.append(str(ww.message))
 
-                        # valid_cols = ["lon", "lat",	"day"	month	year	depth	model	observation	
                         valid_cols = ["lon", "lat", "day", "month", "year", "depth", "observation"]
                         select_these = [x for x in df.columns if x in valid_cols]
                         if variable != "pft":
                             df = df.loc[:, select_these]
 
                         df_all = manager.list()
-
 
                         grid_setup = False
                         pool = multiprocessing.Pool(cores)
@@ -1478,7 +1496,8 @@ def matchup(
         domain=model_domain,
         strict= strict,
         lon_lim = lon_lim,
-        lat_lim = lat_lim
+        lat_lim = lat_lim,
+        times_dict = times_dict,
     )
 
     os.system("pandoc matchup_report.md --pdf-engine wkhtmltopdf -o matchup_report.pdf")

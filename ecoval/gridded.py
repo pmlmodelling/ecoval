@@ -33,7 +33,8 @@ def gridded_matchup(
     domain="nws",
     strict = True,
     lon_lim = None,
-    lat_lim = None
+    lat_lim = None,
+    times_dict = None,
 ):
     """
     Function to create NSBC matchups for a given set of variables
@@ -154,7 +155,7 @@ def gridded_matchup(
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
 
                 new_paths = []
-                ds = nc.open_data(paths, checks=False)
+                #ds = nc.open_data(paths, checks=False)
                 # set up model_grid if it doesn't exist
 
                 # This really should be a function....
@@ -185,20 +186,20 @@ def gridded_matchup(
                     if not os.path.exists("matched"):
                         os.makedirs("matched")
                     df_grid.to_csv("matched/model_grid.csv", index=False)
-                all_years = ds.years
+                
+                all_years = []
+                for ff in paths:
+                    all_years += list(times_dict[ff].year)
 
                 sim_years = range(sim_start, sim_end + 1)
                 if start is not None:
                     years = [x for x in all_years if x in sim_years]
+                # now simplify paths, so that only the relevant years are used
+                new_paths = []
 
                 for ff in paths:
-                    try:
-                        ds = nc.open_data(ff, checks=False)
-                        ds_years = ds.years
-                        if len([x for x in ds_years if x in years]) > 0:
-                            new_paths.append(ff)
-                    except:
-                        print(f"Unable to find relevant years in  {ff}")
+                    if len([x for x in times_dict[ff].year if x in years]) > 0:
+                        new_paths.append(ff)
 
                 paths = list(set(new_paths))
                 paths.sort()
@@ -258,14 +259,15 @@ def gridded_matchup(
                         use_nco = False
 
                 with warnings.catch_warnings(record=True) as w:
-                    ds = nc.open_data(paths, checks=False)
 
-                    ds.subset(years=years)
                     if vv_source == "glodap":
                         ds_years = ds.years
-                        if len([x for x in ds_years if x in range(1971, 2015)]) > 0:
-                            ds.subset(years=range(1971, 2015))
-                            ds.run()
+                        for ff in paths:
+                            ff_years = times_dict[ff].year
+                            if len([x for x in ff_years if x in range(1971, 2015)]) == 0:
+                                paths.remove(ff)
+
+                    ds = nc.open_data(paths, checks=False)
 
                     if use_nco:
                         ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
