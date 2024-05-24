@@ -900,7 +900,7 @@ def matchup(
     if not surf_dict and surf_default:
         surf_all = False
         if surface == ["all"]:
-            surface = all_vars
+            surface = copy.deepcopy(all_vars)
             surf_all = True
 
     if "ph" in surface and model_domain == "nws":
@@ -935,7 +935,7 @@ def matchup(
     point_surface = list(set(point_surface))
 
     # combine all variables into a list
-    all_vars = surface + bottom + point_surface + benthic
+    all_vars = surface + bottom + point_surface + benthic + point_all
     all_vars = list(set(all_vars))
 
     df_variables = all_df.query("variable in @all_vars").reset_index(drop=True)
@@ -973,6 +973,10 @@ def matchup(
                         "day": days,
                     })
             times_dict[ff] = df_ff
+    
+    # save this as a pickle
+    with open("matched/times_dict.pkl", "wb") as f:
+        pickle.dump(times_dict, f)
 
     print("********************************")
     if True:
@@ -1408,7 +1412,6 @@ def matchup(
                         if vv == "pft":
                             print("Fixing pft")
                             # We now need to convert Chl to PFTs
-                            print(df_all)
                             ds = nc.open_data(ff, checks = False)
                             ds_contents = ds.contents
                             nano = [x for x in ds_contents.long_name if "chloroph" in x and "nano" in x]
