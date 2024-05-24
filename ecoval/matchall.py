@@ -939,6 +939,8 @@ def matchup(
     all_vars = list(set(all_vars))
 
     df_variables = all_df.query("variable in @all_vars").reset_index(drop=True)
+    # remove rows where model_variable is None
+    df_variables = df_variables.dropna().reset_index(drop=True)
 
     patterns = list(set(df_variables.pattern))
 
@@ -1228,7 +1230,6 @@ def matchup(
                                 df = df.merge(df_include).reset_index(drop=True)
                             sel_these = point_time_res 
                             sel_these = [x for x in df.columns if x in sel_these]
-                            print(sel_these)
                             if variable not in ["carbon", "benbio"]:
                                 paths = list(
                                     set(
@@ -1381,13 +1382,14 @@ def matchup(
                             )
                             # add model to name column names with frac in them
                         df_all = df_all.dropna().reset_index(drop=True)
-                        #grouping = ["lon", "lat", "day", "month", "year", "depth"]
-                        grouping = point_time_res 
+
+                        grouping = copy.deepcopy(point_time_res)
                         grouping.append("lon")
                         grouping.append("lat")
                         grouping.append("depth")
                         grouping = [x for x in grouping if x in df_all.columns]
-                        #df_all = df_all.drop(columns="day").drop_duplicates().reset_index(drop=True)
+                        grouping = list(set(grouping))
+                        df_all = df_all.dropna().reset_index(drop=True)
                         df_all = df_all.groupby(grouping).mean().reset_index()
 
                         out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
