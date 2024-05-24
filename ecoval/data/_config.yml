@@ -4,3 +4,9 @@ execute:
   execute_notebooks: force
   timeout: 500
   interactiveShell.ast_node_interactivity: last_expr
+latex:
+  latex_engine: pdflatex
+sphinx:
+  config:
+    latex_elements:
+      'extraclassoptions': 'openany,oneside'
