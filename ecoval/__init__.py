@@ -13,6 +13,7 @@ from ecoval.session import session_info
 import webbrowser
 from ecoval.chunkers import add_chunks
 import os
+import re
 
 
 def fix_toc(book_dir):
@@ -92,7 +93,10 @@ def fix_toc(book_dir):
             if vv != "ph":
                 vv_out = vv.capitalize()
             if vv.lower() in ["poc", "doc"]:
-                vv_out = vv.upper() 
+                if vv.lower() == "poc":
+                    vv_out = "Particulate Organic Carbon"
+                if vv.lower() == "doc":
+                    vv_out = "Dissolved Organic Carbon"
             if vv == "pco2":
                 vv_out = "pCO2"
             # correct ph
@@ -376,7 +380,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html"):
+def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None):
     # docstring
     """
     This function will run the model evaluation for all of the available datasets.
@@ -393,6 +397,9 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         Whether to suppress R warnings. Default is False
     build : str
         Whether to build the book as "html" or "pdf". Default is "html"
+    model : str
+        The name of the model. This is only for providing model info and a schematic.
+        The only option right now is "ersem". 
 
 
     Returns
@@ -462,6 +469,18 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         data_path = pkg_resources.resource_filename(__name__, "data/000_info.ipynb")
         if not os.path.exists(f"{book_dir}/notebooks/000_info.ipynb"):
             copyfile(data_path, f"{book_dir}/notebooks/000_info.ipynb")
+
+        # open this file and replace model_name with model
+
+        with open(f"{book_dir}/notebooks/000_info.ipynb", "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("model_name", model)
+
+        # Write the file out again
+        with open(f"{book_dir}/notebooks/000_info.ipynb", "w") as file:
+            file.write(filedata)
 
         # data_path = files("ecoval.data").joinpath("toc.yml")
         data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
@@ -839,6 +858,21 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         # Replace the target string
         filedata = filedata.replace("fast_plot_value", str(fast_plot))
 
+        # fix linees using the above
+        def fix_r_magic(x):
+            if "%%R" in x:
+                # x = x.sp
+                x =  re.sub(r" -r\s+\d+", "", x)
+                x = x.replace("%%R", "%%R -r 120 ") 
+            return x
+
+        # lines = filedata.split("\n")
+        # new_lines = []
+        # for line in lines:
+        #     new_lines.append(fix_r_magic(line))
+
+        # filedata = "\n".join(new_lines)
+
         # Write the file out again
         with open(ff, "w") as file:
             file.write(filedata)
@@ -875,7 +909,27 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 new_lines.append(line)
                 i = 0
             else:
-                new_lines.append(line)
+                if i == 0:
+                    # ensure everything is bold in the latex in this line
+                    def make_header_bold(x):
+                         # header is of format
+                         #Variable & Model mean & Observed mean & Model bias & Percentage bias \\
+                         # stuff in between & needs to be bold
+                         # split the string by "&"
+                         y = x.split("&")
+                         y = ["\\textbf{" + x.replace("\\", "").strip() + "}" for x in y]
+                         # make sure the 2 in R2 is a superscript
+                         y = [x.replace("R2", "R$^2$") for x in y]
+                         y = " & ".join(y) + " \\\\"
+                         # remove the last element
+
+                         return y
+                    if "textbf" not in line:
+                        new_lines.append(make_header_bold(line))
+                    else:
+                        new_lines.append(line)
+                else:
+                    new_lines.append(line)
                 if i == 0:
                     new_lines.append("\\hline")
                     i = 1
