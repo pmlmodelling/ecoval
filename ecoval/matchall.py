@@ -9,6 +9,7 @@ import pandas as pd
 import string
 import random
 import warnings
+import pickle
 # A custom format for warnings.
 def custom_formatwarning(msg, *args, **kwargs):
     # ignore everything except the message
