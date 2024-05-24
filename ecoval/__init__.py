@@ -472,15 +472,16 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
         # open this file and replace model_name with model
 
-        with open(f"{book_dir}/notebooks/000_info.ipynb", "r") as file:
-            filedata = file.read()
 
         # Replace the target string
-        filedata = filedata.replace("model_name", model)
+        if model is not None:
+            with open(f"{book_dir}/notebooks/000_info.ipynb", "r") as file:
+                filedata = file.read()
+            filedata = filedata.replace("model_name", model)
 
-        # Write the file out again
-        with open(f"{book_dir}/notebooks/000_info.ipynb", "w") as file:
-            file.write(filedata)
+            # Write the file out again
+            with open(f"{book_dir}/notebooks/000_info.ipynb", "w") as file:
+                file.write(filedata)
 
         # data_path = files("ecoval.data").joinpath("toc.yml")
         data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
