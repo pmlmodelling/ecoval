@@ -101,6 +101,6 @@ ggplot(df, aes(x = value, colour = variable)) +
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Empirical distribution function of {layer} {vv_name} for model and observations for each month. This compares the distributions on the shelf across the entire domain using grid cells with model-observation matchups.")
+md(f"**Figure {chapter}{i_figure}**: Empirical distribution function of {layer} {vv_name} for model and observations for each month. This compares the distributions on the shelf across the entire domain using grid cells with model-observation matchups.")
 
 

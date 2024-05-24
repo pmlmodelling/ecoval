@@ -25,5 +25,5 @@ else:
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Bias of {layer} {vv_name} from the model. A positive bias indicates that the model overestimates the observation.  For clarity, the colorbar is limited to the 2nd and 98th percentile of the data.")
+md(f"**Figure {chapter}{i_figure}**: Bias of {layer} {vv_name} from the model. A positive bias indicates that the model overestimates the observation.  For clarity, the colorbar is limited to the 2nd and 98th percentile of the data.")
 i_figure += 1

@@ -44,31 +44,33 @@ lat_max = coord_ranges["lat"]["max"]
 if lon_max < 90:
     ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 fix_grid = False
-try:
-    plot_model = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
-except:
-    # this needs to be regridded
-    ds_plot = ds_annual.copy()
-    lons = ds_plot.to_xarray()[lon_name].values
-    # flatten
-    lons = list(set(lons.flatten()))
-    lons.sort()
-    lon_res = np.abs(lons[0] - lons[1])
-    # do the same for lats
-    lats = ds_plot.to_xarray()[lat_name].values
-    # flatten
-    lats = list(set(lats.flatten()))
-    lats.sort()
-    lat_res = np.abs(lats[0] - lats[1])
-    # regrid
-    ds_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res]) 
-    ds_plot.run()
-    plot_model = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
-    fix_grid = True 
+if build != "pdf":
+    try:
+        plot_model = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
+    except:
+        # this needs to be regridded
+        ds_plot = ds_annual.copy()
+        lons = ds_plot.to_xarray()[lon_name].values
+        # flatten
+        lons = list(set(lons.flatten()))
+        lons.sort()
+        lon_res = np.abs(lons[0] - lons[1])
+        # do the same for lats
+        lats = ds_plot.to_xarray()[lat_name].values
+        # flatten
+        lats = list(set(lats.flatten()))
+        lats.sort()
+        lat_res = np.abs(lats[0] - lats[1])
+        # regrid
+        ds_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res]) 
+        ds_plot.run()
+        plot_model = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
+        fix_grid = True 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual average {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
-i_figure += 1
+if build != "pdf":
+    md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
+    i_figure += 1
 
 # %% tags=["remove-input"]
 ds_annual = ds_obs.copy()
@@ -104,16 +106,18 @@ lat_max = coord_ranges["lat"]["max"]
 if lon_max < 90:
     ds_annual.subset(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
 
-if not fix_grid:
-    plot_obs = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
-else:
-    ds_plot = ds_annual.copy()
-    ds_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
-    plot_obs = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
+if build != "pdf":
+    if not fix_grid:
+        plot_obs = ds_annual.pub_plot(limits = ["0%", "98%"], trans = transformation)
+    else:
+        ds_plot = ds_annual.copy()
+        ds_plot.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
+        plot_obs = ds_plot.pub_plot(limits = ["0%", "98%"], trans = transformation)
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual average {layer} {vv_name} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
-i_figure += 1
+if build != "pdf":
+    md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the observations. For clarity, the colorbar is limited to the 98th percentile of the data.")
+    i_figure += 1
 
 # %% tags=["remove-cell"]
 # Plot them on the same scale
@@ -212,5 +216,5 @@ fig
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Annual mean {layer} {vv_name} from the model and observations.")
+md(f"**Figure {chapter}{i_figure}**: Annual mean {layer} {vv_name} from the model and observations.")
 i_figure += 1

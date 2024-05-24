@@ -58,7 +58,7 @@ else:
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Seasonal temporal correlation between model and observations for {layer} {vv_name}. This is the Pearson correlation coefficient between climatology monthly mean values in the model and observations.")
+md(f"**Figure {chapter}{i_figure}**: Seasonal temporal correlation between model and observations for {layer} {vv_name}. This is the Pearson correlation coefficient between climatology monthly mean values in the model and observations.")
 i_figure += 1
 
 # %% tags=["remove-cell"]
@@ -179,7 +179,7 @@ df_diff.to_feather(tmp_csv)
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i model_unit  -w 800 -h 600 -i fast_plot -i variable -i raw_extent
+# %%R -i model_unit  -w 800 -h 600 -i fast_plot -i variable -i raw_extent -r 100
 
 
 library(tidyverse, warn.conflicts = FALSE)
@@ -412,7 +412,7 @@ cowplot::plot_grid(gg1, gg2, gg3, ncol = 1)
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i model_unit -w 800 -h 600 -i fast_plot -i variable -i raw_extent
+# %%R -i model_unit -w 800 -h 600 -i fast_plot -i variable -i raw_extent -r 100
 
 library(tidyverse, warn.conflicts = FALSE)
 library(cowplot, warn.conflicts = FALSE)
@@ -640,5 +640,5 @@ cowplot::plot_grid(gg1, gg2, gg3, ncol = 1)
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {i_figure}**: Monthly mean {layer} {vv_name} for the model, observation and the difference between model and observations. For clarity, the maximum values are capped to the 98th percentiles") 
+md(f"**Figure {chapter}{i_figure}**: Monthly mean {layer} {vv_name} for the model, observation and the difference between model and observations. For clarity, the maximum values are capped to the 98th percentiles") 
 i_figure += 1

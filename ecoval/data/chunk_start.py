@@ -24,6 +24,11 @@ import pandas as pd
 build = "book_build"
 if build == "pdf":
     pd.set_option('styler.render.repr', 'latex')
+chapter = "book_chapter"
+if build == "pdf":
+    chapter = f"{chapter}."
+else:
+    chapter = ""
 import glob
 import cmocean as cm
 from tqdm import tqdm
