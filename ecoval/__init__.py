@@ -3,6 +3,7 @@ import pkg_resources
 import pandas as pd
 import shutil
 import glob
+import subprocess
 import nctoolkit as nc
 from ecoval.matchall import matchup
 from ecoval.trends import trends
@@ -41,6 +42,7 @@ def fix_toc(book_dir):
     out = f"{book_dir}/_toc.yml"
 
     # write line by line to out
+    i_chapter = 1
     with open(out, "w") as f:
         # "format: jb-book"
         x = f.write("format: jb-book\n")
@@ -49,11 +51,38 @@ def fix_toc(book_dir):
         x = f.write(f"- caption: Introduction\n")
         x = f.write("  chapters:\n")
         x = f.write(f"  - file: notebooks/000_info.ipynb\n")
+        # open notebook and replace book_chapter with i_chapter
+        with open(f"{book_dir}/notebooks/000_info.ipynb", "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("book_chapter", str(i_chapter))
+
+        # Write the file out again
+        with open(f"{book_dir}/notebooks/000_info.ipynb", "w") as file:
+            file.write(filedata)
+        i_chapter += 1
+
+
+
 
         x = f.write(f"- caption: Summaries\n")
         x = f.write("  chapters:\n")
-        for file in ss_paths:
-            x = f.write(f"  - file: notebooks/{file}\n")
+        for ff in ss_paths:
+            x = f.write(f"  - file: notebooks/{ff}\n")
+            # open notebook and replace book_chapter with i_chapter
+            with open(f"{book_dir}/notebooks/{ff}", "r") as file:
+                filedata = file.read()
+
+            filedata = filedata.replace("book_chapter", str(i_chapter))
+
+            # Replace the target string
+
+            # Write the file out again
+            with open(f"{book_dir}/notebooks/{ff}", "w") as file:
+                file.write(filedata)
+            i_chapter += 1
+
 
         # loop over variables in each vv_dict
         # value is the file in the chapter section
@@ -75,8 +104,22 @@ def fix_toc(book_dir):
                 vv_out = "Plankton Functional Types"
             x = f.write(f"- caption: {vv_out}\n")
             x = f.write("  chapters:\n")
-            for file in vv_dict[vv]:
-                x = f.write(f"  - file: notebooks/{file}\n")
+            for ff in vv_dict[vv]:
+                x = f.write(f"  - file: notebooks/{ff}\n")
+
+                # open notebook and replace book_chapter with i_chapter
+                with open(f"{book_dir}/notebooks/{ff}", "r") as file:
+                    filedata = file.read()
+
+                # Replace the target string
+                filedata = filedata.replace("book_chapter", str(i_chapter))
+
+                # Write the file out again
+
+                with open(f"{book_dir}/notebooks/{ff}", "w") as file:
+                    file.write(filedata)
+                i_chapter += 1
+
 
 
 
@@ -814,6 +857,54 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         os.system(f"jupyter-book build {book_dir}/")
     else:
         os.system(f"jupyter-book build {book_dir}/ --builder pdflatex")
+        # Now the latex file needs to be modified and re-compiled
+        # open the latex file and ensure tables have an hline after the header 
+        with open(f"{book_dir}/_build/latex/python.tex", "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+            filedata = filedata.replace("\\begin{tabular}{ ", "\\begin{tabular}{\n \\hline\n")
+        
+        # read line by line and modify
+
+        lines = filedata.split("\n")
+        new_lines = []
+        i = 3
+        for line in lines:
+            if "\\begin{tabular}" in line:
+                new_lines.append(line)
+                i = 0
+            else:
+                new_lines.append(line)
+                if i == 0:
+                    new_lines.append("\\hline")
+                    i = 1
+        # now replace noindent with center in lines with sphinxincludegraphics
+        for i in range(len(new_lines)):
+            if "sphinxincludegraphics" in new_lines[i]:
+                new_lines[i] = new_lines[i].replace("noindent", "center")
+
+        filedata = "\n".join(new_lines)
+
+        # Write the file out again
+        with open(f"{book_dir}/_build/latex/python.tex", "w") as file:
+            file.write(filedata)
+        makecmd = os.environ.get("MAKE", "make")
+        # remove the pdf file
+        if os.path.exists(f"{book_dir}/_build/latex/python.pdf"):
+            os.remove(f"{book_dir}/_build/latex/python.pdf")
+        output_path = f"{book_dir}/_build/latex"
+        output = subprocess.run([makecmd, "all-pdf"], cwd=output_path)
+        if output.returncode != 0:
+            _error("Error: Failed to build pdf")
+            return output.returncode
+        print(f"A PDF of your validation can be found at: {output_path} ")
+
+
+
+
+
+
 
     import os
 
@@ -838,6 +929,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
     if build == "html":
         webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
     else:
+        out_ff = f"validation_report.pdf"
+        # make a copy of the pdf
+        shutil.copyfile(f"{book_dir}/_build/latex/python.pdf", out_ff)
+
         webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/latex/python.pdf"))
 
 
