@@ -1143,6 +1143,13 @@ def matchup(
                             ds_thickness.subset(time=0, variables="e3t")
                             ds_thickness.as_missing(0)
                             #####
+                            # now output the bathymetry if it does not exists
+                            if not os.path.exists("matched/model_bathymetry.nc"):
+                                ds_bath = ds_thickness.copy()
+                                ds_bath.vertical_sum()
+                                ds_bath.to_nc("matched/model_bathymetry.nc", zip=True)
+                                raise ValueError("here")
+
 
                             # thickness needs to be inverted if the sea surface is at the bottom
 
