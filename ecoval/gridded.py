@@ -159,7 +159,7 @@ def gridded_matchup(
                 if not os.path.exists("matched/model_grid.csv"):
                     ds_grid = nc.open_data(paths[0], checks=False)
                     var = ds_grid.variables[0]
-                    ds_grid.subset(variables=var)
+                    ds_grid.subset(variables=var, time = 0)
                     if surface == "top":
                         ds_grid.top()
                     else:
@@ -463,8 +463,6 @@ def gridded_matchup(
 
                     lons = [lon_min, lon_max]
                     lats = [lat_min, lat_max]
-                    print(lons)
-                    print(lats)
                     ds.subset(lon=lons, lat=lats)
                     ds_obs.subset(lon=lons, lat=lats)
 
