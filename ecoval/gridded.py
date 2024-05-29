@@ -1,4 +1,3 @@
-# import what is needed in nsbc_matchup
 import os
 import glob
 import warnings
@@ -9,7 +8,6 @@ import nctoolkit as nc
 from ecoval.fixers import tidy_warnings
 from ecoval.utils import extension_of_directory, get_extent
 from ecoval.session import session_info
-
 
 
 def write_report(x):
@@ -31,18 +29,18 @@ def gridded_matchup(
     sim_end=None,
     e3t=None,
     domain="nws",
-    strict = True,
-    lon_lim = None,
-    lat_lim = None,
-    times_dict = None,
+    strict=True,
+    lon_lim=None,
+    lat_lim=None,
+    times_dict=None,
 ):
     """
-    Function to create NSBC matchups for a given set of variables
+    Function to create gridded matchups for a given set of variables
 
     Parameters
     ----------
     df_mapping : pandas.DataFrame
-        DataFrame containing the mapping between model variables and NSBC variables
+        DataFrame containing the mapping between model variables and gridded observations
     folder : str
         Path to folder containing model data
     var_choice : list
@@ -57,14 +55,14 @@ def gridded_matchup(
         Start year for model simulations
     sim_end : int
         End year for model simulations
-    e3t : nctoolkit DataSet or netCDF file 
+    e3t : nctoolkit DataSet or netCDF file
         Vertical grid spacing for model data
     domain : str
         Domain to use for matchups. Either "NWS" or "global"
         This indicates whether the matchups use northwest European shelf data or global data
 
     """
-    data_dir = session_info["data_dir"] 
+    data_dir = session_info["data_dir"]
 
     all_df = df_mapping
     # if model_variable is None remove from all_df
@@ -96,7 +94,6 @@ def gridded_matchup(
         # first up, do the top
 
         mapping = dict()
-        ds_all = nc.open_data()
 
         for vv in vars:
             # figure out the data source
@@ -155,7 +152,7 @@ def gridded_matchup(
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
 
                 new_paths = []
-                #ds = nc.open_data(paths, checks=False)
+                # ds = nc.open_data(paths, checks=False)
                 # set up model_grid if it doesn't exist
 
                 # This really should be a function....
@@ -169,7 +166,6 @@ def gridded_matchup(
                         ds_grid.bottom()
                     ds_grid.as_missing(0)
                     # ds = nc.open_data(paths[0], checks=False)
-                    amm7 = False
                     if max(ds_grid.contents.npoints) == 111375:
                         amm7_out = "matched/amm7.txt"
                         # create empty file
@@ -178,15 +174,13 @@ def gridded_matchup(
 
                         ff_grid = f"{data_dir}/amm7_val_subdomains.nc"
                         ds_grid.cdo_command(f"setgrid,{ff_grid}")
-                        # ds_grid.fix_amm7_grid()
-                        amm7 = True
                     df_grid = ds_grid.to_dataframe().reset_index().dropna()
                     columns = [x for x in df_grid.columns if "lon" in x or "lat" in x]
                     df_grid = df_grid.loc[:, columns].drop_duplicates()
                     if not os.path.exists("matched"):
                         os.makedirs("matched")
                     df_grid.to_csv("matched/model_grid.csv", index=False)
-                
+
                 all_years = []
                 for ff in paths:
                     all_years += list(times_dict[ff].year)
@@ -261,10 +255,12 @@ def gridded_matchup(
                 with warnings.catch_warnings(record=True) as w:
 
                     if vv_source == "glodap":
-                        ds_years = ds.years
                         for ff in paths:
                             ff_years = times_dict[ff].year
-                            if len([x for x in ff_years if x in range(1971, 2015)]) == 0:
+                            if (
+                                len([x for x in ff_years if x in range(1971, 2015)])
+                                == 0
+                            ):
                                 paths.remove(ff)
 
                     ds = nc.open_data(paths, checks=False)
@@ -324,7 +320,7 @@ def gridded_matchup(
 
                     ds.run()
                     ds.merge("time")
-                    ds.subset(years = years)
+                    ds.subset(years=years)
                     ds.run()
 
                 tidy_warnings(w)
@@ -347,13 +343,11 @@ def gridded_matchup(
                 else:
                     ds.tmean(["year", "month"])
 
-                amm7 = False
                 if max(ds.contents.npoints) == 111375:
                     ds.fix_amm7_grid()
-                    amm7 = True
                     ds.subset(lon=[-19, 9], lat=[41, 64.3])
                 if lon_lim is not None and lat_lim is not None:
-                    ds.subset(lon=lon_lim, lat = lat_lim)
+                    ds.subset(lon=lon_lim, lat=lat_lim)
 
                 # dir_var = f"{data_dir}/gridded/{domain}/{vv}"
                 # if vv not in ["poc", "temperature"]:
@@ -427,7 +421,7 @@ def gridded_matchup(
                 lat_min_model = lats[0]
                 lat_max_model = lats[1]
 
-                # now do the same for ds_nsbc
+                # now do the same for the obs
                 ds_xr = ds_obs.to_xarray()
                 lon_name = [x for x in ds_xr.coords if "lon" in x]
                 lat_name = [x for x in ds_xr.coords if "lat" in x]
@@ -446,7 +440,6 @@ def gridded_matchup(
                 lons = [lon_min, lon_max]
                 lats = [lat_min, lat_max]
 
-
                 if domain != "global":
                     ds.subset(lon=lons, lat=lats)
                     ds_obs.subset(lon=lons, lat=lats)
@@ -458,7 +451,7 @@ def gridded_matchup(
                     lon_max = min(model_extent[1], obs_extent[1])
                     lat_min = max(model_extent[2], obs_extent[2])
                     lat_max = min(model_extent[3], obs_extent[3])
-                   # make sure lon_min is greater than -180
+                    # make sure lon_min is greater than -180
                     if lon_min < -180:
                         lon_min = -180
                     if lon_max > 180:
@@ -474,12 +467,10 @@ def gridded_matchup(
                     print(lats)
                     ds.subset(lon=lons, lat=lats)
                     ds_obs.subset(lon=lons, lat=lats)
-                
 
                 n1 = ds_obs.contents.npoints[0]
                 n2 = ds.contents.npoints[0]
 
-                # if not amm7:
                 if n1 >= n2:
                     ds_obs.regrid(ds, method="nn")
                 else:
@@ -520,7 +511,7 @@ def gridded_matchup(
                 ds_obs.set_fill(-9999)
                 ds_obs.top()
                 ds_mask = ds_obs.copy()
-                ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True)
+                ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
                 ds_mask.as_missing([-1e40, -1e20])
                 ds_obs + ds_mask
 
@@ -553,182 +544,4 @@ def gridded_matchup(
                     ds_obs.tmean("month")
                 ds_obs.to_nc(out_file, zip=True, overwrite=True)
 
-                # ds_all.append(ds)
-
-        # if len(ds_all) > 1:
-        #     ds_all.merge("variable", "month")
-        #     ds_all.run()
-        #     # add start year as a global attribute using nco
-        #     ds_all.nco_command(f"ncatted -O -a start_year,global,o,c,{start_year}")
-        #     ds_all.nco_command(f"ncatted -O -a end_year,global,o,c,{end_year}")
-
-        #     ds_all.to_nc(f"matched/gridded/{}/nsbc_model.nc", zip=True, overwrite=True)
-        # else:
-        #     if len(ds_all) == 1:
-        #         # add start year as a global attribute using nco
-        #         ds_all.nco_command(f"ncatted -O -a start_year,global,o,c,{start_year}")
-        #         ds_all.nco_command(f"ncatted -O -a end_year,global,o,c,{end_year}")
-        #         ds_all.to_nc(
-        #             "matched/gridded/nsbc/nsbc_model.nc", zip=True, overwrite=True
-        #         )
-        #     else:
-        #         print(f"No NSBC matchups for {vv} for surface")
-
-        # now, do the vertical mean
-
         return None
-
-        mapping = dict()
-        ds_all = nc.open_data()
-
-        for vv in vars:
-            df = df_mapping.query("variable == @vv").reset_index(drop=True)
-            if len(df) > 0:
-                mapping[vv] = list(df.query("variable == @vv").model_variable)[0]
-
-                selection = []
-                try:
-                    selection += mapping[vv].split("+")
-                except:
-                    selection = selection
-
-                patterns = set(df.pattern)
-                if len(patterns) > 1:
-                    raise ValueError(
-                        "Something strange going on in the string patterns. Unable to handle this. Bug fix time!"
-                    )
-                pattern = list(patterns)[0]
-
-                final_extension = extension_of_directory(folder)
-                paths = glob.glob(folder + final_extension + pattern)
-
-                for exc in exclude:
-                    paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
-
-                years = range(sim_start, sim_end + 1)
-
-                new_paths = []
-                for ff in paths:
-                    try:
-                        ds = nc.open_data(ff, checks=False)
-                        ds_years = ds.years
-                        if len([x for x in ds_years if x in years]) > 0:
-                            new_paths.append(ff)
-                    except:
-                        print(f"Unable to find relevant years in  {ff}")
-
-                paths = list(set(new_paths))
-                paths.sort()
-
-                # figure out if cdo or nco is faster....
-
-                use_nco = False
-
-                with warnings.catch_warnings(record=True) as w:
-                    ds = nc.open_data(paths, checks=False)
-
-                    ds_years = ds.years
-                    years = [x for x in ds_years if x >= sim_start and x <= sim_end]
-
-                    if spinup is not None:
-                        start_year = min(ds.years) + spinup
-                    else:
-                        start_year = min(years)
-                    years = [x for x in years if x >= start_year]
-
-                    ds.subset(years=years)
-
-                    if use_nco:
-                        ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
-                    else:
-                        ds.subset(variables=selection)
-                    ds.as_missing(0)
-
-                    if "chlorophyll" in list(df.variable):
-                        command = "-aexpr,chlorophyll=" + mapping["chlorophyll"]
-                        ds.cdo_command(command)
-                        drop_these = mapping["chlorophyll"].split("+")
-                        ds_contents = ds.contents
-                        ds_contents = ds_contents.query("variable in @drop_these")
-                        chl_unit = ds_contents.unit[0]
-                        ds.drop(variables=drop_these)
-                    ds.run()
-                    for key in mapping:
-                        if key != "chlorophyll":
-                            if mapping[key] in ds.variables:
-                                ds.rename({mapping[key]: key})
-                    if "chlorophyll" in list(df.variable):
-                        ds.set_units({"chlorophyll": chl_unit})
-                        ds.set_longnames(
-                            {"chlorophyll": "Total chlorophyll concentration"}
-                        )
-
-                    ds.run()
-                tidy_warnings(w)
-
-                ds.merge("time")
-                ds.run()
-                # figure out the start and end year
-                start_year = min(ds.years)
-                end_year = max(ds.years)
-
-                ds.tmean("month")
-
-                with warnings.catch_warnings(record=True) as w:
-                    if e3t is None:
-                        try:
-                            ds_thickness = nc.open_data(paths[0], checks=False)
-                            ds_thickness.subset(time=0, variables="e3t")
-                            ds_thickness.run()
-                            e3t = ds_thickness[0]
-
-                        except:
-                            pass
-                tidy_warnings(w)
-
-                if e3t is not None:
-                    ds.vertical_mean(fixed=False, thickness=e3t)
-                else:
-                    ds.vertical_mean(fixed=False)
-
-                amm7 = False
-                if max(ds.contents.npoints) == 111375:
-                    ds.fix_amm7_grid()
-                    amm7 = True
-                ds_nsbc = nc.open_data(
-                    f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
-                    checks=False,
-                )
-
-                if not amm7:
-                    ds.regrid(ds_nsbc)
-
-                ds_all.append(ds)
-
-        if len(ds_all) > 1:
-            ds_all.merge("variable", "month")
-            ds_all.run()
-            # add start year as a global attribute using nco
-            ds_all.nco_command(f"ncatted -O -a start_year,global,o,c,{start_year}")
-            ds_all.nco_command(f"ncatted -O -a end_year,global,o,c,{end_year}")
-
-            ds_all.to_nc(
-                "matched/gridded/nsbc/nsbc_model_verticalmean.nc",
-                zip=True,
-                overwrite=True,
-            )
-        else:
-            if len(ds_all) == 1:
-                # add start year as a global attribute using nco
-                ds_all.nco_command(f"ncatted -O -a start_year,global,o,c,{start_year}")
-                ds_all.nco_command(f"ncatted -O -a end_year,global,o,c,{end_year}")
-                ds_all.to_nc(
-                    "matched/gridded/nsbc/nsbc_model_verticalmean.nc",
-                    zip=True,
-                    overwrite=True,
-                )
-            else:
-                print(f"No NSBC matchups for vertical mean for {vv}")
-
-        del ds_all
-        del ds
