@@ -190,7 +190,7 @@ import matplotlib.pyplot as plt
 
 plt.subplots_adjust(wspace=20, hspace=20)
 
-fig = plt.figure(figsize=(10, 10))
+fig = plt.figure(figsize=(14, 14))
 
 # Create 4x4 Grid
 
@@ -231,7 +231,18 @@ ds_both.set_units({"observation": ds_both.contents.query("variable == 'model'").
 #     ds_both.set_longnames({"observation": ds_both.contents.query("variable == 'model'").reset_index().long_name.values[0]}) 
 # except:
 #     ds_both.set_longnames({"observation": ds_both.contents.query("variable == 'observation'").reset_index().long_name.values[0]})  
+# ditch #Modelled and Observed from long names
+the_contents = ds_both.contents
+for vv in the_contents.variable:
+    long_name = the_contents.query(f"variable == '{vv}'").reset_index().long_name.values[0]
+    if "Modelled" in long_name:
+        long_name = long_name.replace("Modelled", "").strip().replace("surface", "Surface")
+    if "Observed" in long_name:
+        long_name = long_name.replace("Observed", "").strip().replace("surface", "Surface")
+    ds_both.set_longnames({vv: long_name})
+
 ds_both.pub_plot(variable  = "model", limits = [z_min, z_max], title = "Model", fig = fig, gs = gs[0,0], trans = transformation)
+
 
 
 ds_both.pub_plot(variable  = "observation", limits = [z_min, z_max], title = "Observation", fig = fig, gs = gs[0,1], trans = transformation)

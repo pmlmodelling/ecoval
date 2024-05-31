@@ -1156,7 +1156,6 @@ def matchup(
                                 ds_bath = ds_thickness.copy()
                                 ds_bath.vertical_sum()
                                 ds_bath.to_nc("matched/model_bathymetry.nc", zip=True)
-                                raise ValueError("here")
 
                             # thickness needs to be inverted if the sea surface is at the bottom
 

@@ -184,6 +184,7 @@ def gridded_matchup(
                 all_years = []
                 for ff in paths:
                     all_years += list(times_dict[ff].year)
+                all_years = list(set(all_years))
 
                 sim_years = range(sim_start, sim_end + 1)
                 if start is not None:
@@ -223,34 +224,38 @@ def gridded_matchup(
                 # figure out if cdo or nco is faster....
 
                 use_nco = False
-                if surface == "top":
-                    try:
-                        with warnings.catch_warnings(record=True) as w:
-                            use_nco = False
-                            cdo_time = time.time()
+                # if surface == "top":
+                #     try:
+                #         with warnings.catch_warnings(record=True) as w:
+                #             use_nco = False
+                #             cdo_time = time.time()
 
-                            ds = nc.open_data(paths[0], checks=False)
-                            ds.subset(variables=selection)
-                            if surface == "top":
-                                ds.top()
-                            else:
-                                ds.bottom()
-                            ds.run()
-                            cdo_time = time.time() - cdo_time
+                #             ds = nc.open_data(paths[0], checks=False)
+                #             ds.subset(variables=selection)
+                #             if vv_source != "woa":
+                #                 if surface == "top":
+                #                     ds.top()
+                #                 else:
+                #                     ds.bottom()
+                #             ds.run()
+                #             cdo_time = time.time() - cdo_time
 
-                            nco_time = time.time()
-                            ds = nc.open_data(paths[0], checks=False)
-                            nco_selection = ",".join(selection)
-                            ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
-                            ds.run()
-                            nco_time = time.time() - nco_time
+                #             nco_time = time.time()
+                #             ds = nc.open_data(paths[0], checks=False)
+                #             nco_selection = ",".join(selection)
+                #             if vv_source != "woa":
+                #                 ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
+                #             else:
+                #                 ds.nco_command(f"ncks -F -v {nco_selection}")
+                #             ds.run()
+                #             nco_time = time.time() - nco_time
 
-                            if nco_time < cdo_time:
-                                use_nco = True
-                        tidy_warnings(w)
+                #             if nco_time < cdo_time:
+                #                 use_nco = True
+                #         tidy_warnings(w)
 
-                    except:
-                        use_nco = False
+                #     except:
+                #         use_nco = False
 
                 with warnings.catch_warnings(record=True) as w:
 
@@ -266,13 +271,19 @@ def gridded_matchup(
                     ds = nc.open_data(paths, checks=False)
 
                     if use_nco:
-                        ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
+                        if vv_source != "woa":
+                            ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
+                        else:
+                            ds.nco_command(f"ncks -F -v {nco_selection}")
                     else:
                         ds.subset(variables=selection)
-                        if surface == "top":
-                            ds.top()
-                        else:
-                            ds.bottom()
+                        ds.as_missing(0)
+                        ds.tmean(["year", "month"])
+                        if vv_source != "woa":
+                            if surface == "top":
+                                ds.top()
+                            else:
+                                ds.bottom()
 
                     ds.as_missing(0)
                     if vv_source == "glodap":
@@ -319,6 +330,7 @@ def gridded_matchup(
                         )
 
                     ds.run()
+                    ds.tmean(["year", "month"])
                     ds.merge("time")
                     ds.subset(years=years)
                     ds.run()
@@ -330,12 +342,26 @@ def gridded_matchup(
                 end_year = max(ds.years)
 
                 vv_file = nc.create_ensemble(dir_var)
+                vv_file = [x for x in vv_file if "annual" not in x]
                 # except:
                 # vv_file = nc.create_ensemble(dir_var)
                 ds_obs = nc.open_data(
                     vv_file,
                     checks=False,
                 )
+
+                if vv_source == "woa":
+                    vv_file = nc.create_ensemble(dir_var)
+                    vv_file = [x for x in vv_file if "annual" in x]
+                    ds_obs_annual = nc.open_data(
+                        vv_file,
+                        checks=False,
+                    )
+                    ds_obs_annual.rename({ds_obs.variables[0]: "observation"})
+                    if len(ds_obs_annual.variables) > 1:
+                        raise ValueError(f"Please ensure only one variable in {vv}!")
+
+
                 obs_years = ds_obs.years
 
                 if len(obs_years) == 1:
@@ -366,7 +392,8 @@ def gridded_matchup(
                     ds_obs.merge("time")
                     ds_obs.tmean(["year", "month"])
                 if vv in ["salinity"] and domain != "nws":
-                    ds_obs.top()
+                    if vv_source != "woa":
+                        ds_obs.top()
                     ds_obs.subset(years=years)
 
                 if vv not in ["poc", "temperature"]:
@@ -498,6 +525,28 @@ def gridded_matchup(
                     ds_obs * 12.011
                     ds + (40 * 12.011)
 
+                if vv_source != "woa":
+                    ds_obs.top()
+
+                if vv_source == "woa":
+                    levels = ds_obs_annual.levels
+                    levels = [x for x in levels if x >= np.min(ds.levels)]
+                    ds1 = ds.copy()
+                    ds1.tmean()
+                    ds1.vertical_interp(levels, fixed = True)
+                    ds_obs_annual.vertical_interp(levels, fixed = True)
+                    if n1 >= n2:
+                        ds_obs_annual.regrid(ds1, method="nn")
+                    else:
+                        ds1.regrid(ds_obs_annual, method="nn")
+                    ds_obs_annual.append(ds1)
+                    ds_obs_annual.merge("variable")
+                # at this point we need to switch to the sea surface for the monthly file
+
+                if surface == "top":
+                    ds_obs.top()
+                    ds.top()
+
                 ds_obs.append(ds)
 
                 if len(ds.times) > 12:
@@ -507,7 +556,6 @@ def gridded_matchup(
                 ds_obs.nco_command(f"ncatted -O -a start_year,global,o,c,{start_year}")
                 ds_obs.nco_command(f"ncatted -O -a end_year,global,o,c,{end_year}")
                 ds_obs.set_fill(-9999)
-                ds_obs.top()
                 ds_mask = ds_obs.copy()
                 ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
                 ds_mask.as_missing([-1e40, -1e20])
@@ -540,6 +588,34 @@ def gridded_matchup(
                 ds_obs.set_precision("F32")
                 if vv == "salinity" and domain != "nws":
                     ds_obs.tmean("month")
-                ds_obs.to_nc(out_file, zip=True, overwrite=True)
+                ds_surface = ds_obs.copy()
+                if vv_source == "woa":
+                    ds_surface.top()
+                ds_surface.to_nc(out_file, zip=True, overwrite=True)
+
+                # now do the masking etc.
+
+                if vv_source == "woa": 
+                    out_file = f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_vertical.nc"
+                    ds_obs_annual.set_precision("F32")
+
+                #   ds_obs.set_fill(-9999)
+                    #ds_mask = ds_obs_annual.copy()
+                    #ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
+                    #ds_mask.as_missing([-1e40, -1e20])
+                    #ds_obs + ds_mask
+                    ds_obs_annual.set_fill(-9999)
+                    ds_mask = ds_obs_annual.copy()
+                    ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
+                    ds_mask.as_missing([-1e40, -1e20])
+                    ds_mask.run()
+                    ds_obs_annual + ds_mask
+                    if os.path.exists(out_file):
+                        os.remove(out_file)
+                    if not os.path.exists(os.path.dirname(out_file)):
+                        os.makedirs(os.path.dirname(out_file))
+
+                    ds_obs_annual.to_nc(out_file, zip=True, overwrite=True)
+
 
         return None

@@ -62,7 +62,18 @@ md(f"**Figure {chapter}{i_figure}**: Seasonal temporal correlation between model
 i_figure += 1
 
 # %% tags=["remove-cell"]
-data_path = pkg_resources.resource_filename("ecoval", "data/amm7_val_subdomains.nc")
+lon_range = lon_max - lon_min
+lat_range = lat_max - lat_min
+
+global_grid = False
+if lon_range > 340:
+    if lat_range > 160:
+        global_grid = True
+
+if not global_grid:
+    data_path = pkg_resources.resource_filename("ecoval", "data/amm7_val_subdomains.nc")
+else:
+    data_path = pkg_resources.resource_filename("ecoval", "data/global_subdomains.nc")
 ds_regions = nc.open_data(data_path, checks = False)
 # pull this in from the package data
 
@@ -93,6 +104,8 @@ if lon_min > -30:
         if lat_min > 35:
             if lat_max < 70:
                 regional = True
+if global_grid:
+    regional = True
 
 
 # %% tags=["remove-cell"]

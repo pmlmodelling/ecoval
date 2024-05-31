@@ -938,6 +938,9 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         for i in range(len(new_lines)):
             if "sphinxincludegraphics" in new_lines[i]:
                 new_lines[i] = new_lines[i].replace("noindent", "center")
+        
+        # we do not want lines that start with\part{
+        new_lines = [x for x in new_lines if not x.startswith("\\part{")]
 
         filedata = "\n".join(new_lines)
 

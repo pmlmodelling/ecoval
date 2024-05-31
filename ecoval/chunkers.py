@@ -45,6 +45,35 @@ def add_chunks(build = "html"):
             if is_chunk(line):
                 # get the file names
                 chunk_file = line.replace("\n", "") + ".py"
+                # check if globals is in chunk file
+                if "globals" in chunk_file:
+                #     # now, we need to figure out if it's a global grid
+                    try:
+                        file_paths = nc.create_ensemble("matched/gridded/")
+                        if len(file_paths) == 0:
+                            chunk_file = "chunk_empty.py" 
+                        else:
+                            file_path = file_paths[0]
+                            ds = nc.open_data(file_path)
+                            ds = ds.to_xarray()
+                            lon_name = [x for x in ds.coords if "lon" in x][0]
+                            lat_name = [x for x in ds.coords if "lat" in x][0]
+                            # now, get the lon and lat min/max
+                            lon_min = float(ds[lon_name].min())
+                            lon_max = float(ds[lon_name].max())
+                            lat_min = float(ds[lat_name].min())
+                            lat_max = float(ds[lat_name].max())
+                            lon_range = lon_max - lon_min
+                            lat_range = lat_max - lat_min
+                            if lon_range > 340 and lat_range > 160:
+                                chunk_file = "chunk_globals.py"
+                            else:
+                                chunk_file = "chunk_empty.py"
+                            raise ValueError(chunk_file)
+                    except:
+                        chunk_file = chunk_file
+
+
                 if not nws:
                     if "cdf" in chunk_file:
                         continue
@@ -78,4 +107,6 @@ def add_chunks(build = "html"):
         file1 = open(path, 'w')
         file1.writelines(new_lines)
         file1.close()
+
+        
 
