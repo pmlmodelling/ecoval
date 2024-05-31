@@ -1,18 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: ipynb,py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.14.6
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
 # %% tags=["remove-cell"]
 ds1 = ds_model.copy()
 ds1.cdo_command("setname,model")
@@ -347,6 +332,20 @@ theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align =
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 labs(x = NULL, y = NULL, title = "Model", fill = model_unit)
 
+y_labels <-  as.numeric(na.omit(layer_scales(gg1)$y$break_positions()))
+x_labels <- as.numeric(na.omit(layer_scales(gg1)$x$break_positions()))
+x_breaks <- x_labels
+y_breaks <- y_labels
+
+# y labels are north-south coordinates. Make them more appropriate
+# i.e. 10 should be 10 °N, -10 should be 10 °S
+
+y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels), "°S"))
+x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
+
+gg1 <- gg1 + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
+    scale_x_continuous(breaks = x_breaks, labels = x_labels)
+
 if (fast_plot == FALSE)
     gg1 <- gg1 + 
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
@@ -360,10 +359,25 @@ theme_bw(base_size = 12)+
 theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Observation", fill = model_unit)
 
+
+
+y_labels <-  as.numeric(na.omit(layer_scales(gg2)$y$break_positions()))
+x_labels <- as.numeric(na.omit(layer_scales(gg2)$x$break_positions()))
+x_breaks <- x_labels
+y_breaks <- y_labels
+
+# y labels are north-south coordinates. Make them more appropriate
+# i.e. 10 should be 10 °N, -10 should be 10 °S
+
+y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels), "°S"))
+x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
+
+gg2 <- gg2 + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
+    scale_x_continuous(breaks = x_breaks, labels = x_labels)
+
 if (fast_plot == FALSE)
     gg2 <-  gg2 + 
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
-
 
 gg3 = ggplot(df_diff)+
 geom_tile(aes(x = lon, y = lat, fill = diff))+
@@ -374,9 +388,26 @@ scale_fill_gradient2(guide  = guide_colourbar(title.position = "right"), low = "
 theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Model - Observation", fill = model_unit)
 
+
+
+y_labels <-  as.numeric(na.omit(layer_scales(gg3)$y$break_positions()))
+x_labels <- as.numeric(na.omit(layer_scales(gg3)$x$break_positions()))
+x_breaks <- x_labels
+y_breaks <- y_labels
+
+# y labels are north-south coordinates. Make them more appropriate
+# i.e. 10 should be 10 °N, -10 should be 10 °S
+
+y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels), "°S"))
+x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
+
+gg3 <- gg3 + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
+    scale_x_continuous(breaks = x_breaks, labels = x_labels)
+
 if (fast_plot == FALSE)
     gg3 <- gg3 + 
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
+
 
 gg1 <- gg1 + 
    theme(plot.margin = margin(t = 0,  # Top margin
@@ -384,34 +415,6 @@ gg1 <- gg1 +
                              b = 0,  # Bottom margin
                              l = 0)) # Left ggmargin 
 
-# figure out if it's a global file
-if(abs(raw_extent[1] - raw_extent[2]) > 350){
-    gg1 <- gg1 + 
-    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
-    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
-
-    gg2 <- gg2 +
-    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
-    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
-
-    gg3 <- gg3 +
-    scale_x_continuous(breaks = c(-180, -90, 0, 90, 180), labels = c("180°W", "90°W", "0°", "90°E", "180°E"))+
-    scale_y_continuous(breaks = c(-90, -45, 0, 45, 90), labels = c("90°S", "45°S", "0°", "45°N", "90°N"))
-
-}
-
-# appropriate plotting for nws 
-if((raw_extent[1] > -30) & (raw_extent[2] < 20)){
-    gg1 + 
-    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
-    gg2 + 
-    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
-    gg3 +
-    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
-    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
-}
 
 # gg1
 # reduce the size of the plot
@@ -553,12 +556,6 @@ df_obs$month <- factor(df_obs$month, levels = c("Jul", "Aug", "Sep", "Oct", "Nov
 
 df_diff$month <- factor(df_diff$month, levels = c("Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
-
-
-
-
-# lon_label = c("20°W", "10°W", "0°", "10°E")
-# lat_label = c("45°N", "50°N", "55°N", "60°N", "65°N")
 # Create sensible lon/lat labels based on the min/min lon and lat
 # This needs to work on any data, including global data
 lon_breaks = c(xlim[1], xlim[1] + 10, 0, xlim[2] - 10)
@@ -577,9 +574,21 @@ theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align =
 scale_fill_viridis_c(guide  = guide_colourbar(title.position = "right"))+
 labs(x = NULL, y = NULL, title = "Model", fill = model_unit)
 
-if (fast_plot == FALSE)
-    gg1 <- gg1 + 
+
+x_labels <- as.numeric(na.omit(layer_scales(gg1)$x$break_positions()))
+y_labels <- as.numeric(na.omit(layer_scales(gg1)$y$break_positions()))
+x_breaks <- x_labels
+y_breaks <- y_labels
+
+# y labels are north-south coordinates. Make them more appropriate
+
+y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels), "°S"))
+x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
+
+gg1 <- gg1 + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
+    scale_x_continuous(breaks = x_breaks, labels = x_labels)+
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
+
 
 gg2 = ggplot(df_obs)+
 geom_tile(aes(x = lon, y = lat, fill = observation))+
@@ -590,10 +599,20 @@ theme_bw(base_size = 12)+
 theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Observation", fill = model_unit)
 
-if (fast_plot == FALSE)
-    gg2 <-  gg2 + 
-        geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
+x_labels <- as.numeric(na.omit(layer_scales(gg2)$x$break_positions()))
+y_labels <- as.numeric(na.omit(layer_scales(gg2)$y$break_positions()))
+x_breaks <- x_labels
+y_breaks <- y_labels
+
+# y labels are north-south coordinates. Make them more appropriate
+
+y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels), "°S"))
+x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
+
+gg2 <- gg2 + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
+    scale_x_continuous(breaks = x_breaks, labels = x_labels)+
+        geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
 gg3 = ggplot(df_diff)+
 geom_tile(aes(x = lon, y = lat, fill = diff))+
@@ -604,8 +623,19 @@ scale_fill_gradient2(guide  = guide_colourbar(title.position = "right"), low = "
 theme(legend.title = ggtext::element_markdown(angle = -90), legend.title.align = 0.5)+
 labs(x = NULL, y = NULL, title = "Model - Observation", fill = model_unit)
 
-if (fast_plot == FALSE)
-    gg3 <- gg3 + 
+
+x_labels <- as.numeric(na.omit(layer_scales(gg3)$x$break_positions()))
+y_labels <- as.numeric(na.omit(layer_scales(gg3)$y$break_positions()))
+x_breaks <- x_labels
+y_breaks <- y_labels
+
+# y labels are north-south coordinates. Make them more appropriate
+
+y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels), "°S"))
+x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
+
+gg3 <- gg3 + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
+    scale_x_continuous(breaks = x_breaks, labels = x_labels)+
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
 gg1 <- gg1 + 
