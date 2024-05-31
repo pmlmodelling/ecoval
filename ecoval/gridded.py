@@ -277,13 +277,13 @@ def gridded_matchup(
                             ds.nco_command(f"ncks -F -v {nco_selection}")
                     else:
                         ds.subset(variables=selection)
-                        ds.as_missing(0)
-                        ds.tmean(["year", "month"])
                         if vv_source != "woa":
                             if surface == "top":
                                 ds.top()
                             else:
                                 ds.bottom()
+                        ds.as_missing(0)
+                        ds.tmean(["year", "month"])
 
                     ds.as_missing(0)
                     if vv_source == "glodap":
