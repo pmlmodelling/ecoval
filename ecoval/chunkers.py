@@ -1,5 +1,4 @@
 
-import ecoval.noaa as noaa
 from ecoval.matchall import matchup
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
