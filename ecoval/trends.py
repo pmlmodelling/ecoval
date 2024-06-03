@@ -17,6 +17,7 @@ warnings.formatwarning = custom_formatwarning
 import numpy as np
 import xarray as xr
 from ecoval.session import session_info
+from ecoval.parsers import generate_mapping
 
 
 import random

@@ -1,7 +1,5 @@
 
-import ecoval.ices as ices
 import ecoval.noaa as noaa
-from ecoval.ices import match_ices
 from ecoval.matchall import matchup
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
