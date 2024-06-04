@@ -14,7 +14,6 @@ geopandas
 holoviews
 plotnine
 jupyter-book
-rpy2
 seawater
 holteandtalley
 cmocean
