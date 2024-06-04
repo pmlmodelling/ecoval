@@ -1,7 +1,7 @@
-ncplot: Quick plotting of NetCDF files
+ecoVal: Automated marine ecosystem model validation 
 =======================================================
 
-Automatic plotting of NetCDF files in Python and on the command line on Unix systems.
+Automatic validation of marine ecosystem models in Python. 
 
 Documentation
 -------------
