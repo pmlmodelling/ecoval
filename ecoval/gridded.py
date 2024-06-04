@@ -639,6 +639,9 @@ def gridded_matchup(
                     if not os.path.exists(os.path.dirname(out_file)):
                         os.makedirs(os.path.dirname(out_file))
                     print(ds_obs.size)
+                    lons = [lon_min, lon_max]
+                    lats = [lat_min, lat_max]
+                    ds_obs.subset(lon=lons, lat=lats)
 
                     ds_obs_annual.to_nc(out_file, zip=True, overwrite=True)
 
