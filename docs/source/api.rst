@@ -1,4 +1,4 @@
-.. currentmodule:: ncplot
+.. currentmodule:: ecoval
 
 
 ####################
