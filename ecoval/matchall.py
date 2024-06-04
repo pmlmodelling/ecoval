@@ -368,7 +368,6 @@ def matchup(
     cores=None,
     thickness=None,
     mapping=None,
-    fvcom=False,
     mld=False,
     exclude=[],
     levels=2,
@@ -418,8 +417,6 @@ def matchup(
         List of strings. Default is ['year', 'month', 'day']. This is the time resolution of the point data matchup.
     exclude : list
         List of strings to exclude. This is useful if you have files in the directory that you do not want to include in the matchup.
-    fvcom : bool
-        Is the model fvcom? Default is False.
     mld : bool
         Matchup temperature data for mixed layer depth validation. Default is False.
     lon_lim : list
@@ -432,6 +429,7 @@ def matchup(
         Additional arguments
 
     """
+    fvcom=False,
 
     # make sure start and end are integers
 
