@@ -369,7 +369,6 @@ def matchup(
     thickness=None,
     mapping=None,
     fvcom=False,
-    # strict = True,
     mld=False,
     exclude=[],
     levels=2,
@@ -389,8 +388,10 @@ def matchup(
         Folder containing model output
     start : int
         Start year. First year of the simulations to matchup.
+        This must be supplied
     end : int
         End year. Final year of the simulations to matchup.
+        This must be supplied
     surface_level : str
         Surface level of the model netCDF files. Either 'top' or 'bottom'. Default is None, so this must be supplied.
     surface : list
@@ -431,6 +432,20 @@ def matchup(
         Additional arguments
 
     """
+
+    # make sure start and end are integers
+
+    if start is None:
+        raise ValueError("Please provide a start year")
+
+    if end is None:
+        raise ValueError("Please provide an end year")
+
+    if isinstance(start, int) is False:
+        raise ValueError("Start must be an integer")
+    
+    if isinstance(end, int) is False:
+        raise ValueError("End must be an integer")
 
     # ensure time resolution is a list
     if isinstance(point_time_res, list) is False:
