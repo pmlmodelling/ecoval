@@ -189,6 +189,8 @@ def gridded_matchup(
                 sim_years = range(sim_start, sim_end + 1)
                 if start is not None:
                     years = [x for x in all_years if x in sim_years]
+                else:
+                    years = all_years
                 # now simplify paths, so that only the relevant years are used
                 new_paths = []
 
@@ -391,16 +393,26 @@ def gridded_matchup(
                     ds_obs.tmean(["year", "month"])
                     ds_obs.merge("time")
                     ds_obs.tmean(["year", "month"])
+                
                 if vv in ["salinity"] and domain != "nws":
                     if vv_source != "woa":
                         ds_obs.top()
-                    ds_obs.subset(years=years)
+                    sub_years = [x for x in ds.years if x in ds_obs.years]
+                    ds_obs.subset(years=sub_years)
+                    ds.subset(years = sub_years)
+                    ds_obs.merge("time")
+                    ds_obs.tmean("month")
+                    ds.merge("time")
+                    ds.tmean("month")
+                    ds_obs_annual.subset(years = sub_years)
+                    ds_obs_annual.tmean()
+
 
                 if vv not in ["poc", "temperature"]:
                     if len(ds_obs.times) > 12:
                         ds_obs.subset(years=years)
 
-                if vv_source == "occci" and vv == "chlorophyll":
+                if vv_source == "occci":
                     ds_obs.subset(variable="chlor_a")
 
                 ds_xr = ds.to_xarray()
@@ -547,6 +559,18 @@ def gridded_matchup(
                     ds_obs.top()
                     ds.top()
 
+
+                if vv_source == "occci":
+                    years = [x for x in ds_obs.years if x in ds.years]
+                    years = list(set(years))
+
+                    ds_obs.subset(years=years)
+                    ds_obs.tmean(["year", "month"])
+                    ds_obs.merge("time")
+                    ds_obs.tmean(["year", "month"])
+                    ds.subset(years=years)
+                    ds.tmean(["year", "month"])
+
                 ds_obs.append(ds)
 
                 if len(ds.times) > 12:
@@ -614,6 +638,7 @@ def gridded_matchup(
                         os.remove(out_file)
                     if not os.path.exists(os.path.dirname(out_file)):
                         os.makedirs(os.path.dirname(out_file))
+                    print(ds_obs.size)
 
                     ds_obs_annual.to_nc(out_file, zip=True, overwrite=True)
 
