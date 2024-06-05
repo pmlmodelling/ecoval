@@ -689,7 +689,6 @@ def matchup(
 
     if all_df is None:
         all_df = find_paths(folder, fvcom=fvcom, exclude=exclude, n_check = n_check)
-        print(all_df)
 
         # add in anything that is missing
         all_vars = [
@@ -946,12 +945,8 @@ def matchup(
 
     if global_grid is None:
         final_extension = extension_of_directory(folder)
-        print("Finding")
         path = glob.glob(folder + final_extension + all_df.pattern[0])[0]
-        print(path)
-        print("Found")
         ds = nc.open_data(path, checks=False).to_xarray()
-        print("opened")
         lon_name = [x for x in ds.coords if "lon" in x]
         lat_name = [x for x in ds.coords if "lat" in x]
         lon = ds[lon_name[0]].values
@@ -1022,7 +1017,29 @@ def matchup(
 
     patterns = list(set(df_variables.pattern))
 
+
     times_dict = dict()
+
+    print("*************************************")
+    if thickness is None:
+        for pattern in patterns:
+            print("Identifying whether e3t exists in the files")
+            final_extension = extension_of_directory(folder)
+            ensemble = glob.glob(folder + final_extension + pattern)
+            for exc in exclude:
+                ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
+
+            ds = nc.open_data(ensemble[0])
+            if "e3t" in ds.variables:
+                print(f"Extracting and saving thickness from {ensemble[0]} as matched/e3t.nc")
+                ds.subset(variable = "e3t")
+                ds.subset(time= 0)
+                ds.as_missing(0)
+                if os.path.exists("matched/e3t.nc"):
+                    os.remove("matched/e3t.nc")
+                ds.to_nc("matched/e3t.nc", zip=True, overwrite=True)
+                thickness = "matched/e3t.nc"
+                break
 
     print("*************************************")
     for pattern in patterns:
