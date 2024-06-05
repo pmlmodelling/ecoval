@@ -28,7 +28,7 @@ def gridded_matchup(
     sim_start=None,
     sim_end=None,
     e3t=None,
-    domain="nws",
+    domain = "nws",
     strict=True,
     lon_lim=None,
     lat_lim=None,
@@ -152,7 +152,6 @@ def gridded_matchup(
                     paths = [x for x in paths if f"{exc}" not in os.path.basename(x)]
 
                 new_paths = []
-                # ds = nc.open_data(paths, checks=False)
                 # set up model_grid if it doesn't exist
 
                 # This really should be a function....
@@ -165,7 +164,6 @@ def gridded_matchup(
                     else:
                         ds_grid.bottom()
                     ds_grid.as_missing(0)
-                    # ds = nc.open_data(paths[0], checks=False)
                     if max(ds_grid.contents.npoints) == 111375:
                         amm7_out = "matched/amm7.txt"
                         # create empty file
@@ -275,8 +273,12 @@ def gridded_matchup(
                     if use_nco:
                         if vv_source != "woa":
                             ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
+                            ds.as_missing(0)
+                            ds.tmean(["year", "month"])
                         else:
                             ds.nco_command(f"ncks -F -v {nco_selection}")
+                            ds.as_missing(0)
+                            ds.tmean(["year", "month"])
                     else:
                         ds.subset(variables=selection)
                         if vv_source != "woa":
@@ -287,7 +289,6 @@ def gridded_matchup(
                         ds.as_missing(0)
                         ds.tmean(["year", "month"])
 
-                    ds.as_missing(0)
                     if vv_source == "glodap":
                         ds.merge("time")
                         ds.tmean()
@@ -351,6 +352,9 @@ def gridded_matchup(
                     vv_file,
                     checks=False,
                 )
+                if vv_source == "occci":
+                    ds_obs.subset(variable="chlor_a")
+                    ds_obs.subset(years = range(start_year, end_year + 1))
 
                 if vv_source == "woa":
                     vv_file = nc.create_ensemble(dir_var)
@@ -406,6 +410,15 @@ def gridded_matchup(
                     ds.tmean("month")
                     ds_obs_annual.subset(years = sub_years)
                     ds_obs_annual.tmean()
+                if vv in ["chlorophyll"] and domain != "nws":
+                    ds_obs.top()
+                    sub_years = [x for x in ds.years if x in ds_obs.years]
+                    ds_obs.subset(years=sub_years)
+                    ds.subset(years = sub_years)
+                    ds_obs.merge("time")
+                    ds_obs.tmean("month")
+                    ds.merge("time")
+                    ds.tmean("month")
 
 
                 if vv not in ["poc", "temperature"]:

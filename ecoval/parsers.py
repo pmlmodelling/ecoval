@@ -144,7 +144,7 @@ def generate_mapping(ds, fvcom=False):
                 and "benthic" not in x
             ]
             vars_2 = [
-                x for x in ds.contents.long_name if "photolabile" in x and "carbon" in x
+                x for x in ds.contents.long_name if "photolabile" in str(x) and "carbon" in str(x)
             ]
             if len(vars_2) > 0:
                 the_vars += vars_2

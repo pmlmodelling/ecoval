@@ -232,25 +232,26 @@ def get_res(x, folder=None):
         return "d"
 
 
-def find_paths(folder, fvcom=False, exclude=[]):
-    i = 1
+def find_paths(folder, fvcom=False, exclude=[], n_check = None):
     while True:
 
         levels = session["levels"]
 
         new_directory = folder + "/"
-        for i in range(levels):
-            dir_glob = glob.glob(new_directory + "/**")
-            # randomize dir_glob
+        if levels > 0:
+            for i in range(levels+1):
+                dir_glob = glob.glob(new_directory + "/**")
+                # randomize dir_glob
 
-            random.shuffle(dir_glob)
-            for x in dir_glob:
-                # figure out if the the base directory is an integer
-                try:
-                    y = int(os.path.basename(x))
-                    new_directory = x + "/"
-                except:
-                    pass
+                random.shuffle(dir_glob)
+                for x in dir_glob:
+                    # figure out if the the base directory is an integer
+                    try:
+                        if levels != 0:
+                            y = int(os.path.basename(x))
+                        new_directory = x + "/"
+                    except:
+                        pass
         options = glob.glob(new_directory + "/**.nc")
         if not fvcom:
             options = [x for x in options if "part" not in os.path.basename(x)]
@@ -272,9 +273,14 @@ def find_paths(folder, fvcom=False, exclude=[]):
     for exc in exclude:
         options = [x for x in options if f"{exc}" not in os.path.basename(x)]
 
-    for ff in options:
+    print("Searching through files in a random directory to identify variable mappings")
+    # randomize options
+    if n_check is not None:
+        options = random.sample(options, n_check)
+    for ff in tqdm(options):
         ds = nc.open_data(ff, checks=False)
         stop = True
+        ds_dict = generate_mapping(ds, fvcom=fvcom)
         try:
             ds_dict = generate_mapping(ds, fvcom=fvcom)
             stop = False
@@ -323,6 +329,7 @@ def find_paths(folder, fvcom=False, exclude=[]):
             all_df.append(
                 pd.DataFrame.from_dict(new_dict).melt().assign(pattern=new_name)
             )
+
     all_df = pd.concat(all_df).reset_index(drop=True)
 
     if fvcom is False:
@@ -375,6 +382,7 @@ def matchup(
     lon_lim=None,
     lat_lim=None,
     data_dir="default",
+    n_check = None,
     **kwargs,
 ):
     """
@@ -395,15 +403,20 @@ def matchup(
         Surface level of the model netCDF files. Either 'top' or 'bottom'. Default is None, so this must be supplied.
     surface : list
         List of surface variables. Internally, ecoval will decide which variables should matchup with gridded or point observations.
-        Potential surface variables are temperature, salinity, oxygen, phosphate, silicate, nitrate, ammonium, alkalinity, ph, chlorophyll, doc, poc.
-        If you want finer control, you can provide a dictionary with keys 'gridded' and 'point'.
+        If you want finer control, you can provide a dictionary with keys 'gridded' and 'point', 
         So surface = {'gridded': ['temperature'], 'point': ['ph', 'poc']} would matchup temperature with gridded data and pH and POC with point data.
+        Options for the NWS:
+            gridded: ['ammonium', 'poc', 'doc', 'temperature', 'phosphate', 'salinity', 'nitrate', 'silicate', 'chlorophyll', 'oxygen']
+            point: ['ammonium', 'poc', 'doc', 'alkalinity', 'temperature', 'pco2', 'phosphate', 'pft', 'nitrate', 'nitrogen', 'salinity', 'silicate', 'ph', 'chlorophyll', 'oxygen']
+        Options for non-NWS models:
+            gridded: ['chlorophyll', 'alkalinity', 'pco2', 'phosphate', 'co2flux', 'nitrate', 'salinity', 'silicate', 'ph', 'temperature', 'oxygen']
+            point: []
     bottom : list
         List of bottom variables to matchup with observational data.
-        Potential bottom variables are temperature, salinity, oxygen, phosphate, silicate, nitrate, ammonium, alkalinity, ph, chlorophyll, doc, poc.
+        Full list of options for NWS: ["temperature", "salinity", "oxygen", "phosphate", "silicate", "nitrate", "ammonium", "alkalinity", "ph", "chlorophyll", "doc", "poc"]
     benthic : list
         List of benthic variables.
-        Potential benthic variables are carbon.
+        Full list of options for NWS: ["carbon", "benbio"]
     cores : int
         Number of cores to use.
     thickness : str
@@ -425,11 +438,16 @@ def matchup(
         List of two floats. The first is the minimum latitude, the second is the maximum latitude. Default is None.
     data_dir : str
         Path to validation data directory. Default is 'default'. If 'default', the data directory is taken from the session_info dictionary.
+    n_check : int
+        Number of files when identifying mapping. Default is None, which means all files are checked.
+        The mapping is identified by looking at a random output file directory on the assumption on all directories have the same structure.
+        In general each directory will only have a small number of files. Only set n_check if there are many files. 
     kwargs: dict
         Additional arguments
 
     """
-    fvcom=False,
+    global_grid = None
+    fvcom=False
 
     # make sure start and end are integers
 
@@ -670,7 +688,8 @@ def matchup(
             point_bottom = bottom
 
     if all_df is None:
-        all_df = find_paths(folder, fvcom=fvcom, exclude=exclude)
+        all_df = find_paths(folder, fvcom=fvcom, exclude=exclude, n_check = n_check)
+        print(all_df)
 
         # add in anything that is missing
         all_vars = [
@@ -925,11 +944,42 @@ def matchup(
 
     #     return None
 
+    if global_grid is None:
+        final_extension = extension_of_directory(folder)
+        print("Finding")
+        path = glob.glob(folder + final_extension + all_df.pattern[0])[0]
+        print(path)
+        print("Found")
+        ds = nc.open_data(path, checks=False).to_xarray()
+        print("opened")
+        lon_name = [x for x in ds.coords if "lon" in x]
+        lat_name = [x for x in ds.coords if "lat" in x]
+        lon = ds[lon_name[0]].values
+        lat = ds[lat_name[0]].values
+        lon_max = lon.max()
+        lon_min = lon.min()
+        lat_max = lat.max()
+        lat_min = lat.min()
+
+        global_grid = False
+        if lon_max - lon_min > 350:
+            global_grid = True
+        if lat_max - lat_min > 170:
+            global_grid = True
+        if lon_max > 50:
+            global_grid = True
+
+        if global_grid:
+            model_domain = "global"
+        else:
+            model_domain = "nws"
+
     if not surf_dict and surf_default:
         surf_all = False
         if surface == ["all"]:
             surface = copy.deepcopy(all_vars)
             surf_all = True
+    
 
     if "ph" in surface and model_domain == "nws":
         surface.remove("ph")
