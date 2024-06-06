@@ -389,6 +389,7 @@ def matchup(
     data_dir="default",
     n_check = None,
     everything = False,
+    overwrite = True,
     **kwargs,
 ):
     """
@@ -454,6 +455,8 @@ def matchup(
         Additional arguments
 
     """
+    # add overwrite to session_info
+    session_info["overwrite"] = overwrite
 
     if everything:
         pft = True
@@ -1607,6 +1610,8 @@ def matchup(
                         df_all = df_all.groupby(grouping).mean().reset_index()
 
                         out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
+
+
                         # create directory for out if it does not exists
                         if not os.path.exists(os.path.dirname(out)):
                             os.makedirs(os.path.dirname(out))
@@ -1709,6 +1714,14 @@ def matchup(
                     if vv in ["poc", "doc"]:
                         # upper case
                         vv_variable = vv.upper()
+                    print(f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
+                    out = glob.glob(f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
+
+                    if len(out) > 0: 
+                        if session_info["overwrite"] is False:
+                            continue
+                            print("ignore this one")
+
                     if depths == "all":
                         print(
                             f"Matching up model {vv_variable} with vertically resolved bottle and CDT {vv_variable}"
@@ -1726,6 +1739,7 @@ def matchup(
                         print(
                             f"Matching up model {vv_variable} with benthic point data"
                         )
+
                     print("**********************")
                     if depths == "surface":
                         try:

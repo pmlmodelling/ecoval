@@ -96,6 +96,10 @@ def gridded_matchup(
         mapping = dict()
 
         for vv in vars:
+            out = glob.glob(f"matched/gridded/{domain}/{vv}/*_{vv}_surface.nc")
+            if len(out) > 0:
+                if session_info["overwrite"] is False:
+                    continue
             # figure out the data source
             dir_var = f"{data_dir}/gridded/{domain}/{vv}"
             # check if it exists
