@@ -268,8 +268,33 @@ def gridded_matchup(
                             ):
                                 paths.remove(ff)
 
+
                     ds = nc.open_data(paths, checks=False)
 
+                    if vv_source == "woa":
+                        # handle this differently
+                        ds = nc.open_data()
+                        for mm in range(1,13):
+                            print(mm)
+                            mm_paths = []
+                            for ff in paths:
+                                if mm in times_dict[ff].month.values:
+                                    mm_paths.append(ff)
+                            mm_paths = list(set(mm_paths))
+
+                            # nco_command = f'ncra -y mean -v {",".join(selection)}' 
+                            ds_mm = nc.open_data(mm_paths, checks=False)
+                            # ds_mm.nco_command(nco_command, ensemble = False)
+                            ds_mm.subset(variables=selection)
+                            ds_mm.subset(month = mm)
+                            ds_mm.tmean(["year", "month"])
+                            # ds_mm.merge("time")
+                            # ds_mm.tmean(["year", "month"])
+                            # ds_mm.tmean()
+                            ds_mm.ensemble_mean()
+                            ds_mm.as_missing(0)
+                            ds.append(ds_mm)
+                    
                     if use_nco:
                         if vv_source != "woa":
                             ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
@@ -280,14 +305,14 @@ def gridded_matchup(
                             ds.as_missing(0)
                             ds.tmean(["year", "month"])
                     else:
-                        ds.subset(variables=selection)
                         if vv_source != "woa":
+                            ds.subset(variables=selection)
                             if surface == "top":
                                 ds.top()
                             else:
                                 ds.bottom()
-                        ds.as_missing(0)
-                        ds.tmean(["year", "month"])
+                            ds.as_missing(0)
+                            ds.tmean(["year", "month"])
 
                     if vv_source == "glodap":
                         ds.merge("time")
