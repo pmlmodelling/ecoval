@@ -9,6 +9,7 @@ from ecoval.matchall import matchup
 from ecoval.trends import trends
 from ecoval.fixers import tidy_name
 from ecoval.regionals import global_regionals
+from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
 import webbrowser
 from ecoval.chunkers import add_chunks
@@ -529,13 +530,13 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         # loop through the paths
         for pp in point_paths:
             vv = os.path.basename(pp).split("_")[2].replace(".csv", "")
-            if variables != "all":
+            if True:
                 if vv not in variables:
                     continue
             source = os.path.basename(pp).split("_")[0]
             variable = vv
             layer = os.path.basename(pp).split("_")[1].replace(".csv", "")
-            if layer != "all":
+            if True:
                 if vv != "ph":
                     Variable = variable
                 else:
