@@ -390,6 +390,7 @@ def matchup(
     n_check = None,
     everything = False,
     overwrite = True,
+    point_all = [],
     **kwargs,
 ):
     """
@@ -451,6 +452,8 @@ def matchup(
         In general each directory will only have a small number of files. Only set n_check if there are many files. 
     everything : bool
         If True, all possible variables are matched up. Default is False.
+    point_all : list
+        List of all point variables to matchup for all depths. Default is [].
     kwargs: dict
         Additional arguments
 
@@ -689,7 +692,12 @@ def matchup(
         all_df = pd.read_csv(mapping)
 
     # create lists for working out which variables are needed for point matchups
-    point_all = []
+    # change point_all to list if str
+    if isinstance(point_all, str):
+        point_all = [point_all]
+    # check point_all is a list
+    if not isinstance(point_all, list):
+        raise ValueError("point_all must be a list")
     if mld:
         point_all = ["temperature"]
     point_bottom = []
