@@ -101,9 +101,12 @@ def gridded_matchup(
                 if session_info["overwrite"] is False:
                     continue
             # figure out the data source
-            dir_var = f"{data_dir}/gridded/{domain}/{vv}"
-            # check if it exists
-            if not os.path.exists(dir_var):
+            #
+            dir_var = f"{data_dir}/gridded/user/{vv}"
+            # check if this directory is empty
+            if len(glob.glob(dir_var + "/*")) == 0:
+                dir_var = f"{data_dir}/gridded/{domain}/{vv}"
+            if len(glob.glob(dir_var + "/*")) == 0:
                 dir_var = f"{data_dir}/gridded/global/{vv}"
 
             vv_source = [
