@@ -247,6 +247,24 @@ def generate_mapping(ds, fvcom=False):
                     and "benthic" not in x.lower()
                     and "river" not in x.lower()
                 ]
+        if vv == "micro":
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "chloroph" in x and ("micro" in x or "diatom" in x)
+            ]
+        if vv == "nano":
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "chloroph" in x.lower() and "nano" in x
+            ]
+        if vv == "pico":
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "chloroph" in x.lower() and "pico" in x
+            ]
 
         if vv in ["carbon", "benbio"]:
             ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
@@ -275,7 +293,7 @@ def generate_mapping(ds, fvcom=False):
 
         add = True
 
-        if len(ersem_vars) > 1 and vv not in ["doc", "chlorophyll", "carbon", "benbio"]:
+        if len(ersem_vars) > 1 and vv not in ["doc", "chlorophyll", "carbon", "benbio", "micro"]:
             add = False
 
         if add:

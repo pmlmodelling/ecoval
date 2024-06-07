@@ -1,4 +1,5 @@
 import copy
+
 import time
 import nctoolkit as nc
 import re
@@ -139,16 +140,7 @@ def mm_match(
         with warnings.catch_warnings(record=True) as w:
             ds = nc.open_data(ff, checks=False)
             var_match = ersem_variable.split("+")
-            ds.subset(variables=var_match)
-            if top_layer:
-                ds.top()
-            if bottom_layer:
-                ds.bottom()
-            ds.as_missing(0)
-            ds.run()
-            if variable != "pft":
-                if len(var_match) > 1:
-                    ds.sum_all()
+
             valid_locs = ["lon", "lat", "year", "month", "day", "depth"]
             valid_locs = [x for x in valid_locs if x in df.columns]
 
@@ -175,6 +167,37 @@ def mm_match(
                         .drop_duplicates()
                         .reset_index(drop=True)
                     )
+            ff_indices = (
+                df_times
+             .query("path == @ff")
+            )
+            
+            ff_indices = (
+                ff_indices
+                .reset_index(drop = True)
+             .reset_index()
+            )
+            ff_indices = (
+                ff_indices
+            )
+            ff_indices = (
+                ff_indices
+             .merge(df_locs)
+            )
+            ff_indices = ff_indices["index"].values
+            ff_indices = [int(x) for x in ff_indices]
+            ff_indices = list(set(ff_indices))
+            ds.subset(time = ff_indices)
+            ds.subset(variables=var_match)
+            if top_layer:
+                ds.top()
+            if bottom_layer:
+                ds.bottom()
+            ds.as_missing(0)
+            ds.run()
+            if variable != "pft":
+                if len(var_match) > 1:
+                    ds.sum_all()
 
             if len(df_locs) > 0:
                 if top_layer:
@@ -358,22 +381,7 @@ def matchup(
     start=None,
     end=None,
     surface_level=None,
-    surface=[
-        "temperature",
-        "salinity",
-        "oxygen",
-        "phosphate",
-        "silicate",
-        "nitrate",
-        "ammonium",
-        "alkalinity",
-        "ph",
-        "chlorophyll",
-        "doc",
-        "pco2",
-        "co2flux",
-        "poc",
-    ],
+    surface= "default",
     bottom=["ph", "oxygen"],
     benthic=["carbon", "benbio"],
     pft=False,
@@ -410,15 +418,7 @@ def matchup(
     surface_level : str
         Surface level of the model netCDF files. Either 'top' or 'bottom'. Default is None, so this must be supplied.
     surface : list
-        List of surface variables. Internally, ecoval will decide which variables should matchup with gridded or point observations.
-        If you want finer control, you can provide a dictionary with keys 'gridded' and 'point', 
-        So surface = {'gridded': ['temperature'], 'point': ['ph', 'poc']} would matchup temperature with gridded data and pH and POC with point data.
-        Options for the NWS:
-            gridded: ['ammonium', 'poc', 'doc', 'temperature', 'phosphate', 'salinity', 'nitrate', 'silicate', 'chlorophyll', 'oxygen']
-            point: ['ammonium', 'poc', 'doc', 'alkalinity', 'temperature', 'pco2', 'phosphate', 'pft', 'nitrate', 'nitrogen', 'salinity', 'silicate', 'ph', 'chlorophyll', 'oxygen']
-        Options for non-NWS models:
-            gridded: ['chlorophyll', 'alkalinity', 'pco2', 'phosphate', 'co2flux', 'nitrate', 'salinity', 'silicate', 'ph', 'temperature', 'oxygen']
-            point: []
+        This defaults to "default", i.e. it will pick up all available variables.
     bottom : list
         List of bottom variables to matchup with observational data.
         Full list of options for NWS: ["temperature", "salinity", "oxygen", "phosphate", "silicate", "nitrate", "ammonium", "alkalinity", "ph", "chlorophyll", "doc", "poc"]
@@ -458,6 +458,23 @@ def matchup(
         Additional arguments
 
     """
+    if surface == "default":
+        surface=[
+            "temperature",
+            "salinity",
+            "oxygen",
+            "phosphate",
+            "silicate",
+            "nitrate",
+            "ammonium",
+            "alkalinity",
+            "ph",
+            "chlorophyll",
+            "doc",
+            "pco2",
+            "co2flux",
+            "poc",
+        ]
     # add overwrite to session_info
     session_info["overwrite"] = overwrite
 
@@ -514,6 +531,12 @@ def matchup(
     else:
         data_dir = session_info["data_dir"]
 
+    # check if there is a user directory in data_dir
+
+    if data_dir is not None:
+        session_info["user_dir"] = True
+
+
     # check that lon_lim and lat_lim and valid when either is not None
 
     if lon_lim is not None or lat_lim is not None:
@@ -558,22 +581,23 @@ def matchup(
     if len(point_surface) > 0:
         surf_default = False
 
-    valid_points = list(set([x for x in glob.glob(data_dir + "/point/nws/all/*")]))
+    if session_info["user_dir"]:
+        valid_points = list(set([x for x in glob.glob(data_dir + "/point/**/all/*")]))
+    else:
+        valid_points = list(set([x for x in glob.glob(data_dir + f"/point/nws/all/*")]))
     # extract directory base name
     valid_points = [os.path.basename(x) for x in valid_points]
     for pp in point_surface:
         if pp not in valid_points:
             raise ValueError(f"{pp} is not a valid point dataset")
 
-    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/*/*")]
+    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/**/*")]
 
     valid_benthic = [
         os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")
     ]
 
-    valid_bottom = [
-        os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")
-    ]
+    valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/**/bottom/*")]
 
     valid_vars = [
         "temperature",
@@ -590,7 +614,8 @@ def matchup(
         "pco2",
         "doc",
         "poc",
-        "carbon" "benbio",
+        "carbon",
+        "benbio",
     ]
 
     if everything:
@@ -610,17 +635,21 @@ def matchup(
             benthic.remove(pp)
             benthic.append("benbio")
 
-    for pp in benthic:
-        if pp not in valid_benthic:
-            raise ValueError(f"{pp} is not a valid benthic dataset")
+    if not session_info["user_dir"]:
+        for pp in benthic:
+            if pp not in valid_benthic:
+                raise ValueError(f"{pp} is not a valid benthic dataset")
 
-    for pp in surface:
-        if pp not in valid_surface:
-            raise ValueError(f"{pp} is not a valid gridded dataset")
+    # do not check if user_dir
+    if not session_info["user_dir"]:
+        for pp in surface:
+            if pp not in valid_surface:
+                raise ValueError(f"{pp} is not a valid gridded dataset")
 
-    for pp in bottom:
-        if pp not in valid_bottom:
-            raise ValueError(f"{pp} is not a valid bottom dataset")
+    if not session_info["user_dir"]:
+        for pp in bottom:
+            if pp not in valid_bottom:
+                raise ValueError(f"{pp} is not a valid bottom dataset")
 
     session["levels"] = levels
 
@@ -726,6 +755,10 @@ def matchup(
     if len(bottom) > 0:
         if bottom != "all":
             point_bottom = bottom
+    
+    # restrict surface to valids
+
+    surface = [x for x in surface if x in valid_surface]
 
     if all_df is None:
         all_df = find_paths(folder, fvcom=fvcom, exclude=exclude, n_check = n_check)
@@ -812,7 +845,11 @@ def matchup(
                 model_domain = "nws"
             print("********************************")
 
-            valid_points = list(set([x for x in glob.glob(data_dir + "/point/nws/all/*")]))
+            if session_info["user_dir"]:
+                if global_grid:
+                    valid_points = list(set([x for x in glob.glob(data_dir + "/point/user/all/*")]))
+                else:
+                    valid_points = list(set([x for x in glob.glob(data_dir + "/point/**/all/*")]))
             # extract directory base name
             valid_points = [os.path.basename(x) for x in valid_points]
             for pp in point_surface:
@@ -820,17 +857,28 @@ def matchup(
                     raise ValueError(f"{pp} is not a valid point dataset")
 
             if global_grid:
-                valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/global/*")]
+                if session_info["user_dir"]:
+                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/user/*")]
+                    valid_surface += [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/global/*")]
+                else:
+                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/global/*")]
             else:
-                valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/*/*")]
+                if session_info["user_dir"]:
+                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/nws/*")]
+                    valid_surface += [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/user/*")]
+                else:
+                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/nws/*")]
 
             valid_benthic = [
                 os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")
             ]
 
-            valid_bottom = [
-                os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")
-            ]
+            if session_info["user_dir"]:
+                valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/user/bottom/*")]
+            else:
+                valid_bottom = [
+                    os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")
+                ]
             if global_grid:
                 point_surface = []
                 point_benthic = []
@@ -1040,13 +1088,6 @@ def matchup(
         else:
             model_domain = "nws"
 
-    if not surf_dict and surf_default:
-        surf_all = False
-        if surface == ["all"]:
-            surface = copy.deepcopy(all_vars)
-            surf_all = True
-    
-
     if "ph" in surface and model_domain == "nws":
         surface.remove("ph")
         point_surface.append("ph")
@@ -1065,29 +1106,22 @@ def matchup(
     if type(surface) is str:
         surface = [surface]
 
-    for vv in surface:
-        if not os.path.exists(f"{data_dir}/gridded/{model_domain}/{vv}"):
-            if not os.path.exists(f"{data_dir}/gridded/global/{vv}"):
-                surface.remove(vv)
-
-    if surf_all and surf_default:
-        point_surface.append("ph")
-        point_surface.append("poc")
-        point_surface.append("doc")
-        point_surface.append("alkalinity")
-
     point_surface = list(set(point_surface))
 
     # combine all variables into a list
     all_vars = surface + bottom + point_surface + benthic + point_all
     all_vars = list(set(all_vars))
+    
+    if pft:
+        all_vars.append("micro")
+        all_vars.append("nano")
+        all_vars.append("pico")
 
     df_variables = all_df.query("variable in @all_vars").reset_index(drop=True)
     # remove rows where model_variable is None
     df_variables = df_variables.dropna().reset_index(drop=True)
 
     patterns = list(set(df_variables.pattern))
-
 
     times_dict = dict()
 
@@ -1183,7 +1217,9 @@ def matchup(
     point_surface = list(set(point_surface))
 
     df_mapping = all_df
-    if model_domain == "nws":
+
+    #raise ValueError("here")
+    if model_domain == "nws" or session_info["user_dir"]:
 
         if len(point_all) > 0 or len(point_bottom) > 0:
             print("Matching up with observational point data")
@@ -1344,9 +1380,19 @@ def matchup(
                                     "variable == @point_variable"
                                 ).model_variable
                             )[0]
-                            paths = glob.glob(
-                                f"{data_dir}/point/nws/**/{variable}/**{variable}**.feather"
-                            )
+                            if session_info["user_dir"]:
+                                paths = glob.glob(
+                                    f"{data_dir}/point/user/**/{variable}/**{variable}**.feather"
+                                )
+                                if len(paths) == 0:
+                                    paths = glob.glob(
+                                        f"{data_dir}/point/nws/**/{variable}/**{variable}**.feather"
+                                    )
+
+                            else:
+                                paths = glob.glob(
+                                    f"{data_dir}/point/nws/**/{variable}/**{variable}**.feather"
+                                )
                             if variable == "pft":
                                 point_variable = "pft"
                             source = os.path.basename(paths[0]).split("_")[0]
@@ -1434,7 +1480,9 @@ def matchup(
                                         .path
                                     )
                                 )
-                            paths = list(set(df_times.path))
+                            else:
+                                paths = list(set(df_times.path))
+
                             if len(paths) == 0:
                                 print(f"No matching times for {variable}")
                                 raise ValueError("here")
@@ -1639,33 +1687,10 @@ def matchup(
                             )
 
                         if vv == "pft":
-                            print("Fixing pft")
-                            # We now need to convert Chl to PFTs
-                            ds = nc.open_data(ff, checks=False)
-                            ds_contents = ds.contents
-                            nano = [
-                                x
-                                for x in ds_contents.long_name
-                                if "chloroph" in x and "nano" in x
-                            ]
-                            nano = ds.contents.query("long_name in @nano").variable
-                            pico = [
-                                x
-                                for x in ds_contents.long_name
-                                if "chloroph" in x and "pico" in x
-                            ]
-                            pico = ds.contents.query("long_name in @pico").variable
-                            micro = [
-                                x
-                                for x in ds_contents.long_name
-                                if "chloroph" in x and ("micro" in x or "diatom" in x)
-                            ]
-                            micro = ds.contents.query("long_name in @micro").variable
-                            # convert to lists
-                            nano = nano.tolist()
-                            pico = pico.tolist()
-                            micro = micro.tolist()
                             # do a row sum
+                            nano = df_mapping.query("variable == 'nano'").model_variable.values[0].split("+")
+                            pico = df_mapping.query("variable == 'pico'").model_variable.values[0].split("+")
+                            micro = df_mapping.query("variable == 'micro'").model_variable.values[0].split("+")
                             df_all["nano_frac"] = df_all.loc[:, nano].sum(axis=1)
                             df_all["pico_frac"] = df_all.loc[:, pico].sum(axis=1)
                             df_all["micro_frac"] = df_all.loc[:, micro].sum(axis=1)
@@ -1689,6 +1714,7 @@ def matchup(
                                 },
                                 inplace=True,
                             )
+                            print(df_all)
 
                             df = df.rename(
                                 columns={
@@ -1777,6 +1803,8 @@ def matchup(
             session_warnings.pop()
 
     strict = True
+
+#    raise ValueError(surface)
 
     gridded_matchup(
         df_mapping=df_mapping,
