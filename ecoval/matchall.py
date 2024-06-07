@@ -158,36 +158,39 @@ def mm_match(
                 )
             else:
                 df_locs = df.loc[:, valid_locs]
-
-            # idenify if the files have data from multiple days
-            if "day" in df_locs.columns:
-                if len(set(df_locs.day)) < 10:
-                    df_locs = (
-                        df_locs.drop(columns=["month"])
-                        .drop_duplicates()
-                        .reset_index(drop=True)
-                    )
-            ff_indices = (
-                df_times
-             .query("path == @ff")
-            )
             
-            ff_indices = (
-                ff_indices
-                .reset_index(drop = True)
-             .reset_index()
-            )
-            ff_indices = (
-                ff_indices
-            )
-            ff_indices = (
-                ff_indices
-             .merge(df_locs)
-            )
-            ff_indices = ff_indices["index"].values
-            ff_indices = [int(x) for x in ff_indices]
-            ff_indices = list(set(ff_indices))
-            ds.subset(time = ff_indices)
+            t_subset = False
+            if "year" in df_locs.columns or "month" in df_locs.columns or "day" in df_locs.columns:
+                # idenify if the files have data from multiple days
+                if "day" in df_locs.columns:
+                    if len(set(df_locs.day)) < 10:
+                        df_locs = (
+                            df_locs.drop(columns=["month"])
+                            .drop_duplicates()
+                            .reset_index(drop=True)
+                        )
+                ff_indices = (
+                    df_times
+                 .query("path == @ff")
+                )
+            
+                ff_indices = (
+                    ff_indices
+                    .reset_index(drop = True)
+                 .reset_index()
+                )
+                ff_indices = (
+                    ff_indices
+                )
+                ff_indices = (
+                    ff_indices
+                 .merge(df_locs)
+                )
+                ff_indices = ff_indices["index"].values
+                ff_indices = [int(x) for x in ff_indices]
+                ff_indices = list(set(ff_indices))
+                t_subset = True
+                ds.subset(time = ff_indices)
             ds.subset(variables=var_match)
             if top_layer:
                 ds.top()
