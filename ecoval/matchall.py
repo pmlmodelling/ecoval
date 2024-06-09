@@ -803,6 +803,7 @@ def matchup(
 
             all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
 
+        if True:
             pattern = all_df.iloc[0, :].pattern
 
             df = all_df
@@ -897,12 +898,48 @@ def matchup(
             # add the global checker here
             # sort all_df alphabetically by variable
             all_df = all_df.sort_values("variable").reset_index(drop=True)
+            print("Variables that will be matched up")
+            print("******************************")
+            if len(surface) > 0:
+                print(f"The following variables will be matched up with gridded surface data: {','.join(surface)}")
+            else:
+                print("No variables will be matched up with gridded surface data")
 
+            if len(point_surface) > 0:
+                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_surface)}")
+            else:
+                print("No variables will be matched up with in-situ surface data")
+
+            if len(point_bottom) > 0:
+                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_bottom)}")
+            else:
+                print("No variables will be matched up with in-situ bottom data")
+
+            if len(point_benthic) > 0:
+                print(f"The following variables will be matched up with in-situ benthic data: {'.'.join(point_benthic)}")
+            else:
+                print("No variables will be matched up with in-situ benthic data")
+
+            print("******************************")
             print(f"** Inferred mapping of model variable names from {folder}")
-            print(all_df)
+
+            all_df_print = copy.deepcopy(all_df)
+
+            # new tidied variable
+            new_variable = []
+            for i in range(len(all_df)):
+                if all_df.variable[i] in var_chosen:
+                    if all_df.pattern[i] is not None:
+                        new_variable.append(all_df.variable[i] + "**")
+                else:
+                    new_variable.append(all_df.variable[i])
+            all_df_print["variable"] = new_variable
+
+            print(all_df_print)
             print(
-                "Are you happy with these matchups? Y/N \nNote: all possible variables are listed, not just those requested. Non-requested variables will be ignored if you answer yes."
+                "Are you happy with these matchups? Y/N \nNote: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
             )
+
             x = input()
 
             if x.lower() not in ["y", "n"]:
