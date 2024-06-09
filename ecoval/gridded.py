@@ -27,12 +27,12 @@ def gridded_matchup(
     start=None,
     sim_start=None,
     sim_end=None,
-    e3t=None,
     domain = "nws",
     strict=True,
     lon_lim=None,
     lat_lim=None,
     times_dict=None,
+    ds_thickness = None
 ):
     """
     Function to create gridded matchups for a given set of variables
@@ -55,11 +55,11 @@ def gridded_matchup(
         Start year for model simulations
     sim_end : int
         End year for model simulations
-    e3t : nctoolkit DataSet or netCDF file
-        Vertical grid spacing for model data
     domain : str
         Domain to use for matchups. Either "NWS" or "global"
         This indicates whether the matchups use northwest European shelf data or global data
+    thickness : str or nctoolkit DataSet
+        File path to thickness file
 
     """
     data_dir = session_info["data_dir"]
@@ -282,7 +282,6 @@ def gridded_matchup(
                         # handle this differently
                         ds = nc.open_data()
                         for mm in range(1,13):
-                            print(mm)
                             mm_paths = []
                             for ff in paths:
                                 if mm in times_dict[ff].month.values:
@@ -590,7 +589,10 @@ def gridded_matchup(
                     levels = [x for x in levels if x >= np.min(ds.levels)]
                     ds1 = ds.copy()
                     ds1.tmean()
-                    ds1.vertical_interp(levels, fixed = True)
+                    if thickness is not None:
+                        ds1.vertical_interp(levels, thickness = ds_thickness) 
+                    else:
+                        ds1.vertical_interp(levels, fixed = True)
                     ds_obs_annual.vertical_interp(levels, fixed = True)
                     if n1 >= n2:
                         ds_obs_annual.regrid(ds1, method="nn")

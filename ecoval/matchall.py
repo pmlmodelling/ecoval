@@ -58,7 +58,6 @@ ices_variables = [
     "alkalinity",
     "benbio",
 ]
-data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
 
 
 def find_config():
@@ -527,6 +526,9 @@ def matchup(
     if isinstance(bottom, str):
         bottom = [bottom]
 
+    if data_dir is not "default":
+        session_info["user_dir"] = True
+
     if data_dir != "default":
         if not os.path.exists(data_dir):
             raise ValueError(f"{data_dir} does not exist")
@@ -536,8 +538,6 @@ def matchup(
 
     # check if there is a user directory in data_dir
 
-    if data_dir is not None:
-        session_info["user_dir"] = True
 
 
     # check that lon_lim and lat_lim and valid when either is not None
@@ -1231,7 +1231,7 @@ def matchup(
         # if model_variable is None remove from all_df
 
         for depths in ["bottom", "all", "surface", "benthic"]:
-            the_vars = list(df_out.dropna().variable)
+            the_vars = list(df_mapping.dropna().variable)
             var_choice = [x for x in var_choice if x in the_vars]
             if depths == "all":
                 point_vars = point_all
@@ -1262,9 +1262,6 @@ def matchup(
             
             # sort the list
             point_vars.sort()
-            #point_vars = list(set(point_vars))
-            #print(point_vars)
-            # raise ValueError("here")
 
             for vv in point_vars:
                 all_df = df_mapping
@@ -1331,47 +1328,50 @@ def matchup(
                     for ff in ersem_paths:
                         write_report(ff)
 
-                    if depths != "surface":
-                        with warnings.catch_warnings(record=True) as w:
-                            # extract the thickness dataset
-                            if thickness is not None:
-                                ds_thickness = nc.open_data(thickness, checks=False)
-                                if len(ds_thickness.variables) != 1:
-                                    raise ValueError(
-                                        "The thickness file has more than one variable. Please provide a single variable!"
-                                    )
-                                ds_thickness.rename({ds_thickness.variables[0]: "e3t"})
-                            else:
-                                ds_thickness = nc.open_data(ensemble[0], checks=False)
+                    try:
+                        if depths != "surface":
+                            with warnings.catch_warnings(record=True) as w:
+                                # extract the thickness dataset
+                                if thickness is not None:
+                                    ds_thickness = nc.open_data(thickness, checks=False)
+                                    if len(ds_thickness.variables) != 1:
+                                        raise ValueError(
+                                            "The thickness file has more than one variable. Please provide a single variable!"
+                                        )
+                                    ds_thickness.rename({ds_thickness.variables[0]: "e3t"})
+                                else:
+                                    ds_thickness = nc.open_data(ensemble[0], checks=False)
 
-                            ds_thickness.subset(time=0, variables="e3t")
-                            ds_thickness.as_missing(0)
-                            #####
-                            # now output the bathymetry if it does not exists
-                            if not os.path.exists("matched/model_bathymetry.nc"):
-                                ds_bath = ds_thickness.copy()
-                                ds_bath.vertical_sum()
-                                ds_bath.to_nc("matched/model_bathymetry.nc", zip=True)
+                                ds_thickness.subset(time=0, variables="e3t")
+                                ds_thickness.as_missing(0)
+                                #####
+                                # now output the bathymetry if it does not exists
+                                if not os.path.exists("matched/model_bathymetry.nc"):
+                                    ds_bath = ds_thickness.copy()
+                                    ds_bath.vertical_sum()
+                                    ds_bath.to_nc("matched/model_bathymetry.nc", zip=True)
 
-                            # thickness needs to be inverted if the sea surface is at the bottom
+                                # thickness needs to be inverted if the sea surface is at the bottom
 
-                            if surface_level == "bottom":
-                                ds_thickness.cdo_command("invertlev")
-                            ds_thickness.run()
-                            ds_depths = ds_thickness.copy()
+                                if surface_level == "bottom":
+                                    ds_thickness.cdo_command("invertlev")
+                                ds_thickness.run()
+                                ds_depths = ds_thickness.copy()
 
-                            ds_depths.vertical_cumsum()
-                            ds_thickness / 2
-                            ds_depths - ds_thickness
-                            ds_depths.run()
-                            ds_depths.rename({ds_depths.variables[0]: "depth"})
-                            if surface_level == "bottom":
-                                ds_depths.cdo_command("invertlev")
-                            ds_depths.run()
+                                ds_depths.vertical_cumsum()
+                                ds_thickness / 2
+                                ds_depths - ds_thickness
+                                ds_depths.run()
+                                ds_depths.rename({ds_depths.variables[0]: "depth"})
+                                if surface_level == "bottom":
+                                    ds_depths.cdo_command("invertlev")
+                                ds_depths.run()
 
-                        for ww in w:
-                            if str(ww.message) not in session_warnings:
-                                session_warnings.append(str(ww.message))
+                            for ww in w:
+                                if str(ww.message) not in session_warnings:
+                                    session_warnings.append(str(ww.message))
+                    except:
+                        pass
 
                     def point_match(variable, layer="all", ds_depths=None):
                         with warnings.catch_warnings(record=True) as w:
@@ -1717,7 +1717,6 @@ def matchup(
                                 },
                                 inplace=True,
                             )
-                            print(df_all)
 
                             df = df.rename(
                                 columns={
@@ -1751,13 +1750,11 @@ def matchup(
                     if vv in ["poc", "doc"]:
                         # upper case
                         vv_variable = vv.upper()
-                    print(f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
                     out = glob.glob(f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
 
                     if len(out) > 0: 
                         if session_info["overwrite"] is False:
                             continue
-                            print("ignore this one")
 
                     if depths == "all":
                         print(
@@ -1818,12 +1815,12 @@ def matchup(
         start=start,
         sim_start=sim_start,
         sim_end=sim_end,
-        e3t=thickness,
         domain=model_domain,
         strict=strict,
         lon_lim=lon_lim,
         lat_lim=lat_lim,
         times_dict=times_dict,
+        ds_thickness = thickness
     )
 
     os.system("pandoc matchup_report.md --pdf-engine wkhtmltopdf -o matchup_report.pdf")
