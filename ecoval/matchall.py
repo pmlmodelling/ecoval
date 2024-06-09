@@ -803,6 +803,7 @@ def matchup(
 
             all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
 
+    if True:
         if True:
             pattern = all_df.iloc[0, :].pattern
 
@@ -887,17 +888,63 @@ def matchup(
                 point_surface = []
                 point_benthic = []
                 point_bottom = []
+                surface = [x for x in surface if x in valid_surface]
             else:
                 point_surface = [x for x in point_surface if x in valid_points]
                 point_benthic = [x for x in point_benthic if x in valid_benthic]
                 point_bottom = [x for x in point_bottom if x in valid_bottom]
+                surface = [x for x in surface if x in valid_surface]
                 
             var_chosen = surface + bottom + point_benthic + point_bottom + point_surface
             var_chosen = list(set(var_chosen))
-
+    if mapping is not None:
+        if True:
             # add the global checker here
             # sort all_df alphabetically by variable
             all_df = all_df.sort_values("variable").reset_index(drop=True)
+            surface.sort()
+            point_surface.sort()
+            point_bottom.sort()
+            point_benthic.sort()
+            print("Variables that will be matched up")
+            print("******************************")
+            if len(surface) > 0:
+                print(f"The following variables will be matched up with gridded surface data: {','.join(surface)}")
+            else:
+                print("No variables will be matched up with gridded surface data")
+
+            if len(point_surface) > 0:
+                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_surface)}")
+            else:
+                print("No variables will be matched up with in-situ surface data")
+
+            if len(point_bottom) > 0:
+                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_bottom)}")
+            else:
+                print("No variables will be matched up with in-situ bottom data")
+
+            if len(point_benthic) > 0:
+                print(f"The following variables will be matched up with in-situ benthic data: {'.'.join(point_benthic)}")
+            else:
+                print("No variables will be matched up with in-situ benthic data")
+            print(
+                "Are you happy with this? Y/N"
+            )
+
+            x = input()
+            if x == "n":
+                return None
+
+
+    if mapping is None:
+        if True:
+            # add the global checker here
+            # sort all_df alphabetically by variable
+            all_df = all_df.sort_values("variable").reset_index(drop=True)
+            surface.sort()
+            point_surface.sort()
+            point_bottom.sort()
+            point_benthic.sort()
             print("Variables that will be matched up")
             print("******************************")
             if len(surface) > 0:
@@ -1102,6 +1149,7 @@ def matchup(
 
     #     return None
 
+
     if global_grid is None:
         final_extension = extension_of_directory(folder)
         path = glob.glob(folder + final_extension + all_df.pattern[0])[0]
@@ -1166,9 +1214,10 @@ def matchup(
     times_dict = dict()
 
     print("*************************************")
+    thick_found = False
     if thickness is None:
+        print("Identifying whether e3t exists in the files")
         for pattern in patterns:
-            print("Identifying whether e3t exists in the files")
             final_extension = extension_of_directory(folder)
             ensemble = glob.glob(folder + final_extension + pattern)
             for exc in exclude:
@@ -1184,7 +1233,11 @@ def matchup(
                     os.remove("matched/e3t.nc")
                 ds.to_nc("matched/e3t.nc", zip=True, overwrite=True)
                 thickness = "matched/e3t.nc"
+                thick_found = True
                 break
+    if not thick_found:
+        if thickness is None:
+            print("It was not. Assuming files have z-levels for any vertical matchups.") 
 
     print("*************************************")
     for pattern in patterns:
