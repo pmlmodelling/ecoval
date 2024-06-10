@@ -970,19 +970,20 @@ def matchup(
             print("******************************")
             print(f"** Inferred mapping of model variable names from {folder}")
 
-            all_df_print = copy.deepcopy(all_df)
+            all_df_print = copy.deepcopy(all_df).reset_index(drop = True)
 
             # new tidied variable
             new_variable = []
-            for i in range(len(all_df)):
+            for i in range(len(all_df_print)):
                 if all_df.variable[i] in var_chosen:
                     if all_df.pattern[i] is not None:
                         new_variable.append(all_df.variable[i] + "**")
+                    else:
+                        new_variable.append(None)
                 else:
                     new_variable.append(all_df.variable[i])
             all_df_print["variable"] = new_variable
 
-            print(all_df_print)
             print(
                 "Are you happy with these matchups? Y/N \nNote: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
             )
@@ -1893,8 +1894,6 @@ def matchup(
             session_warnings.pop()
 
     strict = True
-
-#    raise ValueError(surface)
 
     gridded_matchup(
         df_mapping=df_mapping,
