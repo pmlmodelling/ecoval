@@ -979,10 +979,11 @@ def matchup(
                     if all_df.pattern[i] is not None:
                         new_variable.append(all_df.variable[i] + "**")
                     else:
-                        new_variable.append(None)
+                        new_variable.append(all_df.variable[i])
                 else:
                     new_variable.append(all_df.variable[i])
             all_df_print["variable"] = new_variable
+            print(all_df_print)
 
             print(
                 "Are you happy with these matchups? Y/N \nNote: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
