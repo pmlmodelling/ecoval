@@ -2,6 +2,14 @@ import glob
 import os
 import warnings
 import xarray as xr
+
+def is_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 def matchup_starting_point(ff, val_dir = None, sim_dir = None):
     valid_vars = [
         "temperature",
@@ -21,8 +29,21 @@ def matchup_starting_point(ff, val_dir = None, sim_dir = None):
         "carbon",
         "benbio",
     ]
-    if sim_dir is None:
-        raise ValueError("sim_dir must be set")
+
+    # check if ff ends with .nc
+    if not ff.endswith(".nc"):
+        raise ValueError("ff must be a netcdf file")
+    
+    sim_dir = os.path.dirname(ff)
+    sim_dir
+    while True:
+        # get the base directory
+        sim_base = os.path.basename(sim_dir)
+        if is_int(sim_base):
+            sim_dir = os.path.dirname(sim_dir)
+        else:
+            break
+
     data_dir = val_dir
     with warnings.catch_warnings(record=True) as w:
         if data_dir is None:
@@ -85,12 +106,11 @@ def matchup_starting_point(ff, val_dir = None, sim_dir = None):
     valid_points = [f"'{x}'" for x in valid_points]
     valid_benthic = [f"'{x}'" for x in valid_benthic]
 
-    lines = ["ecoval.matchup("]
-    lines.append(f"folder = '{sim_dir}',")
+    lines = [f"ecoval.matchup(folder = '{sim_dir}',"]
     lines.append("cores = 6,")
-    lines.append("start = 1999,")
-    lines.append("end = 1999,")
-    lines.append("surface_level = 'top',")
+    lines.append("start = -10000,")
+    lines.append("end = 10000,")
+    lines.append("surface_level = 'top/bottom',")
     lines.append(f"surface = {{'gridded': [{','.join(valid_surface)}],")
     lines.append(f"'point': [{','.join(valid_points)}]}},")
     lines.append(f"bottom = [{','.join(valid_bottom)}],")
