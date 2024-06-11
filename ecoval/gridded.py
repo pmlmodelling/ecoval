@@ -58,7 +58,7 @@ def gridded_matchup(
     domain : str
         Domain to use for matchups. Either "NWS" or "global"
         This indicates whether the matchups use northwest European shelf data or global data
-    thickness : str or nctoolkit DataSet
+    ds_thickness : str or nctoolkit DataSet
         File path to thickness file
 
     """
@@ -89,6 +89,7 @@ def gridded_matchup(
         "doc",
     ]
     vars = [x for x in vars if x in var_choice]
+    vars.sort() 
 
     if len(vars) > 0:
         # first up, do the top
@@ -231,38 +232,6 @@ def gridded_matchup(
                 # figure out if cdo or nco is faster....
 
                 use_nco = False
-                # if surface == "top":
-                #     try:
-                #         with warnings.catch_warnings(record=True) as w:
-                #             use_nco = False
-                #             cdo_time = time.time()
-
-                #             ds = nc.open_data(paths[0], checks=False)
-                #             ds.subset(variables=selection)
-                #             if vv_source != "woa":
-                #                 if surface == "top":
-                #                     ds.top()
-                #                 else:
-                #                     ds.bottom()
-                #             ds.run()
-                #             cdo_time = time.time() - cdo_time
-
-                #             nco_time = time.time()
-                #             ds = nc.open_data(paths[0], checks=False)
-                #             nco_selection = ",".join(selection)
-                #             if vv_source != "woa":
-                #                 ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
-                #             else:
-                #                 ds.nco_command(f"ncks -F -v {nco_selection}")
-                #             ds.run()
-                #             nco_time = time.time() - nco_time
-
-                #             if nco_time < cdo_time:
-                #                 use_nco = True
-                #         tidy_warnings(w)
-
-                #     except:
-                #         use_nco = False
 
                 with warnings.catch_warnings(record=True) as w:
 
@@ -276,11 +245,14 @@ def gridded_matchup(
                                 paths.remove(ff)
 
 
-                    ds = nc.open_data(paths, checks=False)
+                    if vv_source == "woa":
+                        ds_vertical = nc.open_data(paths, checks=False)
+                    else:
+                        ds_surface = nc.open_data(paths, checks=False)
 
                     if vv_source == "woa":
                         # handle this differently
-                        ds = nc.open_data()
+                        ds_vertical = nc.open_data()
                         for mm in range(1,13):
                             mm_paths = []
                             for ff in paths:
@@ -292,37 +264,39 @@ def gridded_matchup(
                             ds_mm = nc.open_data(mm_paths, checks=False)
                             # ds_mm.nco_command(nco_command, ensemble = False)
                             ds_mm.subset(variables=selection)
-                            ds_mm.subset(month = mm)
+                            ds_mm.subset(month = mm, time = 0)
                             ds_mm.tmean(["year", "month"])
-                            # ds_mm.merge("time")
-                            # ds_mm.tmean(["year", "month"])
-                            # ds_mm.tmean()
                             ds_mm.ensemble_mean()
                             ds_mm.as_missing(0)
-                            ds.append(ds_mm)
-                    
-                    if use_nco:
-                        if vv_source != "woa":
-                            ds.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
-                            ds.as_missing(0)
-                            ds.tmean(["year", "month"])
-                        else:
-                            ds.nco_command(f"ncks -F -v {nco_selection}")
-                            ds.as_missing(0)
-                            ds.tmean(["year", "month"])
+                            ds_mm.run()
+                            ds_vertical.append(ds_mm)
+
+                        ds_surface = ds_vertical.copy()
+                        ds_vertical.ensemble_mean(nco = True)
                     else:
-                        if vv_source != "woa":
-                            ds.subset(variables=selection)
-                            if surface == "top":
-                                ds.top()
+                        if use_nco:
+                            if vv_source != "woa":
+                                ds_surface.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
+                                ds_surface.as_missing(0)
+                                ds_surface.tmean(["year", "month"])
                             else:
-                                ds.bottom()
-                            ds.as_missing(0)
-                            ds.tmean(["year", "month"])
+                                ds_surface.nco_command(f"ncks -F -v {nco_selection}")
+                                ds_surface.as_missing(0)
+                                ds_surface.tmean(["year", "month"])
+                                ds_surface = ds_vertical.copy()
+                        else:
+                            if vv_source != "woa":
+                                ds_surface.subset(variables=selection)
+                                if surface == "top":
+                                    ds_surface.top()
+                                else:
+                                    ds_surface.bottom()
+                                ds_surface.as_missing(0)
+                                ds_surface.tmean(["year", "month"])
 
                     if vv_source == "glodap":
-                        ds.merge("time")
-                        ds.tmean()
+                        ds_surface.merge("time")
+                        ds_surface.tmean()
 
                     # the code below needs to be simplifed
                     # essentially anything with a + in the mapping should be split out
@@ -330,51 +304,62 @@ def gridded_matchup(
 
                     var_unit = None
                     ignore_later = []
-                    for vv in list(df.variable):
-                        if "+" in mapping[vv]:
-                            command = f"-aexpr,{vv}=" + mapping[vv]
-                            ds.cdo_command(command)
-                            drop_these = mapping[vv].split("+")
-                            ds_contents = ds.contents
-                            ds_contents = ds_contents.query("variable in @drop_these")
-                            var_unit = ds_contents.unit[0]
-                            ds.drop(variables=drop_these)
-                            ignore_later.append(vv)
+                    if vv_source != "woa":
+                        for vv in list(df.variable):
+                            if "+" in mapping[vv]:
+                                command = f"-aexpr,{vv}=" + mapping[vv]
+                                ds_surface.cdo_command(command)
+                                drop_these = mapping[vv].split("+")
+                                ds_contents = ds_surface.contents
+                                ds_contents = ds_contents.query("variable in @drop_these")
+                                var_unit = ds_contents.unit[0]
+                                ds_surface.drop(variables=drop_these)
+                                ignore_later.append(vv)
 
-                    ds.run()
-                    for key in mapping:
-                        if key not in ignore_later:
-                            if mapping[key] in ds.variables:
-                                ds.rename({mapping[key]: key})
-                    if "chlorophyll" in list(df.variable):
-                        if var_unit is not None:
-                            ds.set_units({"chlorophyll": var_unit})
-                            ds.set_longnames(
-                                {"chlorophyll": "Total chlorophyll concentration"}
-                            )
-                    if "poc" in list(df.variable):
-                        ds.set_units({"poc": var_unit})
-                        ds.set_longnames(
-                            {"poc": "Particulate organic carbon concentration"}
-                        )
-                    if "doc" in list(df.variable):
-                        ds.set_units({"doc": var_unit})
-                        ds.set_longnames(
-                            {"doc": "Dissolved organic carbon concentration"}
-                        )
+                                ds_surface.run()
+                                for key in mapping:
+                                    if key not in ignore_later:
+                                        if mapping[key] in ds_vertical.variables:
+                                            ds_surface.rename({mapping[key]: key})
+                                if "chlorophyll" in list(df.variable):
+                                    if var_unit is not None:
+                                        ds_surface.set_units({"chlorophyll": var_unit})
+                                        ds_surface.set_longnames(
+                                            {"chlorophyll": "Total chlorophyll concentration"}
+                                        )
+                                if "poc" in list(df.variable):
+                                    ds_surface.set_units({"poc": var_unit})
+                                    ds_surface.set_longnames(
+                                        {"poc": "Particulate organic carbon concentration"}
+                                    )
+                                if "doc" in list(df.variable):
+                                    ds_surface.set_units({"doc": var_unit})
+                                    ds_surface.set_longnames(
+                                        {"doc": "Dissolved organic carbon concentration"}
+                                    )
 
-                    ds.run()
-                    ds.tmean(["year", "month"])
-                    ds.merge("time")
-                    ds.subset(years=years)
-                    ds.run()
+                                ds_surface.run()
+                                ds_surface.tmean(["year", "month"])
+                                ds_surface.merge("time")
+                                ds_surface.subset(years=years)
+                                ds_surface.run()
 
                 tidy_warnings(w)
 
-                # figure out the start and end year
-                start_year = min(ds.years)
-                end_year = max(ds.years)
+                if surface == "top":
+                    ds_surface.top()
+                    ds_surface.run()
+                else:
+                    ds_surface.bottom()
 
+                # figure out the start and end year
+                start_year = min(ds_surface.years)
+                end_year = max(ds_surface.years)
+                if vv_source == "woa":
+                    # ds_surface = ds.copy()
+                    ds_vertical.ensemble_mean(nco = True)
+
+                # Read in the monthly observational data
                 vv_file = nc.create_ensemble(dir_var)
                 vv_file = [x for x in vv_file if "annual" not in x]
                 # except:
@@ -387,6 +372,7 @@ def gridded_matchup(
                     ds_obs.subset(variable="chlor_a")
                     ds_obs.subset(years = range(start_year, end_year + 1))
 
+                # read in the annual observational data for WOA
                 if vv_source == "woa":
                     vv_file = nc.create_ensemble(dir_var)
                     vv_file = [x for x in vv_file if "annual" in x]
@@ -394,32 +380,31 @@ def gridded_matchup(
                         vv_file,
                         checks=False,
                     )
-                    ds_obs_annual.rename({ds_obs.variables[0]: "observation"})
+                    ds_obs_annual.rename({ds_obs_annual.variables[0]: "observation"})
                     if len(ds_obs_annual.variables) > 1:
                         raise ValueError(f"Please ensure only one variable in {vv}!")
 
-
                 obs_years = ds_obs.years
 
-                if len(obs_years) == 1:
-                    ds.tmean("month")
-                else:
-                    ds.tmean(["year", "month"])
+                if vv_source != "woa":
+                    if len(obs_years) == 1:
+                        ds_surface.tmean("month")
+                    else:
+                        ds_surface.tmean(["year", "month"])
 
-                if max(ds.contents.npoints) == 111375:
-                    ds.fix_amm7_grid()
-                    ds.subset(lon=[-19, 9], lat=[41, 64.3])
-                if lon_lim is not None and lat_lim is not None:
-                    ds.subset(lon=lon_lim, lat=lat_lim)
+                amm7 = False
+                if domain == "nws":
+                    if max(ds_surface.contents.npoints) == 111375:
+                        ds_surface.fix_amm7_grid()
+                        amm7 = True
+                        ds_surface.subset(lon=[-19, 9], lat=[41, 64.3])
 
-                # dir_var = f"{data_dir}/gridded/{domain}/{vv}"
-                # if vv not in ["poc", "temperature"]:
                 if vv in ["poc", "doc"]:
                     if strict:
                         ds_obs.subset(years=years)
                     ds_obs.merge("time")
                     ds_obs.tmean("month")
-                    ds.tmean("month")
+                    ds_surface.tmean("month")
 
                 if vv in ["temperature"]:
                     if strict:
@@ -432,24 +417,24 @@ def gridded_matchup(
                 if vv in ["salinity"] and domain != "nws":
                     if vv_source != "woa":
                         ds_obs.top()
-                    sub_years = [x for x in ds.years if x in ds_obs.years]
+                    sub_years = [x for x in ds_vertical.years if x in ds_obs.years]
                     ds_obs.subset(years=sub_years)
-                    ds.subset(years = sub_years)
+                    ds_surface.subset(years = sub_years)
                     ds_obs.merge("time")
                     ds_obs.tmean("month")
-                    ds.merge("time")
-                    ds.tmean("month")
+                    ds_surface.merge("time")
+                    ds_surface.tmean("month")
                     ds_obs_annual.subset(years = sub_years)
                     ds_obs_annual.tmean()
                 if vv in ["chlorophyll"] and domain != "nws":
                     ds_obs.top()
-                    sub_years = [x for x in ds.years if x in ds_obs.years]
+                    sub_years = [x for x in ds_surface.years if x in ds_obs.years]
                     ds_obs.subset(years=sub_years)
-                    ds.subset(years = sub_years)
+                    ds_surface.subset(years = sub_years)
                     ds_obs.merge("time")
                     ds_obs.tmean("month")
-                    ds.merge("time")
-                    ds.tmean("month")
+                    ds_surface.merge("time")
+                    ds_surface.tmean("month")
 
 
                 if vv not in ["poc", "temperature"]:
@@ -459,7 +444,7 @@ def gridded_matchup(
                 if vv_source == "occci":
                     ds_obs.subset(variable="chlor_a")
 
-                ds_xr = ds.to_xarray()
+                ds_xr = ds_surface.to_xarray()
                 lon_name = [x for x in ds_xr.coords if "lon" in x]
                 lat_name = [x for x in ds_xr.coords if "lat" in x]
                 lon = ds_xr[lon_name[0]].values
@@ -524,11 +509,11 @@ def gridded_matchup(
                 lats = [lat_min, lat_max]
 
                 if domain != "global":
-                    ds.subset(lon=lons, lat=lats)
+                    ds_surface.subset(lon=lons, lat=lats)
                     ds_obs.subset(lon=lons, lat=lats)
 
                 if domain == "global":
-                    model_extent = get_extent(ds[0])
+                    model_extent = get_extent(ds_surface[0])
                     obs_extent = get_extent(ds_obs[0])
                     lon_min = max(model_extent[0], obs_extent[0])
                     lon_max = min(model_extent[1], obs_extent[1])
@@ -546,81 +531,84 @@ def gridded_matchup(
 
                     lons = [lon_min, lon_max]
                     lats = [lat_min, lat_max]
-                    ds.subset(lon=lons, lat=lats)
+                    ds_surface.subset(lon=lons, lat=lats)
                     ds_obs.subset(lon=lons, lat=lats)
 
                 n1 = ds_obs.contents.npoints[0]
-                n2 = ds.contents.npoints[0]
+                n2 = ds_surface.contents.npoints[0]
 
                 if n1 >= n2:
-                    ds_obs.regrid(ds, method="nn")
+                    ds_obs.regrid(ds_surface, method="nn")
                 else:
-                    ds.regrid(ds_obs, method="nn")
+                    ds_surface.regrid(ds_obs, method="nn")
 
                 ds_obs.rename({ds_obs.variables[0]: "observation"})
-                ds.rename({ds.variables[0]: "model"})
+                ds_surface.merge("time")
+                ds_surface.rename({ds_surface.variables[0]: "model"})
 
                 # it is possible the years do not overlap, e.g. with satellite Chl
-                if len(ds.times) > 12:
-                    years1 = ds.years
+                if len(ds_surface.times) > 12:
+                    years1 = ds_surface.years
                     years2 = ds_obs.years
                     all_years = [x for x in years1 if x in years2]
                     if len(all_years) != len(years1):
                         if len(all_years) != len(years2):
                             ds_obs.subset(years=all_years)
-                            ds.subset(years=all_years)
+                            ds_surface.subset(years=all_years)
                             ds_obs.run()
-                            ds.run()
+                            ds_surface.run()
                 if len(ds_obs) > 1:
                     ds_obs.merge("time")
 
                 ds_obs.run()
-                ds.run()
+                ds_surface.run()
 
                 if vv == "doc":
                     ds_obs * 12.011
-                    ds + (40 * 12.011)
+                    ds_surface + (40 * 12.011)
 
                 if vv_source != "woa":
                     ds_obs.top()
 
                 if vv_source == "woa":
                     levels = ds_obs_annual.levels
-                    levels = [x for x in levels if x >= np.min(ds.levels)]
-                    ds1 = ds.copy()
+                    levels = [x for x in levels if x >= np.min(ds_vertical.levels)]
+                    ds1 = ds_vertical.copy()
+                    ds1.merge("time")
                     ds1.tmean()
-                    if thickness is not None:
+                    ds1.rename({ds1.variables[0]: "model"})
+                    if ds_thickness is not None:
                         ds1.vertical_interp(levels, thickness = ds_thickness) 
                     else:
                         ds1.vertical_interp(levels, fixed = True)
-                    ds_obs_annual.vertical_interp(levels, fixed = True)
                     if n1 >= n2:
                         ds_obs_annual.regrid(ds1, method="nn")
                     else:
                         ds1.regrid(ds_obs_annual, method="nn")
+                    ds_obs_annual.vertical_interp(levels, fixed = True)
                     ds_obs_annual.append(ds1)
                     ds_obs_annual.merge("variable")
-                # at this point we need to switch to the sea surface for the monthly file
 
                 if surface == "top":
-                    ds_obs.top()
-                    ds.top()
-
+                    ds_surface.top()
+                else:
+                    ds_surface.bottom()
+                ds_obs.top()
 
                 if vv_source == "occci":
-                    years = [x for x in ds_obs.years if x in ds.years]
+                    years = [x for x in ds_obs.years if x in ds_surface.years]
                     years = list(set(years))
 
                     ds_obs.subset(years=years)
                     ds_obs.tmean(["year", "month"])
                     ds_obs.merge("time")
                     ds_obs.tmean(["year", "month"])
-                    ds.subset(years=years)
-                    ds.tmean(["year", "month"])
+                    ds_surface.subset(years=years)
+                    ds_surface.tmean(["year", "month"])
 
-                ds_obs.append(ds)
+                ds_obs.append(ds_surface)
 
-                if len(ds.times) > 12:
+                if len(ds_surface.times) > 12:
                     ds_obs.merge("variable", match=["year", "month"])
                 else:
                     ds_obs.merge("variable", match="month")
@@ -662,6 +650,8 @@ def gridded_matchup(
                 ds_surface = ds_obs.copy()
                 if vv_source == "woa":
                     ds_surface.top()
+                if lon_lim is not None and lat_lim is not None:
+                    ds_surface.subset(lon=lon_lim, lat=lat_lim)
                 ds_surface.to_nc(out_file, zip=True, overwrite=True)
 
                 # now do the masking etc.
@@ -670,11 +660,6 @@ def gridded_matchup(
                     out_file = f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_vertical.nc"
                     ds_obs_annual.set_precision("F32")
 
-                #   ds_obs.set_fill(-9999)
-                    #ds_mask = ds_obs_annual.copy()
-                    #ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
-                    #ds_mask.as_missing([-1e40, -1e20])
-                    #ds_obs + ds_mask
                     ds_obs_annual.set_fill(-9999)
                     ds_mask = ds_obs_annual.copy()
                     ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
@@ -689,6 +674,8 @@ def gridded_matchup(
                     lons = [lon_min, lon_max]
                     lats = [lat_min, lat_max]
                     ds_obs_annual.subset(lon=lons, lat=lats)
+                    if lon_lim is not None and lat_lim is not None:
+                        ds_obs_annual.subset(lon=lon_lim, lat=lat_lim)
 
                     ds_obs_annual.to_nc(out_file, zip=True, overwrite=True)
 
