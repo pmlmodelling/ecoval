@@ -1,6 +1,7 @@
-import os
 import glob
+import os
 import warnings
+import pandas as pd
 import time
 import numpy as np
 import nctoolkit as nc
@@ -166,7 +167,7 @@ def gridded_matchup(
                 if not os.path.exists("matched/model_grid.csv"):
                     ds_grid = nc.open_data(paths[0], checks=False)
                     var = ds_grid.variables[0]
-                    ds_grid.subset(variables=var, time = 0)
+                    ds_grid.subset(variables=selection[0], time = 0)
                     if surface == "top":
                         ds_grid.top()
                     else:
@@ -267,23 +268,32 @@ def gridded_matchup(
                             ds_mm.subset(month = mm, time = 0)
                             ds_mm.tmean(["year", "month"])
                             ds_mm.ensemble_mean()
+                            ds_mm.set_date(year = 2000, month = mm, day = 1)
                             ds_mm.as_missing(0)
                             ds_mm.run()
                             ds_vertical.append(ds_mm)
 
                         ds_surface = ds_vertical.copy()
-                        ds_vertical.ensemble_mean(nco = True)
+                        ds_vertical.ensemble_mean()
                     else:
                         if use_nco:
                             if vv_source != "woa":
                                 ds_surface.nco_command(f"ncks -F -d deptht,1 -v {nco_selection}")
                                 ds_surface.as_missing(0)
                                 ds_surface.tmean(["year", "month"])
+                                if surface == "top":
+                                    ds_surface.top()
+                                else:
+                                    ds_surface.bottom()
                             else:
                                 ds_surface.nco_command(f"ncks -F -v {nco_selection}")
                                 ds_surface.as_missing(0)
                                 ds_surface.tmean(["year", "month"])
                                 ds_surface = ds_vertical.copy()
+                                if surface == "top":
+                                    ds_surface.top()
+                                else:
+                                    ds_surface.bottom()
                         else:
                             if vv_source != "woa":
                                 ds_surface.subset(variables=selection)
@@ -319,7 +329,7 @@ def gridded_matchup(
                                 ds_surface.run()
                                 for key in mapping:
                                     if key not in ignore_later:
-                                        if mapping[key] in ds_vertical.variables:
+                                        if mapping[key] in ds_surface.variables:
                                             ds_surface.rename({mapping[key]: key})
                                 if "chlorophyll" in list(df.variable):
                                     if var_unit is not None:
@@ -343,14 +353,18 @@ def gridded_matchup(
                                 ds_surface.merge("time")
                                 ds_surface.subset(years=years)
                                 ds_surface.run()
+                    else:
+                        ds_surface.merge("time")
 
                 tidy_warnings(w)
 
-                if surface == "top":
-                    ds_surface.top()
-                    ds_surface.run()
-                else:
-                    ds_surface.bottom()
+                # raise ValueError(len(ds_surface))
+
+                # if surface == "top":
+                #     ds_surface.top()
+                #     ds_surface.run()
+                # else:
+                #     ds_surface.cdo_command("bottomvalue")
 
                 # figure out the start and end year
                 start_year = min(ds_surface.years)
@@ -388,8 +402,10 @@ def gridded_matchup(
 
                 if vv_source != "woa":
                     if len(obs_years) == 1:
+                        ds_surface.merge("time")
                         ds_surface.tmean("month")
                     else:
+                        ds_surface.merge("time")
                         ds_surface.tmean(["year", "month"])
 
                 amm7 = False
@@ -545,6 +561,8 @@ def gridded_matchup(
                 ds_obs.rename({ds_obs.variables[0]: "observation"})
                 ds_surface.merge("time")
                 ds_surface.rename({ds_surface.variables[0]: "model"})
+                ds_surface.run()
+                ds_obs.run()
 
                 # it is possible the years do not overlap, e.g. with satellite Chl
                 if len(ds_surface.times) > 12:
@@ -586,6 +604,10 @@ def gridded_matchup(
                     else:
                         ds1.regrid(ds_obs_annual, method="nn")
                     ds_obs_annual.vertical_interp(levels, fixed = True)
+                    ds_obs_annual.set_date(year = 2000, month = 1, day = 1)
+                    ds1.set_date(year = 2000, month = 1, day = 1)
+                    ds_obs_annual.run()
+                    ds1.run()
                     ds_obs_annual.append(ds1)
                     ds_obs_annual.merge("variable")
 
@@ -605,6 +627,39 @@ def gridded_matchup(
                     ds_obs.tmean(["year", "month"])
                     ds_surface.subset(years=years)
                     ds_surface.tmean(["year", "month"])
+
+                ds_obs.run()
+                ds_surface.run()
+                ds2 = ds_surface.copy()
+                # ds2.to_nc("foo.nc", zip = True)
+                if len(ds_surface.times) == 12:
+                    ds_surface.set_year(2000)
+                
+                if len(ds_surface.times) > 12:
+                    # at this point, we need to identify the years that are common to both
+                    ds_times = ds_surface.times
+                    ds_years = [x.year for x in ds_times]
+                    ds_months = [x.month for x in ds_times]
+
+                    df_surface = pd.DataFrame({"year": ds_years, "month": ds_months})
+
+                    ds_times = ds_obs.times
+                    ds_years = [x.year for x in ds_times]
+                    ds_months = [x.month for x in ds_times]
+                    df_obs = pd.DataFrame({"year": ds_years, "month": ds_months})
+                    sel_years = list(
+                        df_surface.merge(df_obs).groupby("year").count()
+                        # only 12
+                        .query("month == 12")
+                        .reset_index()
+                        .year
+                        .values
+                    )
+                    ds_surface.subset(years=sel_years)
+                    ds_obs.subset(years=sel_years)
+
+
+
 
                 ds_obs.append(ds_surface)
 
