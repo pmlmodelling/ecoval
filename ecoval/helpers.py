@@ -10,7 +10,20 @@ def is_int(s):
     except ValueError:
         return False
 
-def matchup_starting_point(ff, val_dir = None, sim_dir = None):
+def matchup_starting_point(ff, val_dir = None):
+    """
+    Parameters
+    ----------
+    ff : str
+        Path to the netcdf file
+    val_dir : str
+        Path to the validation data directory
+    Returns
+    -------
+    str
+        A string that can be used to call ecoval.matchup
+
+    """
     valid_vars = [
         "temperature",
         "salinity",
