@@ -420,22 +420,22 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
     # create a new name if one already exists
     i = 0
-    book_dir = "book"
+    book_dir = f"book_{build}"
 
-    if os.path.exists("book"):
+    if os.path.exists(book_dir):
         #get user input to decide if it should be removed
         user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
         if user_input.lower() == "y":
             while True:
-                files = glob.glob("book/**/**/**", recursive=True)
+                files = glob.glob(f"{book_dir}/**/**/**", recursive=True)
                 # list all files in book, recursively
                 for ff in files:
-                    if ff.startswith("book"):
+                    if ff.startswith(f"{book_dir}"):
                         try:
                             os.remove(ff)
                         except:
                             pass
-                files = glob.glob("book/**/**/**", recursive=True)
+                files = glob.glob(f"{book_dir}/**/**/**", recursive=True)
                 # only list files
                 files = [x for x in files if os.path.isfile(x)]
                 if len(files) == 0:
@@ -530,9 +530,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         # loop through the paths
         for pp in point_paths:
             vv = os.path.basename(pp).split("_")[2].replace(".csv", "")
-            if True:
-                if vv not in variables:
-                    continue
+            if variables != "all":
+                if True:
+                    if vv not in variables:
+                        continue
             source = os.path.basename(pp).split("_")[0]
             variable = vv
             layer = os.path.basename(pp).split("_")[1].replace(".csv", "")

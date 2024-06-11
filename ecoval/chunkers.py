@@ -25,7 +25,7 @@ def add_chunks(build = "html"):
     if len(glob.glob("matched/gridded/nws/**/*.nc")) > 0:
         nws = True
 
-    paths = glob.glob("book/notebooks/*.py")
+    paths = glob.glob(f"book_{build}/notebooks/*.py")
     paths += glob.glob("book/compare/notebooks/*.py")
 
     for path in paths:
