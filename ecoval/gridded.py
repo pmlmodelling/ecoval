@@ -1,4 +1,5 @@
 import glob
+import copy
 import os
 import warnings
 import pandas as pd
@@ -236,6 +237,7 @@ def gridded_matchup(
 
                 with warnings.catch_warnings(record=True) as w:
 
+                    new_paths = copy.deepcopy(paths)
                     if vv_source == "glodap":
                         for ff in paths:
                             ff_years = times_dict[ff].year
@@ -243,8 +245,8 @@ def gridded_matchup(
                                 len([x for x in ff_years if x in range(1971, 2015)])
                                 == 0
                             ):
-                                paths.remove(ff)
-
+                                new_paths.remove(ff)
+                        paths = new_paths
 
                     if vv_source == "woa":
                         ds_vertical = nc.open_data(paths, checks=False)
