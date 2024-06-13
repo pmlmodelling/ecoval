@@ -12,12 +12,14 @@ def is_int(s):
 
 def matchup_starting_point(ff, val_dir = None):
     """
+    A function to create a string that can be used to call ecoval.matchup.
+
     Parameters
     ----------
     ff : str
         Path to the netcdf file
     val_dir : str
-        Path to the validation data directory
+        Path to the validation data directory. This only needs to be used outside Plymouth Marine Laboratory.
     Returns
     -------
     str
