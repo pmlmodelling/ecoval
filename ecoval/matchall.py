@@ -909,22 +909,22 @@ def matchup(
             print("Variables that will be matched up")
             print("******************************")
             if len(surface) > 0:
-                print(f"The following variables will be matched up with gridded surface data: {','.join(surface)}")
+                print(f"The following variables will be matched up with gridded surface data: {', '.join(surface)}")
             else:
                 print("No variables will be matched up with gridded surface data")
 
             if len(point_surface) > 0:
-                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_surface)}")
+                print(f"The following variables will be matched up with in-situ near-bottom data: {', '.join(point_surface)}")
             else:
                 print("No variables will be matched up with in-situ surface data")
 
             if len(point_bottom) > 0:
-                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_bottom)}")
+                print(f"The following variables will be matched up with in-situ near-bottom data: {', '.join(point_bottom)}")
             else:
                 print("No variables will be matched up with in-situ bottom data")
 
             if len(point_benthic) > 0:
-                print(f"The following variables will be matched up with in-situ benthic data: {'.'.join(point_benthic)}")
+                print(f"The following variables will be matched up with in-situ benthic data: {', '.join(point_benthic)}")
             else:
                 print("No variables will be matched up with in-situ benthic data")
             print(
