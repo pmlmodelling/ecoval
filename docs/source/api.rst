@@ -13,7 +13,7 @@ Matchups and validation
 
    matchup 
    validate 
-   rebuilt 
+   rebuild 
    matchup_starting_point
 
 
