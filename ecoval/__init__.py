@@ -996,9 +996,23 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/latex/python.pdf"))
 
 
-def rebuild():
-    os.system(f"jupyter-book build book/")
-    webbrowser.open("file://" + os.path.abspath("book/_build/html/index.html"))
+def rebuild(build = None):
+    """
+    This function will rebuild the book.
+
+    Parameters
+    ----------
+    build : str
+        The type of the existing build. Default is None. Options are "html" or "pdf"
+    """
+
+    if build is None:
+        raise ValueError("Please provide a build type")
+    os.system(f"jupyter-book build book_{build}/")
+    if build == "html":
+        webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/html/index.html"))
+    else:
+        webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/latex/python.pdf"))
 
 
 try:
