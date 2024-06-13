@@ -1032,9 +1032,12 @@ def matchup(
                     new_variable.append(all_df.variable[i])
             all_df_print["variable"] = new_variable
             print(all_df_print)
+            print(
+                "Note: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
+            )
 
             print(
-                "Are you happy with these matchups? Y/N \nNote: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
+                "Are you happy with these matchups? Y/N"
             )
 
             x = input()
