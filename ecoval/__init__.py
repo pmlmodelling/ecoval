@@ -384,7 +384,7 @@ def compare(model_dict=None):
 def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None):
     # docstring
     """
-    This function will run the model evaluation for all of the available datasets.
+    Run the model evaluation for all of the available datasets, and generate a validation report.
 
     Parameters
     ----------
@@ -998,7 +998,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
 def rebuild(build = None):
     """
-    This function will rebuild the book.
+    Rebuild the validation report after modifying notebooks.
     Use this if you have modified the notebooks generated and want to create a validation report.
 
     Parameters

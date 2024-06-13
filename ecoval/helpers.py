@@ -12,7 +12,8 @@ def is_int(s):
 
 def matchup_starting_point(ff, val_dir = None):
     """
-    A function to create a string that can be used to call ecoval.matchup.
+    Create a ecoval.matchup call based on the available validation data.
+    This function will identify the domain based on the model grid, identify available data, and then generate a maximal call to ecoval.matchup that can be stripped down to your needs.
 
     Parameters
     ----------
