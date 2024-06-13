@@ -943,10 +943,23 @@ def matchup(
                 point_bottom = [x for x in point_bottom if x in valid_bottom]
                 surface = [x for x in surface if x in valid_surface]
                 
+            vars_available = list(
+                all_df
+                # drop rows where pattern is None
+                .dropna()
+                # get all variables
+                .variable
+
+            )
+            surface = [x for x in surface if x in vars_available] 
+            point_surface = [x for x in point_surface if x in vars_available]
+            point_bottom = [x for x in point_bottom if x in vars_available]
+            point_benthic = [x for x in point_benthic if x in vars_available]
             var_chosen = surface + bottom + point_benthic + point_bottom + point_surface
             var_chosen = list(set(var_chosen))
     if mapping is not None:
         if True:
+
             # add the global checker here
             # sort all_df alphabetically by variable
             all_df = all_df.sort_values("variable").reset_index(drop=True)
@@ -954,6 +967,19 @@ def matchup(
             point_surface.sort()
             point_bottom.sort()
             point_benthic.sort()
+            # ensure variables are in all_df.variable
+            vars_available = list(
+                all_df
+                # drop rows where pattern is None
+                .dropna()
+                # get all variables
+                .variable
+
+            )
+            surface = [x for x in surface if x in vars_available] 
+            point_surface = [x for x in point_surface if x in vars_available]
+            point_bottom = [x for x in point_bottom if x in vars_available]
+            point_benthic = [x for x in point_benthic if x in vars_available]
             print("Variables that will be matched up")
             print("******************************")
             if len(surface) > 0:
