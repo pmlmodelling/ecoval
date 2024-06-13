@@ -17,4 +17,5 @@ jupyter-book
 seawater
 holteandtalley
 cmocean
+numpydoc
 
