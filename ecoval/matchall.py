@@ -459,6 +459,22 @@ def matchup(
     kwargs: dict
         Additional arguments
 
+    Returns
+    -------------
+    None
+
+    Examples
+    -------------
+
+    If you wanted to matchup temperature, salinity and oxygen at the surface for gridded data and the near-bottom, for the year 2002 you would run:
+
+    >>> matchup(folder = "path/to/folder", start = 2002, end = 2002, surface = {"gridded": ["temperature", "salinity", "oxygen"], "point": None}, surface_level = "top")
+
+
+
+
+
+
     """
     if surface == "default":
         surface=[
@@ -578,9 +594,16 @@ def matchup(
             surface = [surface]
         if isinstance(point_surface, str):
             point_surface = [point_surface]
+        if point_surface is None:
+            point_surface = []
+        if surface is None:
+            surface = []
 
+    if surface is None:
+        surface = []
     if len(surface) > 0:
         surf_default = False
+    
     if len(point_surface) > 0:
         surf_default = False
 
@@ -633,6 +656,11 @@ def matchup(
         bottom = [x for x in bottom if x in valid_vars]
 
     # fix benthic if something like "benthic biomass" is an element
+    if benthic is None:
+        benthic = []
+    if isinstance(benthic, str):
+        benthic = [benthic]
+
     for pp in benthic:
         if "ben" in pp and "bio" in pp:
             benthic.remove(pp)
@@ -648,6 +676,11 @@ def matchup(
         for pp in surface:
             if pp not in valid_surface:
                 raise ValueError(f"{pp} is not a valid gridded dataset")
+    
+    if bottom is None:
+        bottom = []
+    if isinstance(bottom, str):
+        bottom = [bottom]
 
     if not session_info["user_dir"]:
         for pp in bottom:
