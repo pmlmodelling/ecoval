@@ -5,7 +5,7 @@
 API Reference
 ####################
 
-Plotting
+Matchups and validation
 ------------------
 
 .. autosummary::
@@ -13,5 +13,7 @@ Plotting
 
    matchup 
    validate 
+   rebuilt 
+   matchup_starting_point
 
 
