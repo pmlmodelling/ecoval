@@ -8,7 +8,7 @@ import numpy as np
 import nctoolkit as nc
 
 from ecoval.fixers import tidy_warnings
-from ecoval.utils import extension_of_directory, get_extent
+from ecoval.utils import extension_of_directory, get_extent, is_latlon, get_resolution
 from ecoval.session import session_info
 
 
@@ -709,6 +709,22 @@ def gridded_matchup(
                     ds_surface.top()
                 if lon_lim is not None and lat_lim is not None:
                     ds_surface.subset(lon=lon_lim, lat=lat_lim)
+
+
+                ds_surface.run()
+
+                regrid_later = False
+                if is_latlon(ds_surface[0]) is False:
+                    extent = get_extent(ds_surface[0])
+                    lons = [extent[0], extent[1]]
+                    lats = [extent[2], extent[3]]
+                    resolution = get_resolution(ds_surface[0])
+                    lon_res = resolution[0]
+                    lat_res = resolution[1]
+                    ds_surface.to_latlon(lon=lons, lat=lats, res=[lon_res, lat_res], method = "nn")
+                    regrid_later = True
+
+
                 ds_surface.to_nc(out_file, zip=True, overwrite=True)
 
                 # now do the masking etc.
@@ -733,6 +749,9 @@ def gridded_matchup(
                     ds_obs_annual.subset(lon=lons, lat=lats)
                     if lon_lim is not None and lat_lim is not None:
                         ds_obs_annual.subset(lon=lon_lim, lat=lat_lim)
+
+                    if regrid_later:
+                        ds_obs_annual.to_latlon(lon=lons, lat=lats, res=[lon_res, lat_res], method = "nn")
 
                     ds_obs_annual.to_nc(out_file, zip=True, overwrite=True)
 

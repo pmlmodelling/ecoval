@@ -1,6 +1,8 @@
 import os
 import nctoolkit as nc
+import xarray as xr
 import numpy as np
+import subprocess
 
 session = dict()
 
@@ -124,3 +126,41 @@ def extension_of_directory(starting_directory, exclude=[]):
     for i in range(levels):
         new_directory = new_directory + "/**"
     return new_directory + "/"
+
+
+
+def is_latlon(ff):
+    ds = nc.open_data(ff, checks = False)
+
+    cdo_result = subprocess.run(
+            f"cdo griddes {ff}",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    return "lonlat" in cdo_result.stdout.decode("utf-8")
+
+def get_resolution(ff):
+    ds = nc.open_data(ff, checks = False)
+    var = ds.variables[0]
+    ds = xr.open_dataset(ff)
+    lon_name = [x for x in list(ds.coords) if 'lon' in x][0]
+    lat_name = [x for x in list(ds.coords) if 'lat' in x][0]
+    var_dims =  ds[var].dims
+    extent = get_extent(ff)
+    if lon_name in var_dims:
+        if lat_name in var_dims:
+            n_lon = len(ds[lon_name])
+            n_lat = len(ds[lat_name])
+            lon_res = (extent[1] - extent[0]) / n_lon
+            lat_res = (extent[3] - extent[2]) / n_lat
+            return [lon_res, lat_res]
+    else:
+        # get the final two var_dims
+        var_dims = var_dims[-2:]
+        # lat should be the second
+        n_lat = len(ds[var_dims[1]])
+        n_lon = len(ds[var_dims[0]])
+        lon_res = (extent[1] - extent[0]) / n_lon
+        lat_res = (extent[3] - extent[2]) / n_lat
+        return [lon_res, lat_res]
