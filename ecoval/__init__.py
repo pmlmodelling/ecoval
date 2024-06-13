@@ -153,7 +153,8 @@ def fix_toc_comparison():
 
 def compare(model_dict=None):
     """
-    This function will compare the validition output from multiple models.
+    Compare pre-validated simulations.
+    This function will compare the validition output from two models.
 
     Parameters
     ----------
