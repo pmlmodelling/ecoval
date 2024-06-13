@@ -16,7 +16,7 @@ python:
     - method: pip
       path: .
       extra_requirements:
-        - docs
+        - numpydocs
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
