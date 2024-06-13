@@ -1,3 +1,4 @@
+[![Documentation Status](https://readthedocs.org/projects/ecoval-pml/badge/?version=latest)](https://ecoval-pml.readthedocs.io/en/latest/?badge=latest)
 # ecoVal
 Marine ecosystem model validation made easy in Python
 
