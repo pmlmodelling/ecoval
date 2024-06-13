@@ -23,6 +23,17 @@ def ignore_warning(x):
         True if the warning should be ignored
         False if the warning should not be ignored
     """
+    if "Adding a time series with the same number of time steps" in x:
+        return True
+    # did not have valid years
+    if "did not have valid years" in x:
+        return True
+    if "There is only file in the dataset. No need to merge" in x:
+        return True
+    if "time bounds unsupporte" in x:
+        return True
+    if "deflate" in x:
+        return True
     if "None of the points are contained" in x:
         return True
     if "0 as the fill value" in x:
