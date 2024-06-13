@@ -999,6 +999,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 def rebuild(build = None):
     """
     This function will rebuild the book.
+    Use this if you have modified the notebooks generated and want to create a validation report.
 
     Parameters
     ----------
