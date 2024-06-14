@@ -928,6 +928,9 @@ def matchup(
 
             if session_info["user_dir"]:
                 valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/user/bottom/*")]
+                if len(valid_bottom) == 0:
+                    valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")]
+
             else:
                 valid_bottom = [
                     os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")
@@ -980,6 +983,24 @@ def matchup(
             point_surface = [x for x in point_surface if x in vars_available]
             point_bottom = [x for x in point_bottom if x in vars_available]
             point_benthic = [x for x in point_benthic if x in vars_available]
+
+            all_df_print = copy.deepcopy(all_df).reset_index(drop = True)
+
+            # new tidied variable
+            new_variable = []
+            for i in range(len(all_df_print)):
+                if all_df.variable[i] in var_chosen:
+                    if all_df.pattern[i] is not None:
+                        new_variable.append(all_df.variable[i] + "**")
+                    else:
+                        new_variable.append(all_df.variable[i])
+                else:
+                    new_variable.append(all_df.variable[i])
+            all_df_print["variable"] = new_variable
+            print(all_df_print)
+            print(
+                "Note: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
+            )
             print("Variables that will be matched up")
             print("******************************")
             if len(surface) > 0:
@@ -1078,13 +1099,13 @@ def matchup(
                 all_df.to_csv(out, index=False)
                 return None
 
-            out = "matched/mapping.csv"
-            if not os.path.exists("matched"):
-                os.mkdir("matched")
-            df_out = all_df.dropna().reset_index(drop=True)
-            final_extension = extension_of_directory(folder)
-            df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
-            df_out.to_csv(out, index=False)
+    out = "matched/mapping.csv"
+    if not os.path.exists("matched"):
+        os.mkdir("matched")
+    df_out = all_df.dropna().reset_index(drop=True)
+    final_extension = extension_of_directory(folder)
+    df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
+    df_out.to_csv(out, index=False)
 
     # if fvcom:
 
