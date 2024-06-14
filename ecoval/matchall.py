@@ -1003,25 +1003,52 @@ def matchup(
             )
             print("Variables that will be matched up")
             print("******************************")
+
             if len(surface) > 0:
-                print(f"The following variables will be matched up with gridded surface data: {', '.join(surface)}")
+                print(f"The following variables will be matched up with gridded surface data: {','.join(surface)}")
+                missing_surface = [x for x in valid_surface if x not in surface] 
+                if len(missing_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_surface)}")
             else:
                 print("No variables will be matched up with gridded surface data")
+                missing_surface = [x for x in valid_surface if x not in surface] 
+                if len(missing_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_surface)}")
 
             if len(point_surface) > 0:
-                print(f"The following variables will be matched up with in-situ near-bottom data: {', '.join(point_surface)}")
+                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_surface)}")
+                missing_point_surface = [x for x in valid_points if x not in point_surface]
+                if len(missing_point_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_point_surface)}")
             else:
                 print("No variables will be matched up with in-situ surface data")
+                missing_point_surface = [x for x in valid_points if x not in point_surface]
+                if len(missing_point_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_point_surface)}")
 
             if len(point_bottom) > 0:
-                print(f"The following variables will be matched up with in-situ near-bottom data: {', '.join(point_bottom)}")
+                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_bottom)}")
+                missing_bottom = [x for x in valid_bottom if x not in point_bottom]
+                if len(missing_bottom) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_bottom)}")
             else:
                 print("No variables will be matched up with in-situ bottom data")
+                missing_bottom = [x for x in valid_bottom if x not in point_bottom]
+                if len(missing_bottom) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_bottom)}")
 
             if len(point_benthic) > 0:
-                print(f"The following variables will be matched up with in-situ benthic data: {', '.join(point_benthic)}")
+                print(f"The following variables will be matched up with in-situ benthic data: {','.join(point_benthic)}")
+                missing_benthic = [x for x in valid_benthic if x not in point_benthic]
+                if len(missing_benthic) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_benthic)}")
+
             else:
                 print("No variables will be matched up with in-situ benthic data")
+                missing_benthic = [x for x in valid_benthic if x not in point_benthic]
+                if len(missing_benthic) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_benthic)}")
+
             print(
                 "Are you happy with this? Y/N"
             )
@@ -1044,23 +1071,48 @@ def matchup(
             print("******************************")
             if len(surface) > 0:
                 print(f"The following variables will be matched up with gridded surface data: {','.join(surface)}")
+                missing_surface = [x for x in valid_surface if x not in surface] 
+                if len(missing_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_surface)}")
             else:
                 print("No variables will be matched up with gridded surface data")
+                missing_surface = [x for x in valid_surface if x not in surface] 
+                if len(missing_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_surface)}")
 
             if len(point_surface) > 0:
                 print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_surface)}")
+                missing_point_surface = [x for x in valid_points if x not in point_surface]
+                if len(missing_point_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_point_surface)}")
             else:
                 print("No variables will be matched up with in-situ surface data")
+                missing_point_surface = [x for x in valid_points if x not in point_surface]
+                if len(missing_point_surface) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_point_surface)}")
 
             if len(point_bottom) > 0:
                 print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_bottom)}")
+                missing_bottom = [x for x in valid_bottom if x not in point_bottom]
+                if len(missing_bottom) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_bottom)}")
             else:
                 print("No variables will be matched up with in-situ bottom data")
+                missing_bottom = [x for x in valid_bottom if x not in point_bottom]
+                if len(missing_bottom) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_bottom)}")
 
             if len(point_benthic) > 0:
-                print(f"The following variables will be matched up with in-situ benthic data: {'.'.join(point_benthic)}")
+                print(f"The following variables will be matched up with in-situ benthic data: {','.join(point_benthic)}")
+                missing_benthic = [x for x in valid_benthic if x not in point_benthic]
+                if len(missing_benthic) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_benthic)}")
+
             else:
                 print("No variables will be matched up with in-situ benthic data")
+                missing_benthic = [x for x in valid_benthic if x not in point_benthic]
+                if len(missing_benthic) > 0:
+                    print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_benthic)}")
 
             print("******************************")
             print(f"** Inferred mapping of model variable names from {folder}")
