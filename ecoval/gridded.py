@@ -2,6 +2,7 @@ import glob
 import copy
 import os
 import warnings
+import pickle
 import pandas as pd
 import time
 import numpy as np
@@ -99,6 +100,8 @@ def gridded_matchup(
         mapping = dict()
 
         for vv in vars:
+            # a dictionary for summarizing things
+            var_dict = {}
             out = glob.glob(f"matched/gridded/{domain}/{vv}/*_{vv}_surface.nc")
             if len(out) > 0:
                 if session_info["overwrite"] is False:
@@ -208,6 +211,8 @@ def gridded_matchup(
 
                 paths = list(set(new_paths))
                 paths.sort()
+
+                var_dict["clim_years"] = [min(years), max(years)] 
 
                 # get the number of paths
 
@@ -760,5 +765,13 @@ def gridded_matchup(
 
                     ds_obs_annual.to_nc(out_file, zip=True, overwrite=True)
 
+
+                #out = f"matched/gridded/{domain}/{vv}/{vv}_summary.pkl"
+                out= f"matched/dicts/{domain}_{vv}_{vv_source}_{vv}.pkl"
+                if not os.path.exists(os.path.dirname(out)):
+                    os.makedirs(os.path.dirname(out))
+                with open(out, "wb") as f:
+                    pickle.dump(var_dict, f)
+        
 
         return None
