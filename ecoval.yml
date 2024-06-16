@@ -10,7 +10,7 @@ dependencies:
   - jellyfish
   - nctoolkit>=1.1.1
   - pandoc
-  - python=3.9.16=h2782a2a_0_cpython
+  - python=3.11
   - rpy2
   - r-base
   - r-cowplot
