@@ -65,7 +65,7 @@ def gridded_matchup(
         File path to thickness file
 
     """
-    data_dir = session_info["data_dir"]
+    obs_dir = session_info["obs_dir"]
 
     all_df = df_mapping
     # if model_variable is None remove from all_df
@@ -108,12 +108,12 @@ def gridded_matchup(
                     continue
             # figure out the data source
             #
-            dir_var = f"{data_dir}/gridded/user/{vv}"
+            dir_var = f"{obs_dir}/gridded/user/{vv}"
             # check if this directory is empty
             if len(glob.glob(dir_var + "/*")) == 0:
-                dir_var = f"{data_dir}/gridded/{domain}/{vv}"
+                dir_var = f"{obs_dir}/gridded/{domain}/{vv}"
             if len(glob.glob(dir_var + "/*")) == 0:
-                dir_var = f"{data_dir}/gridded/global/{vv}"
+                dir_var = f"{obs_dir}/gridded/global/{vv}"
 
             vv_source = [
                 os.path.basename(x).replace(".txt", "")
@@ -183,7 +183,7 @@ def gridded_matchup(
                         with open(amm7_out, "w") as f:
                             f.write("")
 
-                        ff_grid = f"{data_dir}/amm7_val_subdomains.nc"
+                        ff_grid = f"{obs_dir}/amm7_val_subdomains.nc"
                         ds_grid.cdo_command(f"setgrid,{ff_grid}")
                     df_grid = ds_grid.to_dataframe().reset_index().dropna()
                     columns = [x for x in df_grid.columns if "lon" in x or "lat" in x]

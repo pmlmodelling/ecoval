@@ -3,12 +3,12 @@ import pandas as pd
 import os
 import xarray as xr
 import warnings
-from ecoval.utils import get_datadir
+from ecoval.utils import get_obsdir
 
 from pathlib import Path
 from netCDF4 import Dataset
 
-data_dir = get_datadir()
+obs_dir = get_obsdir()
 
 
 def split_path(path):

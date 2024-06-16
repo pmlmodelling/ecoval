@@ -12,7 +12,7 @@ import pickle
 import ecoval
 import copy
 import calendar
-data_dir = ecoval.get_datadir(level = -2)
+data_dir = ecoval.get_obsdir(level = -2)
 import nctoolkit as nc
 import hvplot.xarray
 import geopandas as gpd

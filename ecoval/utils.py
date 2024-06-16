@@ -88,9 +88,9 @@ def find_config(level=0):
     return None
 
 
-def get_datadir(level=0):
+def get_obsdir(level=0):
 
-    data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
+    obs_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
     config_file = find_config(level=level)
 
     if config_file is not None:
@@ -113,10 +113,10 @@ def get_datadir(level=0):
             data_path = terms[1].replace(" ", "")
 
             if os.path.exists(data_path):
-                data_dir = data_path
+                obs_dir = data_path
             else:
                 raise ValueError(f"{data_path} does not exist")
-    return data_dir
+    return obs_dir
 
 
 def extension_of_directory(starting_directory, exclude=[]):

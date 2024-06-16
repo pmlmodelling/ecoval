@@ -1,4 +1,4 @@
-from ecoval.utils import get_datadir
+from ecoval.utils import get_obsdir
 import pkg_resources
 import pandas as pd
 import shutil

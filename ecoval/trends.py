@@ -84,7 +84,7 @@ ices_variables = [
     "alkalinity",
     "benbio"
 ]
-data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
+obs_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
 
 
 def find_config():
@@ -127,13 +127,13 @@ if config_file is not None:
         data_path = terms[1].replace(" ", "")
 
         if os.path.exists(data_path):
-            data_dir = data_path
+            obs_dir = data_path
         else:
             raise ValueError(f"{data_path} does not exist")
 
 
 def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
-    data_dir = session_info["data_dir"] 
+    obs_dir = session_info["obs_dir"] 
     ds = nc.open_data(ff, checks=False)
     years = list(set(ds.years))
     # read in the WOD data
@@ -141,7 +141,7 @@ def matchup_wod(ff=None, variable=None, df_all=None, depths=None):
 
     try:
         for year in years:
-            ff_year = f"{data_dir}/wod/temp_csv/yearly/wod_temp_{year}.csv"
+            ff_year = f"{obs_dir}/wod/temp_csv/yearly/wod_temp_{year}.csv"
             df_wod.append(pd.read_csv(ff_year))
     except:
         return None
@@ -402,7 +402,7 @@ def trends(
         List of two floats. The first is the minimum longitude, the second is the maximum longitude. Default is None.
     lat_lim: list
         List of two floats. The first is the minimum latitude, the second is the maximum latitude. Default is None.
-    data_dir: str
+    obs_dir: str
         Path to data directory. Default is 'default'. If 'default', the data directory is taken from the session_info dictionary.
     
     kwargs: dict
@@ -708,9 +708,9 @@ def trends(
                 with open(amm7_out, "w") as f:
                     f.write("")
 
-                data_dir = "/data/proteus1/scratch/rwi/evaldata/data"
+                obs_dir = "/data/proteus1/scratch/rwi/evaldata/data"
 
-                ff_grid = f"{data_dir}/amm7_val_subdomains.nc"
+                ff_grid = f"{obs_dir}/amm7_val_subdomains.nc"
                 ds_grid.cdo_command(f"setgrid,{ff_grid}")
                 # ds_grid.fix_amm7_grid()
                 amm7 = True

@@ -100,7 +100,7 @@ if config_file is not None:
         data_path = terms[1].replace(" ", "")
 
         if os.path.exists(data_path):
-            data_dir = data_path
+            obs_dir = data_path
         else:
             raise ValueError(f"{data_path} does not exist")
 
@@ -262,6 +262,7 @@ def get_res(x, folder=None):
         return "d"
 
 
+random_files = []
 def find_paths(folder, fvcom=False, exclude=[], n_check = None):
     while True:
 
@@ -308,6 +309,7 @@ def find_paths(folder, fvcom=False, exclude=[], n_check = None):
     if n_check is not None:
         options = random.sample(options, n_check)
     for ff in tqdm(options):
+        random_files.append(ff)
         ds = nc.open_data(ff, checks=False)
         stop = True
         ds_dict = generate_mapping(ds, fvcom=fvcom)
@@ -379,7 +381,7 @@ def find_paths(folder, fvcom=False, exclude=[], n_check = None):
 
 
 def matchup(
-    folder=None,
+    sim_dir =None,
     start=None,
     end=None,
     surface_level=None,
@@ -396,7 +398,7 @@ def matchup(
     point_time_res=["year", "month", "day"],
     lon_lim=None,
     lat_lim=None,
-    data_dir="default",
+    obs_dir="default",
     n_check = None,
     everything = False,
     overwrite = True,
@@ -409,7 +411,7 @@ def matchup(
     Parameters
     -------------
 
-    folder : str
+    sim_dir : str
         Folder containing model output
     start : int
         Start year. First year of the simulations to matchup.
@@ -458,7 +460,7 @@ def matchup(
         List of two floats. The first is the minimum longitude, the second is the maximum longitude. Default is None.
     lat_lim : list
         List of two floats. The first is the minimum latitude, the second is the maximum latitude. Default is None.
-    data_dir : str
+    obs_dir : str
         Path to validation data directory. Default is 'default'. If 'default', the data directory is taken from the session_info dictionary.
     n_check : int
         Number of files when identifying mapping. Default is None, which means all files are checked.
@@ -557,17 +559,17 @@ def matchup(
     if isinstance(bottom, str):
         bottom = [bottom]
 
-    if data_dir is not "default":
+    if obs_dir is not "default":
         session_info["user_dir"] = True
 
-    if data_dir != "default":
-        if not os.path.exists(data_dir):
-            raise ValueError(f"{data_dir} does not exist")
-        session_info["data_dir"] = data_dir
+    if obs_dir != "default":
+        if not os.path.exists(obs_dir):
+            raise ValueError(f"{obs_dir} does not exist")
+        session_info["obs_dir"] = obs_dir
     else:
-        data_dir = session_info["data_dir"]
+        obs_dir = session_info["obs_dir"]
 
-    # check if there is a user directory in data_dir
+    # check if there is a user directory in obs_dir
 
 
 
@@ -623,22 +625,22 @@ def matchup(
         surf_default = False
 
     if session_info["user_dir"]:
-        valid_points = list(set([x for x in glob.glob(data_dir + "/point/**/all/*")]))
+        valid_points = list(set([x for x in glob.glob(obs_dir + "/point/**/all/*")]))
     else:
-        valid_points = list(set([x for x in glob.glob(data_dir + f"/point/nws/all/*")]))
+        valid_points = list(set([x for x in glob.glob(obs_dir + f"/point/nws/all/*")]))
     # extract directory base name
     valid_points = [os.path.basename(x) for x in valid_points]
     for pp in point_surface:
         if pp not in valid_points:
             raise ValueError(f"{pp} is not a valid point dataset")
 
-    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/**/*")]
+    valid_surface = [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/**/*")]
 
     valid_benthic = [
-        os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")
+        os.path.basename(x) for x in glob.glob(obs_dir + "/point/nws/benthic/*")
     ]
 
-    valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/**/bottom/*")]
+    valid_bottom = [os.path.basename(x) for x in glob.glob(obs_dir + "/point/**/bottom/*")]
 
     valid_vars = [
         "temperature",
@@ -707,12 +709,12 @@ def matchup(
     if isinstance(exclude, str):
         exclude = [exclude]
 
-    # check if the folder exists
-    if folder is None:
-        raise ValueError("Please provide a folder")
+    # check if the sim_dir exists
+    if sim_dir is None:
+        raise ValueError("Please provide a sim_dir directory")
 
-    if not os.path.exists(folder):
-        raise ValueError(f"{folder} does not exist")
+    if not os.path.exists(sim_dir):
+        raise ValueError(f"{sim_dir} does not exist")
 
     # loop through kwargs, if first three characters match arg and arg is None, set arg to value
 
@@ -812,7 +814,7 @@ def matchup(
     surface = [x for x in surface if x in valid_surface]
 
     if all_df is None:
-        all_df = find_paths(folder, fvcom=fvcom, exclude=exclude, n_check = n_check)
+        all_df = find_paths(sim_dir, fvcom=fvcom, exclude=exclude, n_check = n_check)
 
         # add in anything that is missing
         all_vars = [
@@ -861,14 +863,14 @@ def matchup(
             pattern = list(df.pattern)[0]
             pattern = pattern.replace("//", "/")
 
-            final_extension = extension_of_directory(folder)
+            final_extension = extension_of_directory(sim_dir)
 
             if final_extension[0] == "/":
                 final_extension = final_extension[1:]
 
             wild_card = final_extension + pattern
             wild_card = wild_card.replace("**", "*")
-            for x in pathlib.Path(folder).glob(wild_card):
+            for x in pathlib.Path(sim_dir).glob(wild_card):
                 path = x
                 # convert to string
                 path = str(path)
@@ -900,9 +902,9 @@ def matchup(
 
             if session_info["user_dir"]:
                 if global_grid:
-                    valid_points = list(set([x for x in glob.glob(data_dir + "/point/user/all/*")]))
+                    valid_points = list(set([x for x in glob.glob(obs_dir + "/point/user/all/*")]))
                 else:
-                    valid_points = list(set([x for x in glob.glob(data_dir + "/point/**/all/*")]))
+                    valid_points = list(set([x for x in glob.glob(obs_dir + "/point/**/all/*")]))
             # extract directory base name
             valid_points = [os.path.basename(x) for x in valid_points]
             for pp in point_surface:
@@ -911,29 +913,29 @@ def matchup(
 
             if global_grid:
                 if session_info["user_dir"]:
-                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/user/*")]
-                    valid_surface += [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/global/*")]
+                    valid_surface = [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/user/*")]
+                    valid_surface += [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/global/*")]
                 else:
-                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/global/*")]
+                    valid_surface = [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/global/*")]
             else:
                 if session_info["user_dir"]:
-                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/nws/*")]
-                    valid_surface += [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/user/*")]
+                    valid_surface = [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/nws/*")]
+                    valid_surface += [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/user/*")]
                 else:
-                    valid_surface = [os.path.basename(x) for x in glob.glob(data_dir + "/gridded/nws/*")]
+                    valid_surface = [os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/nws/*")]
 
             valid_benthic = [
-                os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/benthic/*")
+                os.path.basename(x) for x in glob.glob(obs_dir + "/point/nws/benthic/*")
             ]
 
             if session_info["user_dir"]:
-                valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/user/bottom/*")]
+                valid_bottom = [os.path.basename(x) for x in glob.glob(obs_dir + "/point/user/bottom/*")]
                 if len(valid_bottom) == 0:
-                    valid_bottom = [os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")]
+                    valid_bottom = [os.path.basename(x) for x in glob.glob(obs_dir + "/point/nws/bottom/*")]
 
             else:
                 valid_bottom = [
-                    os.path.basename(x) for x in glob.glob(data_dir + "/point/nws/bottom/*")
+                    os.path.basename(x) for x in glob.glob(obs_dir + "/point/nws/bottom/*")
                 ]
             if global_grid:
                 point_surface = []
@@ -960,6 +962,68 @@ def matchup(
             point_benthic = [x for x in point_benthic if x in vars_available]
             var_chosen = surface + bottom + point_benthic + point_bottom + point_surface
             var_chosen = list(set(var_chosen))
+
+    if len(point_bottom) > 0 or mld or len(point_all) > 0:
+        ds_depths = False
+        if True:
+            if True:
+                if True:
+                    try:
+                        if True: 
+                            with warnings.catch_warnings(record=True) as w:
+                                # extract the thickness dataset
+                                e3t_found = False
+                                if thickness is not None:
+                                    ds_thickness = nc.open_data(thickness, checks=False)
+                                    if len(ds_thickness.variables) != 1:
+                                        raise ValueError(
+                                            "The thickness file has more than one variable. Please provide a single variable!"
+                                        )
+                                    ds_thickness.rename({ds_thickness.variables[0]: "e3t"})
+                                    e3t_found = True
+                                else:
+                                    print("Vertical thickness is required for your matchups, but they are not supplied")
+                                    print("Searching through simulation output to find it")
+                                    for ff in random_files:
+                                        ds_thickness = nc.open_data(ff, checks=False)
+                                        if "e3t" in ds_thickness.variables:
+                                            break
+                                            e3t_found
+                                if not e3t_found:
+                                    raise ValueError("Unable to find e3t")
+
+                                ds_thickness.subset(time=0, variables="e3t")
+                                ds_thickness.as_missing(0)
+                                #####
+                                # now output the bathymetry if it does not exists
+                                if not os.path.exists("matched/model_bathymetry.nc"):
+                                    ds_bath = ds_thickness.copy()
+                                    ds_bath.vertical_sum()
+                                    ds_bath.to_nc("matched/model_bathymetry.nc", zip=True)
+
+                                # thickness needs to be inverted if the sea surface is at the bottom
+
+                                if surface_level == "bottom":
+                                    ds_thickness.cdo_command("invertlev")
+                                ds_thickness.run()
+                                ds_depths = ds_thickness.copy()
+
+                                ds_depths.vertical_cumsum()
+                                ds_thickness / 2
+                                ds_depths - ds_thickness
+                                ds_depths.run()
+                                ds_depths.rename({ds_depths.variables[0]: "depth"})
+                                if surface_level == "bottom":
+                                    ds_depths.cdo_command("invertlev")
+                                ds_depths.run()
+
+                            for ww in w:
+                                if str(ww.message) not in session_warnings:
+                                    session_warnings.append(str(ww.message))
+                    except:
+                        pass
+        if ds_depths is False:
+            raise ValueError("You have asked for variables that require the specification of thickness")
     if mapping is not None:
         if True:
 
@@ -1115,7 +1179,7 @@ def matchup(
                     print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_benthic)}")
 
             print("******************************")
-            print(f"** Inferred mapping of model variable names from {folder}")
+            print(f"** Inferred mapping of model variable names from {sim_dir}")
 
             all_df_print = copy.deepcopy(all_df).reset_index(drop = True)
 
@@ -1155,8 +1219,8 @@ def matchup(
     if not os.path.exists("matched"):
         os.mkdir("matched")
     df_out = all_df.dropna().reset_index(drop=True)
-    final_extension = extension_of_directory(folder)
-    df_out["pattern"] = [folder + final_extension + x for x in df_out.pattern]
+    final_extension = extension_of_directory(sim_dir)
+    df_out["pattern"] = [sim_dir + final_extension + x for x in df_out.pattern]
     df_out.to_csv(out, index=False)
 
     # if fvcom:
@@ -1303,8 +1367,8 @@ def matchup(
 
 
     if global_grid is None:
-        final_extension = extension_of_directory(folder)
-        path = glob.glob(folder + final_extension + all_df.pattern[0])[0]
+        final_extension = extension_of_directory(sim_dir)
+        path = glob.glob(sim_dir + final_extension + all_df.pattern[0])[0]
         ds = nc.open_data(path, checks=False).to_xarray()
         lon_name = [x for x in ds.coords if "lon" in x]
         lat_name = [x for x in ds.coords if "lat" in x]
@@ -1370,8 +1434,8 @@ def matchup(
     if thickness is None:
         print("Identifying whether e3t exists in the files")
         for pattern in patterns:
-            final_extension = extension_of_directory(folder)
-            ensemble = glob.glob(folder + final_extension + pattern)
+            final_extension = extension_of_directory(sim_dir)
+            ensemble = glob.glob(sim_dir + final_extension + pattern)
             for exc in exclude:
                 ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
 
@@ -1394,8 +1458,8 @@ def matchup(
     print("*************************************")
     for pattern in patterns:
         print(f"Indexing file time information for {pattern} files")
-        final_extension = extension_of_directory(folder)
-        ensemble = glob.glob(folder + final_extension + pattern)
+        final_extension = extension_of_directory(sim_dir)
+        ensemble = glob.glob(sim_dir + final_extension + pattern)
         for exc in exclude:
             ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
 
@@ -1521,8 +1585,8 @@ def matchup(
                 patterns = list(set(all_df.pattern))
 
                 for pattern in patterns:
-                    final_extension = extension_of_directory(folder)
-                    ensemble = glob.glob(folder + final_extension + pattern)
+                    final_extension = extension_of_directory(sim_dir)
+                    ensemble = glob.glob(sim_dir + final_extension + pattern)
                     for exc in exclude:
                         ensemble = [
                             x for x in ensemble if f"{exc}" not in os.path.basename(x)
@@ -1567,53 +1631,6 @@ def matchup(
                     # list of files
                     write_report("List of files:")
 
-                    for ff in ersem_paths:
-                        write_report(ff)
-
-                    try:
-                        if depths != "surface":
-                            with warnings.catch_warnings(record=True) as w:
-                                # extract the thickness dataset
-                                if thickness is not None:
-                                    ds_thickness = nc.open_data(thickness, checks=False)
-                                    if len(ds_thickness.variables) != 1:
-                                        raise ValueError(
-                                            "The thickness file has more than one variable. Please provide a single variable!"
-                                        )
-                                    ds_thickness.rename({ds_thickness.variables[0]: "e3t"})
-                                else:
-                                    ds_thickness = nc.open_data(ensemble[0], checks=False)
-
-                                ds_thickness.subset(time=0, variables="e3t")
-                                ds_thickness.as_missing(0)
-                                #####
-                                # now output the bathymetry if it does not exists
-                                if not os.path.exists("matched/model_bathymetry.nc"):
-                                    ds_bath = ds_thickness.copy()
-                                    ds_bath.vertical_sum()
-                                    ds_bath.to_nc("matched/model_bathymetry.nc", zip=True)
-
-                                # thickness needs to be inverted if the sea surface is at the bottom
-
-                                if surface_level == "bottom":
-                                    ds_thickness.cdo_command("invertlev")
-                                ds_thickness.run()
-                                ds_depths = ds_thickness.copy()
-
-                                ds_depths.vertical_cumsum()
-                                ds_thickness / 2
-                                ds_depths - ds_thickness
-                                ds_depths.run()
-                                ds_depths.rename({ds_depths.variables[0]: "depth"})
-                                if surface_level == "bottom":
-                                    ds_depths.cdo_command("invertlev")
-                                ds_depths.run()
-
-                            for ww in w:
-                                if str(ww.message) not in session_warnings:
-                                    session_warnings.append(str(ww.message))
-                    except:
-                        pass
 
                     def point_match(variable, layer="all", ds_depths=None):
                         with warnings.catch_warnings(record=True) as w:
@@ -1627,16 +1644,16 @@ def matchup(
                             )[0]
                             if session_info["user_dir"]:
                                 paths = glob.glob(
-                                    f"{data_dir}/point/user/**/{variable}/**{variable}**.feather"
+                                    f"{obs_dir}/point/user/**/{variable}/**{variable}**.feather"
                                 )
                                 if len(paths) == 0:
                                     paths = glob.glob(
-                                        f"{data_dir}/point/nws/**/{variable}/**{variable}**.feather"
+                                        f"{obs_dir}/point/nws/**/{variable}/**{variable}**.feather"
                                     )
 
                             else:
                                 paths = glob.glob(
-                                    f"{data_dir}/point/nws/**/{variable}/**{variable}**.feather"
+                                    f"{obs_dir}/point/nws/**/{variable}/**{variable}**.feather"
                                 )
                             if variable == "pft":
                                 point_variable = "pft"
@@ -1711,7 +1728,7 @@ def matchup(
 
                             if variable == "temperature" and mld:
                                 df_include = pd.read_feather(
-                                    f"{data_dir}/point/nws/mld_profiles.feather"
+                                    f"{obs_dir}/point/nws/mld_profiles.feather"
                                 )
                                 df = df.merge(df_include).reset_index(drop=True)
                             sel_these = point_time_res
@@ -2023,7 +2040,9 @@ def matchup(
                         except:
                             pass
                     else:
+                        point_match(vv, ds_depths=ds_depths)
                         try:
+                            print(layer)
                             point_match(vv, ds_depths=ds_depths)
                         except:
                             pass
@@ -2048,7 +2067,7 @@ def matchup(
 
     gridded_matchup(
         df_mapping=df_mapping,
-        folder=folder,
+        folder=sim_dir,
         var_choice=surface,
         exclude=exclude,
         surface=surface_level,

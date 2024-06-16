@@ -1,4 +1,4 @@
 session_info = dict()
 
-session_info["data_dir"] = "/data/proteus1/scratch/rwi/evaldata/data/"
+session_info["obs_dir"] = "/data/proteus1/scratch/rwi/evaldata/data/"
 session_info["user_dir"] = False
