@@ -527,7 +527,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         point_paths = glob.glob("matched/point/**/**/**/**.csv")
         point_paths = [x for x in point_paths if "paths.csv" not in x]
         point_paths = [x for x in point_paths if "pft" not in x]
-        point_paths = [x for x in point_paths if "unit" not in x]
+        point_paths = [x for x in point_paths if "unit" not in os.path.basename(x)]
         # loop through the paths
         for pp in point_paths:
             vv = os.path.basename(pp).split("_")[2].replace(".csv", "")
@@ -648,11 +648,13 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         # figure out if mld needs to be calculated...
 
         mld_paths = glob.glob("matched/point/**/all/temperature/**temperature**.csv")
+        mld_paths = [x for x in mld_paths if "unit" not in os.path.basename(x)]
 
         run = True
         if variables != "all":
             if "mld" not in variables:
                 run = False
+
         if len(mld_paths) > 0 and run:
 
             if not os.path.exists(f"{book_dir}/notebooks/temperature_mld.ipynb"):
