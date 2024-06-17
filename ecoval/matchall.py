@@ -495,10 +495,14 @@ def matchup(
 
 
 
-
-
-
     """
+
+    surface_default = False
+    if surface == "default":
+        surface_default = True
+    if isinstance(surface, list):
+        surf_default = True
+
     if surface == "default":
         surface=[
             "temperature",
@@ -1424,9 +1428,11 @@ def matchup(
         point_surface.append("alkalinity")
     # do the same for alkalinity, poc and doc
     if "poc" in surface and model_domain == "nws":
-        point_surface.append("poc")
+        if surface_default:
+            point_surface.append("poc")
     if "doc" in surface and model_domain == "nws":
-        point_surface.append("doc")
+        if surface_default:
+            point_surface.append("doc")
 
     if pft:
         point_surface.append("pft")
@@ -2126,3 +2132,13 @@ def matchup(
     )
 
     os.system("pandoc matchup_report.md --pdf-engine wkhtmltopdf -o matchup_report.pdf")
+
+    if len(session_info["end_messages"]) > 0:
+        print("########################################")
+        print("########################################")
+        print("Important messages about matchups:")
+        print("*" * 30)
+        for x in session_info["end_messages"]:
+            print(x)
+        print("########################################")
+        print("########################################")

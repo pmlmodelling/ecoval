@@ -270,7 +270,6 @@ def gridded_matchup(
                                     mm_paths.append(ff)
                             mm_paths = list(set(mm_paths))
 
-                            # nco_command = f'ncra -y mean -v {",".join(selection)}' 
                             ds_mm = nc.open_data(mm_paths, checks=False)
                             # ds_mm.nco_command(nco_command, ensemble = False)
                             ds_mm.subset(variables=selection)
@@ -429,8 +428,15 @@ def gridded_matchup(
                             ds_surface.subset(lon=[-19, 9], lat=[41, 64.3])
 
                     if vv in ["poc", "doc"]:
-                        if strict:
-                            ds_obs.subset(years=years)
+                        ds_obs.run()
+                        if len([x for x in ds_obs.years if x in ds_surface.years]) == 0:
+                            #print(f"Unable to create matchup for {vv}")
+                            session_info["end_messages"] += [
+                                f"Unable to create matchup for gridded surface {vv}. There were no years in common between model and observation"
+                            ]
+                            print(f"No years in common between model and observation for gridded surface {vv}")
+                            continue
+                        ds_obs.subset(years=years)
                         ds_obs.merge("time")
                         ds_obs.tmean("month")
                         ds_surface.tmean("month")
