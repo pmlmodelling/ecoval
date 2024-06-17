@@ -404,6 +404,7 @@ def matchup(
     overwrite = True,
     point_all = [],
     ask = True,
+    out_dir = "",
     **kwargs,
 ):
     """
@@ -476,6 +477,8 @@ def matchup(
         Additional arguments
     ask : bool
         If True, the user will be asked if they are happy with the matchups. Default is True.
+    out_dir : str
+        Path to output directory. Default is "", so the output will be saved in the current directory.
 
     Returns
     -------------
@@ -515,6 +518,12 @@ def matchup(
         ]
     # add overwrite to session_info
     session_info["overwrite"] = overwrite
+
+    # add out_dir to session_info
+    if out_dir != "":
+        session_info["out_dir"] = out_dir + "/"
+    else:
+        session_info["out_dir"] = ""
 
     if everything:
         pft = True
@@ -1224,9 +1233,15 @@ def matchup(
                 all_df.to_csv(out, index=False)
                 return None
 
-    out = "matched/mapping.csv"
-    if not os.path.exists("matched"):
-        os.mkdir("matched")
+    if session_info["out_dir"] != "":
+        out = session_info["out_dir"] + "/matched/mapping.csv"
+    else:
+        out = "matched/mapping.csv"
+    # check directory exists for out
+    out_folder = os.path.dirname(out)
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
+
     df_out = all_df.dropna().reset_index(drop=True)
     final_extension = extension_of_directory(sim_dir)
     df_out["pattern"] = [sim_dir + final_extension + x for x in df_out.pattern]
@@ -1936,7 +1951,12 @@ def matchup(
                         df_all = df_all.dropna().reset_index(drop=True)
                         df_all = df_all.groupby(grouping).mean().reset_index()
 
-                        out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
+                        if session_info["out_dir"] != "":
+                            out = (
+                                f"{session_info['out_dir']}/matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
+                            )
+                        else:
+                            out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
 
 
                         # create directory for out if it does not exists
@@ -1998,7 +2018,12 @@ def matchup(
 
                         if len(df_all) > 0:
                             df_all.to_csv(out, index=False)
-                            out_unit = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}_unit.csv"
+                            if session_info["out_dir"] != "":
+                                out_unit = (
+                                    f"{session_info['out_dir']}/matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}_unit.csv"
+                                )
+                            else:
+                                out_unit = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}_unit.csv"
                             ds = nc.open_data(paths[0], checks=False)
                             ds_contents = ds.contents
                             ersem_variable = ersem_variable.split("+")[0]
@@ -2018,7 +2043,11 @@ def matchup(
                     if vv in ["poc", "doc"]:
                         # upper case
                         vv_variable = vv.upper()
-                    out = glob.glob(f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
+                    if session_info["out_dir"] != "":
+                        out = glob.glob( session_info["out_dir"] + "/" + f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
+
+                    else:
+                        out = glob.glob(f"matched/point/{model_domain}/{depths}/{vv}/**_{depths}_{vv}.csv")
 
                     if len(out) > 0: 
                         if session_info["overwrite"] is False:

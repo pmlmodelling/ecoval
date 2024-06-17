@@ -102,7 +102,8 @@ def gridded_matchup(
         for vv in vars:
             # a dictionary for summarizing things
             var_dict = {}
-            out = glob.glob(f"matched/gridded/{domain}/{vv}/*_{vv}_surface.nc")
+            out_dir = session_info["out_dir"] 
+            out = glob.glob(out_dir + f"matched/gridded/{domain}/{vv}/*_{vv}_surface.nc")
             if len(out) > 0:
                 if session_info["overwrite"] is False:
                     continue
@@ -178,7 +179,8 @@ def gridded_matchup(
                         ds_grid.bottom()
                     ds_grid.as_missing(0)
                     if max(ds_grid.contents.npoints) == 111375:
-                        amm7_out = "matched/amm7.txt"
+                        amm7_out =  session_info["out_dir"] + "matched/amm7.txt" 
+                        # amm7_out =  "matched/amm7.txt"
                         # create empty file
                         with open(amm7_out, "w") as f:
                             f.write("")
@@ -702,7 +704,8 @@ def gridded_matchup(
                         ds_obs.set_units({"observation": "degrees C"})
                     # # now, we need to exclude data outside the lon/lat range with data
 
-                    out_file = f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_surface.nc"
+                    out_file = session_info["out_dir"] + f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_surface.nc"
+                    # out_file = f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_surface.nc"
                     # check directory exists for out_file
                     if not os.path.exists(os.path.dirname(out_file)):
                         os.makedirs(os.path.dirname(out_file))
@@ -740,7 +743,8 @@ def gridded_matchup(
                 # now do the masking etc.
 
                 if vv_source == "woa": 
-                    out_file = f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_vertical.nc"
+                    out_file = session_info["out_dir"] + f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_vertical.nc"
+                    # out_file = f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_vertical.nc"
                     ds_obs_annual.set_precision("F32")
 
                     ds_obs_annual.set_fill(-9999)
@@ -767,7 +771,8 @@ def gridded_matchup(
 
 
                 #out = f"matched/gridded/{domain}/{vv}/{vv}_summary.pkl"
-                out= f"matched/dicts/{domain}_{vv}_{vv_source}_{vv}.pkl"
+                out = session_info["out_dir"] + f"matched/gridded/{domain}/{vv}/{vv}_summary.pkl"
+                # out= f"matched/dicts/{domain}_{vv}_{vv_source}_{vv}.pkl"
                 if not os.path.exists(os.path.dirname(out)):
                     os.makedirs(os.path.dirname(out))
                 with open(out, "wb") as f:
