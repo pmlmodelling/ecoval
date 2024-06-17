@@ -26,7 +26,9 @@ class TestFinal:
             os.remove("/tmp/matched/point/nws/surface/temperature/model_surface_temperature.csv")
 
         ecoval.matchup(sim_dir = "data/example", obs_dir = "data/evaldata", start = 2000, end = 2000, surface_level = "top", surface = surface, bottom = [], benthic = None, cores = 1, ask = False, out_dir = "/tmp")
-        print(glob.glob("/tmp/*"))
+        # list files in /tmp recursively
+        paths = glob.glob("/tmp/matched/*", recursive = True)
+        print(paths)
 
         assert os.path.exists("/tmp/matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
         assert os.path.exists("/tmp/matched/point/nws/surface/temperature/model_surface_temperature.csv")
