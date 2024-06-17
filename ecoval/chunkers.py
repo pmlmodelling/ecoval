@@ -1,7 +1,6 @@
 
 from ecoval.matchall import matchup
 from ecoval.fixers import tidy_name
-from ecoval.regionals import global_regionals
 import pandas as pd
 import glob
 import os
