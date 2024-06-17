@@ -1657,6 +1657,7 @@ def matchup(
 
 
                     def point_match(variable, layer="all", ds_depths=None):
+                        print("Getting here")
                         with warnings.catch_warnings(record=True) as w:
                             point_variable = variable
                             if variable == "pft":
