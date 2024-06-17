@@ -1698,10 +1698,7 @@ def matchup(
                                     if f"{exc}" not in os.path.basename(x)
                                 ]
 
-                            print("Reading in df")
                             df = pd.concat([pd.read_feather(x) for x in paths])
-                            print("printing df")    
-                            print(df)
                             # if it exists, coerce year to int
                             if "year" in df.columns:
                                 df = df.assign(year=lambda x: x.year.astype(int))
@@ -1715,8 +1712,6 @@ def matchup(
                                 df = df.assign(
                                     observation=lambda x: x.observation * 12.011
                                 )
-                            print("printing df of obs")
-                            print(df)
 
                             for x in [
                                 x
