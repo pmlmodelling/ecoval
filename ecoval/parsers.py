@@ -11,32 +11,6 @@ from netCDF4 import Dataset
 obs_dir = get_obsdir()
 
 
-def split_path(path):
-    x = path.split("/")
-    for i in range(len(x)):
-        if "*" in x[i]:
-            break
-    part1 = "/".join(x[:i])
-    part2 = "/".join(x[i:])
-    part2 = part2.replace("**", "*")
-    return [part1, part2]
-
-
-
-def get_dates(ds):
-    print("Getting dates in dataset!")
-    years = []
-    months = []
-    time_name = None
-    for ff in ds:
-        ds_xr = xr.open_dataset(ff)
-        if time_name is None:
-            time_name = [x for x in list(ds_xr.dims) if "time" in x][0]
-        years += list((ds_xr[time_name].dt.year.values))
-        months += list((ds_xr[time_name].dt.month.values))
-    return pd.DataFrame({"year": years, "month": months}).drop_duplicates()
-
-
 def fvcom_contents(ds):
     import xarray as xr
 
