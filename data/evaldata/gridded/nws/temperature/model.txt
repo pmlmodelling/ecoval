@@ -1,0 +1,1 @@
+/data/proteus1/scratch/rwi/evaldata/data/gridded/nws/temperature/NSBC_Level3_temperature__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc
