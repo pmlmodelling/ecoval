@@ -10,7 +10,7 @@ def is_int(s):
     except ValueError:
         return False
 
-def matchup_starting_point(ff, val_dir = None):
+def matchup_starting_point(ff, obs_dir = None):
     """
     Create an ecoval.matchup call based on the available validation data.
     This function will identify the domain based on the model grid, identify available data, and then generate a maximal call to ecoval.matchup that can be stripped down to your needs.
@@ -19,7 +19,7 @@ def matchup_starting_point(ff, val_dir = None):
     ----------
     ff : str
         Path to the netcdf file
-    val_dir : str
+    obs_dir : str
         Path to the validation data directory. This only needs to be used outside Plymouth Marine Laboratory.
     Returns
     -------
@@ -45,6 +45,8 @@ def matchup_starting_point(ff, val_dir = None):
         "carbon",
         "benbio",
     ]
+
+    val_dir = obs_dir
 
     # check if ff ends with .nc
     if not ff.endswith(".nc"):
