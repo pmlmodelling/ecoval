@@ -19,6 +19,8 @@ class TestFinal:
         surface = {"gridded": None, "point":["nitrate", "temperature"]}
         # get the name of the temporary directory
 
+        print(glob.glob("/tmp/*"))
+
         if os.path.exists("/tmp/matched/point/nws/surface/nitrate/model_surface_nitrate.csv"):
             os.remove("/tmp/matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
         if os.path.exists("/tmp/matched/point/nws/surface/temperature/model_surface_temperature.csv"):
