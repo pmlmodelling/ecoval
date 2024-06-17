@@ -169,7 +169,7 @@ def gridded_matchup(
                 # set up model_grid if it doesn't exist
 
                 # This really should be a function....
-                if not os.path.exists("matched/model_grid.csv"):
+                if not os.path.exists(session_info["out_dir"] + "matched/model_grid.csv"):
                     ds_grid = nc.open_data(paths[0], checks=False)
                     var = ds_grid.variables[0]
                     ds_grid.subset(variables=selection[0], time = 0)
@@ -190,9 +190,9 @@ def gridded_matchup(
                     df_grid = ds_grid.to_dataframe().reset_index().dropna()
                     columns = [x for x in df_grid.columns if "lon" in x or "lat" in x]
                     df_grid = df_grid.loc[:, columns].drop_duplicates()
-                    if not os.path.exists("matched"):
+                    if not os.path.exists(session_info["out_dir"] + "matched"):
                         os.makedirs("matched")
-                    df_grid.to_csv("matched/model_grid.csv", index=False)
+                    df_grid.to_csv(session_info["out_dir"] + "matched/model_grid.csv", index=False)
 
                 all_years = []
                 for ff in paths:
