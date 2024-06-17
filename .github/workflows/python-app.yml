@@ -51,5 +51,5 @@ jobs:
       - name: Test with pytest
         shell: bash -l {0}
         run: |
-          pytest tests/test_matchups.py -s
+          pytest tests/te*.py
 
