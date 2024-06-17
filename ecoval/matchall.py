@@ -1679,8 +1679,6 @@ def matchup(
                                 paths = glob.glob(
                                     f"{obs_dir}/point/nws/**/{variable}/**{variable}**.feather"
                                 )
-                            print(paths)
-                            print("Getting here")
                             if variable == "pft":
                                 point_variable = "pft"
                             source = os.path.basename(paths[0]).split("_")[0]
@@ -1714,6 +1712,7 @@ def matchup(
                                 df = df.assign(
                                     observation=lambda x: x.observation * 12.011
                                 )
+                            print(df)
 
                             for x in [
                                 x
