@@ -1679,7 +1679,7 @@ def matchup(
                                 paths = glob.glob(
                                     f"{obs_dir}/point/nws/**/{variable}/**{variable}**.feather"
                                 )
-                            print(paths)
+                            print(len(paths))
                             print("Getting here")
                             if variable == "pft":
                                 point_variable = "pft"
