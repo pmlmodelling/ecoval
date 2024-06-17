@@ -33,7 +33,8 @@ class TestFinal:
 
         ecoval.matchup(sim_dir = "data/example", obs_dir = "data/evaldata", start = 2000, end = 2000, surface_level = "top", surface = surface, bottom = [], benthic = None, cores = 1, ask = False, out_dir = "/tmp")
         # list files in /tmp recursively
-        paths = glob.glob("/tmp/matched/*", recursive = True)
+        # paths = glob.glob("/tmp/matched/*", recursive = True)
+        paths = glob.glob('/tmp/**/*.csv', recursive=True)
         print(paths)
 
         assert os.path.exists("/tmp/matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
