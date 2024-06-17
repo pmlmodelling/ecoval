@@ -1958,6 +1958,7 @@ def matchup(
                         else:
                             out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
 
+                        print(out)
 
                         # create directory for out if it does not exists
                         if not os.path.exists(os.path.dirname(out)):
