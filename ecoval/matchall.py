@@ -403,6 +403,7 @@ def matchup(
     everything = False,
     overwrite = True,
     point_all = [],
+    ask = True,
     **kwargs,
 ):
     """
@@ -473,6 +474,8 @@ def matchup(
         List of all point variables to matchup for all depths. Default is [].
     kwargs: dict    
         Additional arguments
+    ask : bool
+        If True, the user will be asked if they are happy with the matchups. Default is True.
 
     Returns
     -------------
@@ -1117,7 +1120,10 @@ def matchup(
                 "Are you happy with this? Y/N"
             )
 
-            x = input()
+            if ask:
+                x = input()
+            else:
+                x = "y"
             if x == "n":
                 return None
 
@@ -1145,7 +1151,7 @@ def matchup(
                     print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_surface)}")
 
             if len(point_surface) > 0:
-                print(f"The following variables will be matched up with in-situ near-bottom data: {','.join(point_surface)}")
+                print(f"The following variables will be matched up with in-situ surface data: {','.join(point_surface)}")
                 missing_point_surface = [x for x in valid_points if x not in point_surface]
                 if len(missing_point_surface) > 0:
                     print(f"Surface variables that could be validated, but are not requested: {', '.join(missing_point_surface)}")
@@ -1203,7 +1209,10 @@ def matchup(
                 "Are you happy with these matchups? Y/N"
             )
 
-            x = input()
+            if ask:
+                x = input()
+            else:
+                x = "y"
 
             if x.lower() not in ["y", "n"]:
                 print("Provide Y or N")
