@@ -12,7 +12,13 @@ import shutil
 
 class TestFinal:
     def test_point(self):
+        import tempfile
+
+        print(tempfile.gettempdir())
+        assert tempfile.gettempdir() == "/tmp"
         surface = {"gridded": None, "point":["nitrate", "temperature"]}
+        # get the name of the temporary directory
+
         if os.path.exists("/tmp/matched/point/nws/surface/nitrate/model_surface_nitrate.csv"):
             os.remove("/tmp/matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
         if os.path.exists("/tmp/matched/point/nws/surface/temperature/model_surface_temperature.csv"):
