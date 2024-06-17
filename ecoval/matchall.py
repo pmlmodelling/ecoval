@@ -1816,6 +1816,7 @@ def matchup(
                         if variable != "pft":
                             df = df.loc[:, select_these]
                         if len(df) == 0:
+                            print("No data for this variable")
                             return None
 
                         df_all = manager.list()
