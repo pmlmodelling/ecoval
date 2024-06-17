@@ -1506,7 +1506,7 @@ def matchup(
             times_dict[ff] = df_ff
 
     # save this as a pickle
-    with open("matched/times_dict.pkl", "wb") as f:
+    with open(session_info["out_dir"] + "matched/times_dict.pkl", "wb") as f:
         pickle.dump(times_dict, f)
 
     print("********************************")
@@ -1853,10 +1853,10 @@ def matchup(
                                         df_grid = df_grid.loc[
                                             :, columns
                                         ].drop_duplicates()
-                                        if not os.path.exists("matched"):
-                                            os.makedirs("matched")
+                                        if not os.path.exists(session_info["out_dir"] + "matched"):
+                                            os.makedirs(session_info["out_dir"] + "matched")
                                         df_grid.to_csv(
-                                            "matched/model_grid.csv", index=False
+                                            session_info["out_dir"] + "matched/model_grid.csv", index=False
                                         )
                                     for ww in w:
                                         if str(ww.message) not in session_warnings:
