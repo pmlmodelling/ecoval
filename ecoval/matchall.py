@@ -1657,7 +1657,6 @@ def matchup(
 
 
                     def point_match(variable, layer="all", ds_depths=None):
-                        print("Getting here")
                         with warnings.catch_warnings(record=True) as w:
                             point_variable = variable
                             if variable == "pft":
@@ -1680,6 +1679,8 @@ def matchup(
                                 paths = glob.glob(
                                     f"{obs_dir}/point/nws/**/{variable}/**{variable}**.feather"
                                 )
+                            print(paths)
+                            print("Getting here")
                             if variable == "pft":
                                 point_variable = "pft"
                             source = os.path.basename(paths[0]).split("_")[0]
