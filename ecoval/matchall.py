@@ -2016,8 +2016,10 @@ def matchup(
 
                             df_all = df_all.merge(df)
 
+                        print("************************")
+                        print(out)
+                        print("************************")
                         if len(df_all) > 0:
-                            print(out)
                             df_all.to_csv(out, index=False)
                             if session_info["out_dir"] != "":
                                 out_unit = (
