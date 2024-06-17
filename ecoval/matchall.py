@@ -422,7 +422,7 @@ def matchup(
         This must be supplied
     surface_level : str
         Surface level of the model netCDF files. Either 'top' or 'bottom'. This must be supplied.
-    surface : list
+    surface : str, list or "dict"
         This defaults to "default", i.e. it will choose all available surface variables, either from gridded or point data.
         When gridded data is available it will use it, otherwise it will use point_data.
         For finer grained control, you can pass a dictionary with two keys, "gridded" and "point".
