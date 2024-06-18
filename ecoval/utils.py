@@ -120,7 +120,7 @@ def get_obsdir(level=0):
 
 
 def extension_of_directory(starting_directory, exclude=[]):
-    levels = session["levels"]
+    levels = session["levels_down"]
 
     new_directory = ""
     for i in range(levels):

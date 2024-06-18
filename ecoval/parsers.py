@@ -11,32 +11,8 @@ from netCDF4 import Dataset
 obs_dir = get_obsdir()
 
 
-def fvcom_contents(ds):
-    import xarray as xr
 
-    drop_variables = ["siglay", "siglev"]
-
-    ff = ds[0]
-
-    ds_xr = xr.open_dataset(ff, drop_variables=drop_variables, decode_times=False)
-    # ds_nc = nc.open_data(ff, checks = False)
-    nc_ds = Dataset(ff)
-    variables = ds_xr.variables
-    # variables = list(ds_xr.variables)
-    good_vars = []
-    longs = []
-    for vv in variables:
-        try:
-            x = nc_ds[vv].long_name
-            good_vars.append(vv)
-            longs.append(x)
-        except:
-            print(vv)
-    contents = pd.DataFrame({"variable": good_vars, "long_name": longs})
-    return contents
-
-
-def generate_mapping(ds, fvcom=False):
+def generate_mapping(ds):
     """
     Generate mapping of model and ICES data
     """
@@ -62,18 +38,12 @@ def generate_mapping(ds, fvcom=False):
         "pico",
     ]
     ds1 = nc.open_data(ds[0], checks=False)
-    try:
-        ds_contents = ds1.contents
-    except:
-        try:
-            ds_contents = fvcom_contents(ds1)
-        except:
-            raise ValueError("Could not read contents of dataset!")
+    ds_contents = ds1.contents
 
     ds_contents["long_name"] = [str(x) for x in ds_contents["long_name"]]
-    if fvcom is False:
-        ds_contents_top = ds_contents.query("nlevels == 1").reset_index(drop=True)
-        ds_contents = ds_contents.query("nlevels > 1").reset_index(drop=True)
+
+    ds_contents_top = ds_contents.query("nlevels == 1").reset_index(drop=True)
+    ds_contents = ds_contents.query("nlevels > 1").reset_index(drop=True)
 
     ersem_dict = {}
     for vv in ices_variables:
@@ -131,87 +101,54 @@ def generate_mapping(ds, fvcom=False):
                 if "pH" in x and "benthic" not in x.lower() and "river" not in x.lower()
             ]
         if vv == "co2flux":
-            if fvcom is False:
-                the_vars = [
-                    x
-                    for x in ds_contents_top.long_name
-                    if "co2" in x.lower()
-                    and "flux" in x.lower()
-                    and "river" not in x.lower()
-                ]
-            else:
-                the_vars = [
-                    x
-                    for x in ds_contents_top.long_name
-                    if "co2" in x.lower()
-                    and "flux" in x.lower()
-                    and "river" not in x.lower()
-                ]
+            the_vars = [
+                x
+                for x in ds_contents_top.long_name
+                if "co2" in x.lower()
+                and "flux" in x.lower()
+                and "river" not in x.lower()
+            ]
 
         if vv == "pco2":
-            if fvcom is False:
-                the_vars = [
-                    x
-                    for x in ds_contents.long_name
-                    if "carbonate" in x.lower()
-                    and "partial" in x.lower()
-                    and "river" not in x.lower()
-                ]
-            else:
-                the_vars = [
-                    x
-                    for x in ds_contents_top.long_name
-                    if "pco2" in x.lower()
-                    and "carbonate" in x.lower()
-                    and "river" not in x.lower()
-                ]
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "carbonate" in x.lower()
+                and "partial" in x.lower()
+                and "river" not in x.lower()
+            ]
 
         if vv == "silicate":
-            if fvcom is False:
-                the_vars = [
-                    x
-                    for x in ds_contents.long_name
-                    if ("silicate" in x or "silicic" in x)
-                    and "benthic" not in x.lower()
-                    and "river" not in x.lower()
-                ]
-            else:
-                the_vars = [
-                    x
-                    for x in ds_contents_top.long_name
-                    if ("silicate silicate" in x or "silicic" in x)
-                    and "benthic" not in x.lower()
-                    and "river" not in x.lower()
-                ]
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if ("silicate" in x or "silicic" in x)
+                and "benthic" not in x.lower()
+                and "river" not in x.lower()
+            ]
         if vv == "oxygen":
-            if fvcom is False:
-                the_vars = [
-                    x
-                    for x in ds_contents.long_name
-                    if "oxygen" in x.lower()
-                    and "benthic" not in x.lower()
-                    and "river" not in x.lower()
-                ]
-            else:
-                the_vars = [
-                    x
-                    for x in ds_contents_top.long_name
-                    if "oxygen oxygen" in x.lower()
-                    and "benthic" not in x.lower()
-                    and "river" not in x.lower()
-                ]
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "oxygen" in x.lower()
+                and "benthic" not in x.lower()
+                and "river" not in x.lower()
+            ]
+
         if vv == "micro":
             the_vars = [
                 x
                 for x in ds_contents.long_name
                 if "chloroph" in x and ("micro" in x or "diatom" in x)
             ]
+
         if vv == "nano":
             the_vars = [
                 x
                 for x in ds_contents.long_name
                 if "chloroph" in x.lower() and "nano" in x
             ]
+
         if vv == "pico":
             the_vars = [
                 x
@@ -226,23 +163,13 @@ def generate_mapping(ds, fvcom=False):
                 ersem_vars = ds_contents.query("long_name in @the_vars").variable
             else:
                 if vv == "co2flux":
-                    if fvcom is False:
-                        ersem_vars = ds_contents_top.query(
-                            "long_name in @the_vars"
-                        ).variable
-                    else:
-                        ersem_vars = ds_contents.query(
-                            "long_name in @the_vars"
-                        ).variable
+                    ersem_vars = ds_contents_top.query(
+                        "long_name in @the_vars"
+                    ).variable
                 else:
-                    if fvcom:
-                        ersem_vars = ds_contents_top.query(
-                            "long_name in @the_vars"
-                        ).variable
-                    else:
-                        ersem_vars = ds_contents.query(
-                            "long_name in @the_vars"
-                        ).variable
+                    ersem_vars = ds_contents_top.query(
+                        "long_name in @the_vars"
+                    ).variable
 
         add = True
 
@@ -270,3 +197,29 @@ def generate_mapping(ds, fvcom=False):
                 if vv not in ersem_dict.keys():
                     ersem_dict[vv] = None
     return ersem_dict
+
+
+# redundant fvcom contents function. User later
+# def fvcom_contents(ds):
+#     import xarray as xr
+
+#     drop_variables = ["siglay", "siglev"]
+
+#     ff = ds[0]
+
+#     ds_xr = xr.open_dataset(ff, drop_variables=drop_variables, decode_times=False)
+#     # ds_nc = nc.open_data(ff, checks = False)
+#     nc_ds = Dataset(ff)
+#     variables = ds_xr.variables
+#     # variables = list(ds_xr.variables)
+#     good_vars = []
+#     longs = []
+#     for vv in variables:
+#         try:
+#             x = nc_ds[vv].long_name
+#             good_vars.append(vv)
+#             longs.append(x)
+#         except:
+#             print(vv)
+#     contents = pd.DataFrame({"variable": good_vars, "long_name": longs})
+#     return contents
