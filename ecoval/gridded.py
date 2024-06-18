@@ -26,7 +26,7 @@ def gridded_matchup(
     folder=None,
     var_choice=None,
     exclude=None,
-    surface=None,
+    surface_level=None,
     sim_start=None,
     sim_end=None,
     domain="nws",
@@ -48,7 +48,7 @@ def gridded_matchup(
         List of variables to create matchups for
     exclude : list
         List of strings to exclude from the file search
-    surface : str
+    surface_level : str
         Surface to use for matchups. Either "top" or "bottom"
     start : int
         Start year for matchups
@@ -171,7 +171,7 @@ def gridded_matchup(
                     ds_grid = nc.open_data(paths[0], checks=False)
                     var = ds_grid.variables[0]
                     ds_grid.subset(variables=selection[0], time=0)
-                    if surface == "top":
+                    if surface_level == "top":
                         ds_grid.top()
                     else:
                         ds_grid.bottom()

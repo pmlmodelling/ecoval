@@ -1909,7 +1909,7 @@ def matchup(
         folder=sim_dir,
         var_choice=surface,
         exclude=exclude,
-        surface=surface_level,
+        surface_level=surface_level,
         sim_start=sim_start,
         sim_end=sim_end,
         domain=model_domain,
