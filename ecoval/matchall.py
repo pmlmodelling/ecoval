@@ -1,5 +1,4 @@
 import copy
-
 import time
 import nctoolkit as nc
 import re
@@ -161,16 +160,7 @@ def mm_match(
         print(e)
 
 
-def get_out():
-    # choose from all lowercase letter
-    length = 8
-    letters = string.ascii_lowercase
-    result_str = "".join(random.choice(letters) for i in range(length))
-    mapping = "mapping_" + result_str + ".csv"
-    return mapping
-
-
-def get_res(x, folder=None):
+def get_time_res(x, folder=None):
     """
     Get the time resolution of the netCDF files
 
@@ -317,7 +307,7 @@ def find_paths(folder, exclude=[], n_check=None):
 
     all_df = pd.concat(all_df).reset_index(drop=True)
 
-    all_df["resolution"] = [get_res(x, folder) for x in all_df.pattern]
+    all_df["resolution"] = [get_time_res(x, folder) for x in all_df.pattern]
 
     all_df = (
         all_df.sort_values("resolution").groupby("value").head(1).reset_index(drop=True)
@@ -1184,8 +1174,11 @@ def matchup(
                 x = input()
 
             if x.lower() == "n":
-                out = get_out()
-                print(f"Inferred mapping saved as {out}")
+                length = 8
+                letters = string.ascii_lowercase
+                result_str = "".join(random.choice(letters) for i in range(length))
+                mapping = "mapping_" + result_str + ".csv"
+                print(f"Inferred mapping saved as {mapping}")
                 all_df.to_csv(out, index=False)
                 return None
 

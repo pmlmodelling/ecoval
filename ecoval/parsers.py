@@ -3,21 +3,17 @@ import pandas as pd
 import os
 import xarray as xr
 import warnings
-from ecoval.utils import get_obsdir
 
 from pathlib import Path
 from netCDF4 import Dataset
 
-obs_dir = get_obsdir()
-
-
 
 def generate_mapping(ds):
     """
-    Generate mapping of model and ICES data
+    Generate mapping of model and observational variables
     """
 
-    ices_variables = [
+    candidate_variables = [
         "temperature",
         "salinity",
         "oxygen",
@@ -45,8 +41,8 @@ def generate_mapping(ds):
     ds_contents_top = ds_contents.query("nlevels == 1").reset_index(drop=True)
     ds_contents = ds_contents.query("nlevels > 1").reset_index(drop=True)
 
-    ersem_dict = {}
-    for vv in ices_variables:
+    model_dict = {}
+    for vv in candidate_variables:
         vv_check = vv
         if vv != "ph":
             the_vars = [
@@ -67,7 +63,9 @@ def generate_mapping(ds):
                 and "benthic" not in x
             ]
             vars_2 = [
-                x for x in ds.contents.long_name if "photolabile" in str(x) and "carbon" in str(x)
+                x
+                for x in ds.contents.long_name
+                if "photolabile" in str(x) and "carbon" in str(x)
             ]
             if len(vars_2) > 0:
                 the_vars += vars_2
@@ -157,46 +155,52 @@ def generate_mapping(ds):
             ]
 
         if vv in ["carbon", "benbio"]:
-            ersem_vars = ds_contents_top.query("long_name in @the_vars").variable
+            model_vars = ds_contents_top.query("long_name in @the_vars").variable
         else:
             if vv != "co2flux" and vv != "pco2":
-                ersem_vars = ds_contents.query("long_name in @the_vars").variable
+                model_vars = ds_contents.query("long_name in @the_vars").variable
             else:
                 if vv == "co2flux":
-                    ersem_vars = ds_contents_top.query(
+                    model_vars = ds_contents_top.query(
                         "long_name in @the_vars"
                     ).variable
                 else:
-                    ersem_vars = ds_contents_top.query(
+                    model_vars = ds_contents_top.query(
                         "long_name in @the_vars"
                     ).variable
 
         add = True
 
-        if len(ersem_vars) > 1 and vv not in ["doc", "chlorophyll", "carbon", "benbio", "micro"]:
+        if len(model_vars) > 1 and vv not in [
+            "doc",
+            "chlorophyll",
+            "carbon",
+            "benbio",
+            "micro",
+        ]:
             add = False
 
         if add:
-            if len(ersem_vars) > 0:
-                ersem_dict[vv] = "+".join(ersem_vars)
+            if len(model_vars) > 0:
+                model_dict[vv] = "+".join(model_vars)
             else:
 
-                if "nitrate" not in ersem_dict.keys() and vv == "nitrate":
-                    if "ammonium" not in ersem_dict.keys():
+                if "nitrate" not in model_dict.keys() and vv == "nitrate":
+                    if "ammonium" not in model_dict.keys():
                         df_nitrogen = (
                             ds_contents.query("long_name.str.contains('nitrogen')")
                             .query("long_name.str.contains('nutrient')")
                             .reset_index(drop=True)
                         )
                         if len(df_nitrogen) == 1:
-                            ersem_dict["nitrate"] = df_nitrogen.variable[0]
+                            model_dict["nitrate"] = df_nitrogen.variable[0]
                             warnings.warn(
                                 "No nitrate variable found, using nitrogen nutrient variable"
                             )
 
-                if vv not in ersem_dict.keys():
-                    ersem_dict[vv] = None
-    return ersem_dict
+                if vv not in model_dict.keys():
+                    model_dict[vv] = None
+    return model_dict
 
 
 # redundant fvcom contents function. User later

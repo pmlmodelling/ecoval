@@ -303,7 +303,7 @@ def gridded_matchup(
                         else:
                             if vv_source != "woa":
                                 ds_surface.subset(variables=selection)
-                                if surface == "top":
+                                if surface_level == "top":
                                     ds_surface.top()
                                 else:
                                     ds_surface.bottom()
@@ -593,7 +593,7 @@ def gridded_matchup(
                         ds_obs_annual.append(ds1)
                         ds_obs_annual.merge("variable")
 
-                    if surface == "top":
+                    if surface_level == "top":
                         ds_surface.top()
                     else:
                         ds_surface.bottom()
