@@ -1904,19 +1904,15 @@ def matchup(
         while len(session_warnings) > 0:
             session_warnings.pop()
 
-    strict = True
-
     gridded_matchup(
         df_mapping=df_mapping,
         folder=sim_dir,
         var_choice=surface,
         exclude=exclude,
         surface=surface_level,
-        start=start,
         sim_start=sim_start,
         sim_end=sim_end,
         domain=model_domain,
-        strict=strict,
         lon_lim=lon_lim,
         lat_lim=lat_lim,
         times_dict=times_dict,

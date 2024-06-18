@@ -27,11 +27,9 @@ def gridded_matchup(
     var_choice=None,
     exclude=None,
     surface=None,
-    start=None,
     sim_start=None,
     sim_end=None,
     domain="nws",
-    strict=True,
     lon_lim=None,
     lat_lim=None,
     times_dict=None,
@@ -201,21 +199,18 @@ def gridded_matchup(
                 all_years = list(set(all_years))
 
                 sim_years = range(sim_start, sim_end + 1)
-                if start is not None:
-                    years = [x for x in all_years if x in sim_years]
-                else:
-                    years = all_years
+                sim_years = [x for x in all_years if x in sim_years]
                 # now simplify paths, so that only the relevant years are used
                 new_paths = []
 
                 for ff in paths:
-                    if len([x for x in times_dict[ff].year if x in years]) > 0:
+                    if len([x for x in times_dict[ff].year if x in sim_years]) > 0:
                         new_paths.append(ff)
 
                 paths = list(set(new_paths))
                 paths.sort()
 
-                var_dict["clim_years"] = [min(years), max(years)]
+                var_dict["clim_years"] = [min(sim_years), max(sim_years)]
 
                 # get the number of paths
 
@@ -225,9 +220,9 @@ def gridded_matchup(
                 write_report(f"### Matchups for {vv}")
                 write_report(f"Number of paths: {n_paths}")
                 # minimum year
-                write_report(f"Minimum year: {min(years)}")
+                write_report(f"Minimum year: {min(sim_years)}")
                 # maximum year
-                write_report(f"Maximum year: {max(years)}")
+                write_report(f"Maximum year: {max(sim_years)}")
                 # write the list of files
                 write_report(f"Files used for {vv}:")
                 write_report("```")
@@ -370,7 +365,7 @@ def gridded_matchup(
                                 ds_surface.run()
                                 ds_surface.tmean(["year", "month"])
                                 ds_surface.merge("time")
-                                ds_surface.subset(years=years)
+                                ds_surface.subset(years=sim_years)
                                 ds_surface.run()
                     else:
                         ds_surface.merge("time")
@@ -444,15 +439,13 @@ def gridded_matchup(
                                 f"No years in common between model and observation for gridded surface {vv}"
                             )
                             continue
-                        ds_obs.subset(years=years)
+                        ds_obs.subset(years=sim_years)
                         ds_obs.merge("time")
                         ds_obs.tmean("month")
                         ds_surface.tmean("month")
 
                     if vv in ["temperature"]:
-                        if strict:
-                            ds_obs.subset(years=years)
-                        ds_obs.subset(years=years)
+                        ds_obs.subset(years=sim_years)
                         ds_obs.tmean(["year", "month"])
                         ds_obs.merge("time")
                         ds_obs.tmean(["year", "month"])
@@ -481,7 +474,7 @@ def gridded_matchup(
 
                     if vv not in ["poc", "temperature"]:
                         if len(ds_obs.times) > 12:
-                            ds_obs.subset(years=years)
+                            ds_obs.subset(years=sim_years)
 
                     if vv_source == "occci":
                         ds_obs.subset(variable="chlor_a")
