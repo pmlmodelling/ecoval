@@ -11,7 +11,6 @@ import string
 import random
 import warnings
 import pickle
-import numpy as np
 import xarray as xr
 from ecoval.session import session_info
 from multiprocessing import Manager
@@ -211,7 +210,23 @@ def get_time_res(x, folder=None):
 random_files = []
 
 
-def find_paths(folder, exclude=[], n_check=None):
+def extract_variable_mapping(folder, exclude=[], n_check=None):
+    """
+    Find paths to netCDF files
+    Parameters
+    -------------
+    folder : str
+        The folder containing the netCDF files
+    exclude : list
+        List of strings to exclude
+    n_check : int
+        Number of files to check
+
+    Returns
+    -------------
+    all_df : pd.DataFrame
+        A DataFrame containing the paths to the netCDF files
+    """
     while True:
 
         levels = session["levels_down"]
@@ -541,15 +556,12 @@ def matchup(
         benthic = [benthic]
 
     point_surface = []
-    surf_dict = False
 
     if isinstance(surface, str):
         surface = [surface]
         surface = {"gridded": surface, "point": []}
-    surf_all = False
     if isinstance(surface, list):
         surface = {"gridded": surface, "point": []}
-        surf_all = True
     if isinstance(surface, dict):
         # throw error if gridded and point not in surface
         if "gridded" not in surface and "point" not in surface:
@@ -682,7 +694,7 @@ def matchup(
     # surface = [x for x in surface if x in valid_surface]
 
     if all_df is None:
-        all_df = find_paths(sim_dir, exclude=exclude, n_check=n_check)
+        all_df = extract_variable_mapping(sim_dir, exclude=exclude, n_check=n_check)
 
         # add in anything that is missing
         all_vars = valid_vars
@@ -758,6 +770,10 @@ def matchup(
                 set([x for x in glob.glob(obs_dir + "/point/user/all/*")])
             )
         else:
+            valid_points = list(
+                set([x for x in glob.glob(obs_dir + "/point/**/all/*")])
+            )
+    else:
             valid_points = list(
                 set([x for x in glob.glob(obs_dir + "/point/**/all/*")])
             )
@@ -889,10 +905,11 @@ def matchup(
                                         "Searching through simulation output to find it"
                                     )
                                     for ff in random_files:
+                                        print(ff)
                                         ds_thickness = nc.open_data(ff, checks=False)
                                         if "e3t" in ds_thickness.variables:
+                                            e3t_found = True
                                             break
-                                            e3t_found
                                 if not e3t_found:
                                     raise ValueError("Unable to find e3t")
 
@@ -1179,7 +1196,7 @@ def matchup(
                 result_str = "".join(random.choice(letters) for i in range(length))
                 mapping = "mapping_" + result_str + ".csv"
                 print(f"Inferred mapping saved as {mapping}")
-                all_df.to_csv(out, index=False)
+                all_df.to_csv(mapping, index=False)
                 return None
 
     if session_info["out_dir"] != "":
@@ -1876,7 +1893,6 @@ def matchup(
                     else:
                         point_match(vv, ds_depths=ds_depths)
                         try:
-                            print(layer)
                             point_match(vv, ds_depths=ds_depths)
                         except:
                             pass
