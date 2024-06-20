@@ -27,7 +27,7 @@ jobs:
         with:
           micromamba-version: '1.4.5-0'
           environment-name: foo
-          create-args: nctoolkit cmocean cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book
+          create-args: nctoolkit cmocean cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book r-mapdata
           init-shell: >-
             bash
             powershell
