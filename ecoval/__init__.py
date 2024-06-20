@@ -5,7 +5,6 @@ import glob
 import subprocess
 import nctoolkit as nc
 from ecoval.matchall import matchup
-from ecoval.trends import trends
 from ecoval.fixers import tidy_name
 from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
@@ -77,7 +76,6 @@ def fix_toc(book_dir):
             filedata = filedata.replace("book_chapter", str(i_chapter))
 
             # Replace the target string
-
             # Write the file out again
             with open(f"{book_dir}/notebooks/{ff}", "w") as file:
                 file.write(filedata)
