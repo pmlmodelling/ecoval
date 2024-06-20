@@ -72,14 +72,20 @@ class TestFinal:
         if os.path.exists("matched/point/nws/surface/temperature/model_surface_temperature.csv"):
             os.remove("matched/point/nws/surface/temperature/model_surface_temperature.csv")
 
-        ff = "book_html/_build/html/notebooks/001_model_nitrate.html"
+        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "nitrate" in x]
+        assert len(ff) == 1
+        ff = ff[0]
+        # ff = "book_html/_build/html/notebooks/001_model_nitrate.html"
         line = "This is getting to the end!"
         #read in and  identify if line is in the file
         with open(ff, 'r') as file:
             filedata = file.read()
             assert line in filedata
 
-        ff = "book_html/_build/html/notebooks/002_model_temperature.html"
+        # ff = "book_html/_build/html/notebooks/002_model_temperature.html"
+        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "temperature" in x][0]
+        assert len(ff) == 1
+        ff = ff[0]
         line = "This is getting to the end!"
         #read in and  identify if line is in the file
         with open(ff, 'r') as file:
