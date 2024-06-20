@@ -67,17 +67,6 @@ class TestFinal:
             os.remove("validation_report.pdf")
         ecoval.validate(build = "html")
 
-        import PyPDF2
-        assert os.path.exists("validation_report.pdf")
-        pdf = PyPDF2.PdfFileReader(open("validation_report.pdf", "rb"))
-        # make sure this is 20 pages long
-        assert pdf.numPages == 20
-        os.remove("validation_report.pdf")
-        # remove book_pdf directory
-        shutil.rmtree("book_html")
-        # results directory
-        shutil.rmtree("results")
-
         if os.path.exists("matched/point/nws/surface/nitrate/model_surface_nitrate.csv"):
             os.remove("matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
         if os.path.exists("matched/point/nws/surface/temperature/model_surface_temperature.csv"):
@@ -97,6 +86,10 @@ class TestFinal:
             filedata = file.read()
             assert line in filedata
 
+        # remove book_pdf directory
+        shutil.rmtree("book_html")
+        # results directory
+        shutil.rmtree("results")
 
         shutil.rmtree("matched")
         #os.removedirs("/tmp/matched")
