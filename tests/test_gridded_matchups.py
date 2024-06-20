@@ -34,7 +34,7 @@ class TestFinal:
         # remove book_pdf directory if it exists
         # if os.path.exists("book_pdf"):
             # shutil.rmtree("book_pdf")
-        remove results directory if it exists
+        # remove results directory if it exists
         # if os.path.exists("results"):
             # shutil.rmtree("results")
 # 
