@@ -31,25 +31,29 @@ class TestFinal:
         # ensure average abs difference < 0.01
         assert np.mean(np.abs(df["observation"] - df["model"])) < 0.01
 
-        # remove book_pdf directory if it exists
-        if os.path.exists("book_pdf"):
-            shutil.rmtree("book_pdf")
-        # remove results directory if it exists
-        if os.path.exists("results"):
-            shutil.rmtree("results")
-# 
-        if os.path.exists("validation_report.pdf"):
-            os.remove("validation_report.pdf")
-        ecoval.validate(build = "pdf", test = True)
+        ecoval.validate(build = "html", test = True)
 
+        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "nitrate" in x]
+        assert len(ff) == 1
+        ff = ff[0]
+        # ff = "book_html/_build/html/notebooks/001_model_nitrate.html"
+        line = "This is getting to the end!"
+        #read in and  identify if line is in the file
+        with open(ff, 'r') as file:
+            filedata = file.read()
+            assert line in filedata
 
-        assert os.path.exists("validation_report.pdf")
-        pdf = PyPDF2.PdfFileReader(open("validation_report.pdf", "rb"))
-        # make sure this is 20 pages long
-        assert pdf.numPages == 25
-        os.remove("validation_report.pdf")
+        # ff = "book_html/_build/html/notebooks/002_model_temperature.html"
+        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "temperature" in x][0]
+        assert len(ff) == 1
+        ff = ff[0]
+        line = "This is getting to the end!"
+        #read in and  identify if line is in the file
+        with open(ff, 'r') as file:
+            filedata = file.read()
+            assert line in filedata
         # remove book_pdf directory
-        shutil.rmtree("book_pdf")
+        shutil.rmtree("book_html")
         # results directory
         shutil.rmtree("results")
 
