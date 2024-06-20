@@ -37,6 +37,7 @@ jobs:
         shell: bash -l {0}
         run: |
         
+          sudo apt-get install texlive
           mamba install pandoc r-ggthemes r-ggridges r-maps r-plotrix r-arrow r-pyarrow  -y
           python -m pip install .
           pip install PyPDF2
@@ -48,7 +49,6 @@ jobs:
           pip install coverage 
 
       - name: Test with pytest
-        uses: xu-cheng/latex-action@v2
         shell: bash -l {0}
         run: |
           coverage run -m pytest tests/test_gridded_matchups.py -s
