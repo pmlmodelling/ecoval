@@ -27,7 +27,7 @@ jobs:
         with:
           micromamba-version: '1.4.5-0'
           environment-name: foo
-          create-args: cdo nco cartopy pandoc python=3.11
+          create-args: cdo nco cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext 
           init-shell: >-
             bash
             powershell
@@ -36,6 +36,8 @@ jobs:
       - name: Install dependencies
         shell: bash -l {0}
         run: |
+        
+          mamba install pandoc r-ggridges r-maps r-plotrix r-arrow r-pyarrow 
           pip install numpy 
           pip install dask
           python -m pip install .
