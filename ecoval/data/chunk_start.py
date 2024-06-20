@@ -22,6 +22,7 @@ import numpy as np
 from mask import mask_all, mask_shelf
 import pandas as pd
 build = "book_build"
+test_status = the_test_status
 if build == "pdf":
     pd.set_option('styler.render.repr', 'latex')
 chapter = "book_chapter"

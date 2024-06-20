@@ -378,7 +378,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None):
+def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None, test = False):
     # docstring
     """
     Run the model evaluation for all of the available datasets, and generate a validation report.
@@ -831,6 +831,15 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     new_lines.append("options(warn=-1)")
                 else:
                     new_lines.append(line)
+            # loop through all lines in lines and replace the_test_status with True
+            for i in range(len(new_lines)):
+                if "the_test_status" in new_lines[i]:
+                    if test:  
+                        new_lines[i] = new_lines[i].replace("the_test_status", "True")
+                    else:
+                        new_lines[i] = new_lines[i].replace("the_test_status", "False")
+
+
             
             # write the new lines to the file
             with open(ff, "w") as file:

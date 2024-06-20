@@ -27,7 +27,7 @@ jobs:
         with:
           micromamba-version: '1.4.5-0'
           environment-name: foo
-          create-args: cdo nco cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book
+          create-args: nctoolkit cmocean cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book
           init-shell: >-
             bash
             powershell
@@ -38,11 +38,7 @@ jobs:
         run: |
         
           mamba install pandoc r-ggthemes r-ggridges r-maps r-plotrix r-arrow r-pyarrow  -y
-          pip install numpy 
-          pip install dask
           python -m pip install .
-          # pip install .
-          pip install pandas
           pip install PyPDF2
           pip install pyarrow
           pip install rioxarray

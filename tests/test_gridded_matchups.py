@@ -40,7 +40,7 @@ class TestFinal:
 # 
         # if os.path.exists("validation_report.pdf"):
             # os.remove("validation_report.pdf")
-        ecoval.validate(build = "html")
+        ecoval.validate(build = "html", test = True)
 
 
         #assert os.path.exists("validation_report.pdf")
