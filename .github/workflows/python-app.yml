@@ -41,6 +41,7 @@ jobs:
           python -m pip install .
           # pip install .
           pip install pandas
+          pip install PyPDF2
           pip install pyarrow
           pip install rioxarray
           pip install pytest
