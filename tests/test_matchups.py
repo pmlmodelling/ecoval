@@ -57,15 +57,15 @@ class TestFinal:
         assert np.mean(np.abs(df["observation"] - df["model"])) < 0.01
 
         # remove book_pdf directory if it exists
-        if os.path.exists("book_pdf"):
-            shutil.rmtree("book_pdf")
+        if os.path.exists("book_html"):
+            shutil.rmtree("book_html")
         # remove results directory if it exists
         if os.path.exists("results"):
             shutil.rmtree("results")
 
         if os.path.exists("validation_report.pdf"):
             os.remove("validation_report.pdf")
-        ecoval.validate(build = "pdf")
+        ecoval.validate(build = "html")
 
         import PyPDF2
         assert os.path.exists("validation_report.pdf")
@@ -74,7 +74,7 @@ class TestFinal:
         assert pdf.numPages == 20
         os.remove("validation_report.pdf")
         # remove book_pdf directory
-        shutil.rmtree("book_pdf")
+        shutil.rmtree("book_html")
         # results directory
         shutil.rmtree("results")
 
@@ -82,6 +82,21 @@ class TestFinal:
             os.remove("matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
         if os.path.exists("matched/point/nws/surface/temperature/model_surface_temperature.csv"):
             os.remove("matched/point/nws/surface/temperature/model_surface_temperature.csv")
+
+        ff = "book_html/_build/html/notebooks/001_model_nitrate.html"
+        line = "This is getting to the end!"
+        #read in and  identify if line is in the file
+        with open(ff, 'r') as file:
+            filedata = file.read()
+            assert line in filedata
+
+        ff = "book_html/_build/html/notebooks/002_model_temperature.html"
+        line = "This is getting to the end!"
+        #read in and  identify if line is in the file
+        with open(ff, 'r') as file:
+            filedata = file.read()
+            assert line in filedata
+
 
         shutil.rmtree("matched")
         #os.removedirs("/tmp/matched")
