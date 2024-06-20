@@ -1822,9 +1822,6 @@ def matchup(
 
                             df_all = df_all.merge(df)
 
-                        print("************************")
-                        print(out)
-                        print("************************")
                         if len(df_all) > 0:
                             df_all.to_csv(out, index=False)
                             if session_info["out_dir"] != "":
