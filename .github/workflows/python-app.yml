@@ -37,7 +37,7 @@ jobs:
         shell: bash -l {0}
         run: |
         
-          mamba install pandoc r-ggridges r-maps r-plotrix r-arrow r-pyarrow  -y
+          mamba install pandoc r-ggthemes r-ggridges r-maps r-plotrix r-arrow r-pyarrow  -y
           pip install numpy 
           pip install dask
           python -m pip install .
