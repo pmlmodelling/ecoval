@@ -30,6 +30,11 @@ class TestFinal:
         assert np.corrcoef(df["observation"], df["model"])[0,1] > 0.999
         # ensure average abs difference < 0.01
         assert np.mean(np.abs(df["observation"] - df["model"])) < 0.01
+        if os.path.exists("book_html"):
+            shutil.rmtree("book_html")
+        # results directory
+        if os.path.exists("results"):
+            shutil.rmtree("results")
 
         ecoval.validate(build = "html", test = True)
 
@@ -44,7 +49,7 @@ class TestFinal:
             assert line in filedata
 
         # ff = "book_html/_build/html/notebooks/002_model_temperature.html"
-        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "temperature" in x][0]
+        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "temperature" in x]
         assert len(ff) == 1
         ff = ff[0]
         line = "This is getting to the end!"

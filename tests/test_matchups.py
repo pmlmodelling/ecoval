@@ -63,14 +63,7 @@ class TestFinal:
         if os.path.exists("results"):
             shutil.rmtree("results")
 
-        if os.path.exists("validation_report.pdf"):
-            os.remove("validation_report.pdf")
         ecoval.validate(build = "html", test = True)
-
-        if os.path.exists("matched/point/nws/surface/nitrate/model_surface_nitrate.csv"):
-            os.remove("matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
-        if os.path.exists("matched/point/nws/surface/temperature/model_surface_temperature.csv"):
-            os.remove("matched/point/nws/surface/temperature/model_surface_temperature.csv")
 
         ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "nitrate" in x]
         assert len(ff) == 1
@@ -83,7 +76,7 @@ class TestFinal:
             assert line in filedata
 
         # ff = "book_html/_build/html/notebooks/002_model_temperature.html"
-        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "temperature" in x][0]
+        ff = [x for x in glob.glob("book_html/_build/html/notebooks/*") if "temperature" in x]
         assert len(ff) == 1
         ff = ff[0]
         line = "This is getting to the end!"
