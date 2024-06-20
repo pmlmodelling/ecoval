@@ -65,7 +65,7 @@ class TestFinal:
 
         if os.path.exists("validation_report.pdf"):
             os.remove("validation_report.pdf")
-        ecoval.validate(build = "html")
+        ecoval.validate(build = "html", test = True)
 
         if os.path.exists("matched/point/nws/surface/nitrate/model_surface_nitrate.csv"):
             os.remove("matched/point/nws/surface/nitrate/model_surface_nitrate.csv")
