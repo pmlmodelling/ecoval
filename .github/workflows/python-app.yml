@@ -38,7 +38,7 @@ jobs:
         run: |
         
           sudo apt-get install texlive
-          mamba install pandoc r-ggthemes r-ggridges r-maps r-plotrix r-arrow r-pyarrow  -y
+          mamba install pandoc r-ggthemes r-ggridges r-maps r-plotrix r-arrow r-pyarrow r-cowplot  -y
           python -m pip install .
           pip install PyPDF2
           pip install pyarrow
