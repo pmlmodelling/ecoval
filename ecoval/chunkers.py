@@ -1,6 +1,5 @@
 
 from ecoval.matchall import matchup
-from ecoval.fixers import tidy_name
 import pandas as pd
 import glob
 import os

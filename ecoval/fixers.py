@@ -79,6 +79,7 @@ def tidy_name_1(x, lower=False):
 
 
 # vectorize the function
+
 def tidy_name(x, lower=False):
     if isinstance(x, str):
         x = [x]

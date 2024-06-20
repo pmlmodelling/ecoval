@@ -25,9 +25,9 @@ def get_extent(ff):
     """
 
     ds = nc.open_data(ff)
+    ds.subset(variables=ds.variables[0])
     ds.top()
     ds.subset(time=0)
-    ds.subset(variables=ds.variables[0])
     ds_xr = ds.to_xarray()
     lon_name = [x for x in ds_xr.coords if "lon" in x][0]
     lat_name = [x for x in ds_xr.coords if "lat" in x][0]
@@ -42,6 +42,7 @@ def get_extent(ff):
     lon_res = np.abs(lons[2] - lons[1])
     lat_res = np.abs(lats[2] - lats[1])
     ds = nc.open_data(ff)
+    ds.subset(variables=ds.variables[0])
     ds.top()
     ds.tmax()
     ds.to_latlon(lon=[-180, 180], lat=[-90, 90], res=[lon_res, lat_res])
