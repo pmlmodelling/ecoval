@@ -27,7 +27,7 @@ jobs:
         with:
           micromamba-version: '1.4.5-0'
           environment-name: foo
-          create-args: cdo nco cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext 
+          create-args: cdo nco cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book
           init-shell: >-
             bash
             powershell
