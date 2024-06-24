@@ -1,0 +1,9 @@
+[run]
+omit = 
+    *tests*
+    tests/*
+    # exclude anything that is not officially documented on the website
+    ecoval/trends.py 
+    ecoval/robust_statistics.py 
+[report]
+show_missing = True
