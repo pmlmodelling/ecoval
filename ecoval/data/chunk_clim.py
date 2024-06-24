@@ -254,5 +254,5 @@ fig
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {chapter}{i_figure}**: Annual mean {layer} {vv_name} from the model and observations.")
+md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the model and observations. Data is limited to the 2nd and 98th percentile of the combined model and observational data. Arrows indicate that values can exceed the colorbar limits.") 
 i_figure += 1

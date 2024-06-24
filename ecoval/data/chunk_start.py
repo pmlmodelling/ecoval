@@ -8,6 +8,7 @@ warnings.filterwarnings('ignore')
 from IPython.display import Markdown as md
 %load_ext rpy2.ipython
 import jellyfish
+compact = False
 import pickle
 import ecoval
 import copy

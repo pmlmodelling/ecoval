@@ -87,6 +87,9 @@ df$month <- factor(df$month, levels = month.name)
 #labs(y = "Cumulative probability", x = str_glue("{str_to_title(variable)} ({units})"))+
 x_lab = str_glue("{str_to_title(variable)} ({units})")
 x_lab <- str_replace(x_lab, "/m\\^3", "m<sup>-3</sup>")
+# convert variable to title case
+df <- df %>%
+    mutate(variable = str_to_title(variable))
 
 ggplot(df, aes(x = value, colour = variable)) +
     stat_ecdf()+

@@ -174,6 +174,13 @@ tmp_csv = f"adhoc/df_diff_model.feather"
 df_diff.to_feather(tmp_csv)
 
 
+# %% tags=["remove-input"]
+
+md(f"The seasonal cycles of simulated and observed {vv_name} are compared in Figure {chapter}{i_figure} below. This figure shows the model and observation average in each month of the year, and the differences between the two each month") 
+
+if build:
+    md("latexpagebreak")
+
 
 # %% tags=["remove-input"]
 # %%capture --no-display

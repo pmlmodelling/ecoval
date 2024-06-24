@@ -914,6 +914,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
         # Replace the target string
             filedata = filedata.replace("\\begin{tabular}{ ", "\\begin{tabular}{\n \\hline\n")
+            # replace latexpagebreak with newpage
+            filedata = filedata.replace("latexpagebreak", "\\newpage")
         
         # read line by line and modify
 
