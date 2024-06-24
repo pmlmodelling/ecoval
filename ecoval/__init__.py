@@ -443,6 +443,11 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 # if not os.path.exists(book_dir):
                     # break
 
+    # remove the results directory
+    x_path = "results"
+    if os.path.exists(x_path):
+        if x_path == "results":
+            shutil.rmtree(x_path)
     import os
 
     if variables != "all":
