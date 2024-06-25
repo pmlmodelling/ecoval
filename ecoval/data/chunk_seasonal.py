@@ -416,12 +416,24 @@ if (fast_plot == FALSE)
         geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "grey", colour = "grey")
 
 
-gg1 <- gg1 + 
-   theme(plot.margin = margin(t = 0,  # Top margin
-                             r = 0,  # Right margin
-                             b = 0,  # Bottom margin
-                             l = 0)) # Left ggmargin 
+# gg1 <- gg1 + 
+#    theme(plot.margin = margin(t = 0,  # Top margin
+#                              r = 0,  # Right margin
+#                              b = 0,  # Bottom margin
+#                              l = 0)) # Left ggmargin 
 
+# appropriate plotting for nws 
+if((raw_extent[1] > -30) & (raw_extent[2] < 20)){
+    gg1 <- gg1 + 
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+    gg2 <- gg2 + 
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+    gg3 <- gg3 +
+    scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
+    scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
+}
 
 # gg1
 # reduce the size of the plot
@@ -669,13 +681,13 @@ if(abs(raw_extent[1] - raw_extent[2]) > 350){
 
 # appropriate plotting for nws 
 if((raw_extent[1] > -30) & (raw_extent[2] < 20)){
-    gg1 + 
+    gg1 <- gg1 + 
     scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
     scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
-    gg2 + 
+    gg2 <- gg2 + 
     scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
     scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
-    gg3 +
+    gg3 <- gg3 +
     scale_x_continuous(breaks = c(-20, -10, 0, 10), labels = c("20°W", "10°W", "0°", "10°E"))+
     scale_y_continuous(breaks = c(45, 50, 55, 60, 65), labels = c("45°N", "50°N", "55°N", "60°N", "65°N"))
 }
