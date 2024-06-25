@@ -903,6 +903,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         if os.path.exists(ff_clean):
             os.remove(ff_clean)
 
+    # move pml_logo to book directory
+
+    shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"pml_logo.jpg")
+
     if build == "html":
         os.system(f"jupyter-book build {book_dir}/")
     else:
@@ -996,6 +1000,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 os.remove(ff)
     # create a symlink  
     out_ff = f"{book_dir}/_build/html/index.html"
+
+
     #if os.path.exists("validation.html"):
     #    os.remove("validation.html")
     #os.symlink(out_ff, "validation.html")

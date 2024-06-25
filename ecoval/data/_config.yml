@@ -1,5 +1,6 @@
 title:
 author:
+logo                        : "../pml_logo.jpg" 
 execute:
   execute_notebooks: force
   timeout: 500
