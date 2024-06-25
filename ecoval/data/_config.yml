@@ -1,6 +1,7 @@
 title:
 author:
 logo                        : "../pml_logo.jpg" 
+copyright:  2024
 execute:
   execute_notebooks: force
   timeout: 500
