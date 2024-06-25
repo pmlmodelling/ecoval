@@ -4,6 +4,7 @@ import shutil
 import glob
 import subprocess
 import nctoolkit as nc
+import copy
 from ecoval.matchall import matchup
 from ecoval.fixers import tidy_name
 from ecoval.helpers import matchup_starting_point 
@@ -926,6 +927,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         lines = filedata.split("\n")
         new_lines = []
         i = 3
+        logo_added = False
         for line in lines:
             if "\\begin{tabular}" in line:
                 new_lines.append(line)
@@ -955,10 +957,40 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 if i == 0:
                     new_lines.append("\\hline")
                     i = 1
+            #\begin{document}
+            # figure out if line includes \phantomsection\label{\detokenize{intro::doc}}
+            # if "release" in line: 
+            #     # move the logo the latex directory
+            #     if not logo_added:
+            #         shutil.copyfile("pml_logo.jpg", f"{book_dir}/_build/latex/pml_logo.jpg")
+            #         #\center\sphinxincludegraphics[width=500\sphinxpxdimen]{{0b11138af3025ff0aaebf8d6e8d2899e4863b78d2b7ddd3140f9f137fdb74b52}.png}
+            #         new_lines.append("\\center\\sphinxincludegraphics[width=500\\sphinxpxdimen]{pml_logo.jpg}")
+            #         logo_added = True
+
         # now replace noindent with center in lines with sphinxincludegraphics
         for i in range(len(new_lines)):
             if "sphinxincludegraphics" in new_lines[i]:
                 new_lines[i] = new_lines[i].replace("noindent", "center")
+        for i in range(len(new_lines)):
+            #     \begin{sphinxuseclass}{cell_output}\subsubsection*{Assessing model bias for surface nitrate}
+            if "subsubsection" in new_lines[i]:
+                new_lines[i] = new_lines[i].replace("subsubsection*", "section")
+                # raise ValueError(new_lines[i])
+
+        # check_these = copy.deepcopy(new_lines)
+        # for i in range(len(check_these)):
+        #     if "sphinxVerbatimOutput" in check_these[i]:
+        #         if check_these[i] in new_lines:
+        #             new_lines.remove(check_these[i])
+        #     if "sphinxuseclass" in check_these[i]:
+        #         if check_these[i] in new_lines:
+        #             new_lines.remove(check_these[i])
+
+        # for i in range(len(new_lines)):
+        #     #"\newcommand{\sphinxlogo}{\vbox{}}"
+        #     if "sphinxlogo" in new_lines[i]:
+        #         # put pml_logo.png in vbox
+        #         new_lines[i] = "\newcommand{\sphinxlogo}{\vbox{pml_logo.jpg}}}"
         
         # we do not want lines that start with\part{
         new_lines = [x for x in new_lines if not x.startswith("\\part{")]
