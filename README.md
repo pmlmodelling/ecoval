@@ -1,5 +1,5 @@
 [![Documentation Status](https://readthedocs.org/projects/ecoval-pml/badge/?version=latest)](https://ecoval-pml.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/pmlmodelling/ecoval/branch/master/graph/badge.svg)](https://codecov.io/gh/pmlmodelling/ecoval)
+[![codecov](https://codecov.io/gh/pmlmodelling/ecoval/branch/main/graph/badge.svg)](https://codecov.io/gh/pmlmodelling/ecoval)
 # ecoVal
 Marine ecosystem model validation made easy in Python
 
