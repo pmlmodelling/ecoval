@@ -1791,6 +1791,26 @@ def matchup(
                             df_all["nano_frac"] = df_all.loc[:, nano].sum(axis=1)
                             df_all["pico_frac"] = df_all.loc[:, pico].sum(axis=1)
                             df_all["micro_frac"] = df_all.loc[:, micro].sum(axis=1)
+                            # fraction should be 1 over the sum of the 3
+                            nano_frac = df_all["nano_frac"] / (
+                                df_all["nano_frac"]
+                                + df_all["pico_frac"]
+                                + df_all["micro_frac"]
+                            )
+                            pico_frac = df_all["pico_frac"] / (
+                                df_all["nano_frac"]
+                                + df_all["pico_frac"]
+                                + df_all["micro_frac"]
+                            )
+                            micro_frac = df_all["micro_frac"] / (
+                                df_all["nano_frac"]
+                                + df_all["pico_frac"]
+                                + df_all["micro_frac"]
+                            )
+                            df_all["nano_frac"] = nano_frac
+                            df_all["pico_frac"] = pico_frac
+                            df_all["micro_frac"] = micro_frac
+
                             valid_vars = [
                                 "lon",
                                 "lat",
