@@ -7,8 +7,31 @@ import warnings
 from pathlib import Path
 from netCDF4 import Dataset
 
+def fvcom_contents(ds):
+    import xarray as xr
+    drop_variables = ['siglay','siglev']
 
-def generate_mapping(ds):
+    ff = ds[0]
+
+    ds_xr = xr.open_dataset(ff, drop_variables = drop_variables, decode_times=False)
+    #ds_nc = nc.open_data(ff, checks = False)
+    nc_ds = Dataset(ff)
+    variables = ds_xr.variables
+    # variables = list(ds_xr.variables)
+    good_vars = []
+    longs = []
+    for vv in variables:
+        try:
+            x = nc_ds[vv].long_name
+            good_vars.append(vv)
+            longs.append(x)
+        except:
+            pass
+    contents = pd.DataFrame({"variable":good_vars,"long_name":longs})
+    contents = contents.assign(nlevels = 50)
+    return contents
+
+def generate_mapping(ds, fvcom = False):
     """
     Generate mapping of model and observational variables
     """
@@ -33,8 +56,11 @@ def generate_mapping(ds):
         "nano",
         "pico",
     ]
-    ds1 = nc.open_data(ds[0], checks=False)
-    ds_contents = ds1.contents
+    if fvcom is False:
+        ds1 = nc.open_data(ds[0], checks=False)
+        ds_contents = ds1.contents
+    else:
+        ds_contents = fvcom_contents(ds)
 
     ds_contents["long_name"] = [str(x) for x in ds_contents["long_name"]]
 
@@ -64,7 +90,7 @@ def generate_mapping(ds):
             ]
             vars_2 = [
                 x
-                for x in ds.contents.long_name
+                for x in ds_contents.long_name
                 if "photolabile" in str(x) and "carbon" in str(x)
             ]
             if len(vars_2) > 0:

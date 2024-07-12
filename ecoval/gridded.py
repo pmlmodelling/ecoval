@@ -1,5 +1,6 @@
 import glob
 import copy
+from tqdm import tqdm
 import os
 import warnings
 import pickle
@@ -7,9 +8,10 @@ import pandas as pd
 import time
 import numpy as np
 import nctoolkit as nc
+import xarray as xr
 
 from ecoval.fixers import tidy_warnings
-from ecoval.utils import extension_of_directory, get_extent, is_latlon, get_resolution
+from ecoval.utils import extension_of_directory, get_extent, is_latlon, get_resolution, fvcom_regrid
 from ecoval.session import session_info
 
 
@@ -34,6 +36,7 @@ def gridded_matchup(
     lat_lim=None,
     times_dict=None,
     ds_thickness=None,
+    fvcom = False
 ):
     """
     Function to create gridded matchups for a given set of variables
@@ -165,33 +168,43 @@ def gridded_matchup(
                 # set up model_grid if it doesn't exist
 
                 # This really should be a function....
-                if not os.path.exists(
-                    session_info["out_dir"] + "matched/model_grid.csv"
-                ):
-                    ds_grid = nc.open_data(paths[0], checks=False)
-                    var = ds_grid.variables[0]
-                    ds_grid.subset(variables=selection[0], time=0)
-                    if surface_level == "top":
-                        ds_grid.top()
-                    else:
-                        ds_grid.bottom()
-                    ds_grid.as_missing(0)
-                    if max(ds_grid.contents.npoints) == 111375:
-                        amm7_out = session_info["out_dir"] + "matched/amm7.txt"
-                        # create empty file
-                        with open(amm7_out, "w") as f:
-                            f.write("")
+                if fvcom is False:
+                    if not os.path.exists(
+                        session_info["out_dir"] + "matched/model_grid.csv"
+                    ):
+                        ds_grid = nc.open_data(paths[0], checks=False)
+                        var = ds_grid.variables[0]
+                        ds_grid.subset(variables=selection[0], time=0)
+                        if surface_level == "top":
+                            ds_grid.top()
+                        else:
+                            ds_grid.bottom()
+                        ds_grid.as_missing(0)
+                        if max(ds_grid.contents.npoints) == 111375:
+                            amm7_out = session_info["out_dir"] + "matched/amm7.txt"
+                            # create empty file
+                            with open(amm7_out, "w") as f:
+                                f.write("")
 
-                        ff_grid = f"{obs_dir}/amm7_val_subdomains.nc"
-                        ds_grid.cdo_command(f"setgrid,{ff_grid}")
-                    df_grid = ds_grid.to_dataframe().reset_index().dropna()
-                    columns = [x for x in df_grid.columns if "lon" in x or "lat" in x]
-                    df_grid = df_grid.loc[:, columns].drop_duplicates()
-                    if not os.path.exists(session_info["out_dir"] + "matched"):
-                        os.makedirs("matched")
-                    df_grid.to_csv(
-                        session_info["out_dir"] + "matched/model_grid.csv", index=False
-                    )
+                            ff_grid = f"{obs_dir}/amm7_val_subdomains.nc"
+                            ds_grid.cdo_command(f"setgrid,{ff_grid}")
+                        df_grid = ds_grid.to_dataframe().reset_index().dropna()
+                        columns = [x for x in df_grid.columns if "lon" in x or "lat" in x]
+                        df_grid = df_grid.loc[:, columns].drop_duplicates()
+                        if not os.path.exists(session_info["out_dir"] + "matched"):
+                            os.makedirs("matched")
+                        df_grid.to_csv(
+                            session_info["out_dir"] + "matched/model_grid.csv", index=False
+                        )
+                else:
+                    drop_variables = ["siglay", "siglev"]
+                    ds_xr = xr.open_dataset(paths[0], drop_variables=drop_variables, decode_times=False)
+                    lon = ds_xr.lon.values
+                    lat = ds_xr.lat.values
+                    grid = pd.DataFrame({"lon": lon, "lat": lat})
+                    grid = grid.drop_duplicates().reset_index(drop=True)
+                    grid.to_csv(session_info["out_dir"] + "matched/model_grid.csv", index=False)
+
 
                 all_years = []
                 for ff in paths:
@@ -256,59 +269,75 @@ def gridded_matchup(
                     else:
                         ds_surface = nc.open_data(paths, checks=False)
 
-                    if vv_source == "woa":
-                        # handle this differently
-                        ds_vertical = nc.open_data()
-                        for mm in range(1, 13):
-                            mm_paths = []
-                            for ff in paths:
-                                if mm in times_dict[ff].month.values:
-                                    mm_paths.append(ff)
-                            mm_paths = list(set(mm_paths))
+                    if fvcom is False:
+                        if vv_source == "woa":
+                            # handle this differently
+                            ds_vertical = nc.open_data()
+                            for mm in range(1, 13):
+                                mm_paths = []
+                                for ff in paths:
+                                    if mm in times_dict[ff].month.values:
+                                        mm_paths.append(ff)
+                                mm_paths = list(set(mm_paths))
 
-                            ds_mm = nc.open_data(mm_paths, checks=False)
-                            # ds_mm.nco_command(nco_command, ensemble = False)
-                            ds_mm.subset(variables=selection)
-                            ds_mm.subset(month=mm, time=0)
-                            ds_mm.tmean(["year", "month"])
-                            ds_mm.ensemble_mean()
-                            ds_mm.set_date(year=2000, month=mm, day=1)
-                            ds_mm.as_missing(0)
-                            ds_mm.run()
-                            ds_vertical.append(ds_mm)
+                                ds_mm = nc.open_data(mm_paths, checks=False)
+                                # ds_mm.nco_command(nco_command, ensemble = False)
+                                ds_mm.subset(variables=selection)
+                                ds_mm.subset(month=mm, time=0)
+                                ds_mm.tmean(["year", "month"])
+                                ds_mm.ensemble_mean()
+                                ds_mm.set_date(year=2000, month=mm, day=1)
+                                ds_mm.as_missing(0)
+                                ds_mm.run()
+                                ds_vertical.append(ds_mm)
 
-                        ds_surface = ds_vertical.copy()
-                        ds_vertical.ensemble_mean()
-                    else:
-                        if use_nco:
-                            if vv_source != "woa":
-                                ds_surface.nco_command(
-                                    f"ncks -F -d deptht,1 -v {nco_selection}"
-                                )
-                                ds_surface.as_missing(0)
-                                ds_surface.tmean(["year", "month"])
-                                if surface == "top":
-                                    ds_surface.top()
-                                else:
-                                    ds_surface.bottom()
-                            else:
-                                ds_surface.nco_command(f"ncks -F -v {nco_selection}")
-                                ds_surface.as_missing(0)
-                                ds_surface.tmean(["year", "month"])
-                                ds_surface = ds_vertical.copy()
-                                if surface == "top":
-                                    ds_surface.top()
-                                else:
-                                    ds_surface.bottom()
+                            ds_surface = ds_vertical.copy()
+                            ds_vertical.ensemble_mean()
                         else:
-                            if vv_source != "woa":
-                                ds_surface.subset(variables=selection)
-                                if surface_level == "top":
-                                    ds_surface.top()
+                            if use_nco:
+                                if vv_source != "woa":
+                                    ds_surface.nco_command(
+                                        f"ncks -F -d deptht,1 -v {nco_selection}"
+                                    )
+                                    ds_surface.as_missing(0)
+                                    ds_surface.tmean(["year", "month"])
+                                    if surface == "top":
+                                        ds_surface.top()
+                                    else:
+                                        ds_surface.bottom()
                                 else:
-                                    ds_surface.bottom()
-                                ds_surface.as_missing(0)
-                                ds_surface.tmean(["year", "month"])
+                                    ds_surface.nco_command(f"ncks -F -v {nco_selection}")
+                                    ds_surface.as_missing(0)
+                                    ds_surface.tmean(["year", "month"])
+                                    ds_surface = ds_vertical.copy()
+                                    if surface == "top":
+                                        ds_surface.top()
+                                    else:
+                                        ds_surface.bottom()
+                            else:
+                                if vv_source != "woa":
+                                    ds_surface.subset(variables=selection)
+                                    if surface_level == "top":
+                                        ds_surface.top()
+                                    else:
+                                        ds_surface.bottom()
+                                    ds_surface.as_missing(0)
+                                    ds_surface.tmean(["year", "month"])
+                    else:
+                        files = paths
+                        ds_surface = nc.open_data()
+                        # Read in the monthly observational data
+                        vv_file = nc.create_ensemble(dir_var)
+                        vv_file = [x for x in vv_file if "annual" not in x][0]
+                        # except:
+                        for ff in tqdm(files):
+                            ds_ff = fvcom_regrid(ff, vv_file, selection)
+                            ds_surface.append(ds_ff)
+                        ds_surface.merge("time")
+                        ds_surface.tmean(["year", "month"])
+                        ds_surface.tmean("month")
+
+
 
                     if vv_source == "glodap":
                         ds_surface.merge("time")

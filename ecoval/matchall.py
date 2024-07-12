@@ -210,7 +210,7 @@ def get_time_res(x, folder=None):
 random_files = []
 
 
-def extract_variable_mapping(folder, exclude=[], n_check=None):
+def extract_variable_mapping(folder, exclude=[], n_check=None, fvcom = False):
     """
     Find paths to netCDF files
     Parameters
@@ -270,9 +270,9 @@ def extract_variable_mapping(folder, exclude=[], n_check=None):
         random_files.append(ff)
         ds = nc.open_data(ff, checks=False)
         stop = True
-        ds_dict = generate_mapping(ds)
+        ds_dict = generate_mapping(ds, fvcom = fvcom)
         try:
-            ds_dict = generate_mapping(ds)
+            ds_dict = generate_mapping(ds, fvcom = fvcom)
             stop = False
         # output error and ff
         except:
@@ -451,6 +451,9 @@ def matchup(
 
 
     """
+
+    if "fvcom" not in kwargs:
+        fvcom = False
 
     # check everything is valid
 
@@ -636,6 +639,9 @@ def matchup(
             if sim_dir is None:
                 sim_dir = kwargs[key]
                 key_failed = False
+        if key == "fvcom":
+            fvcom = kwargs[key]
+            key_failed = False
         if key_failed:
             raise ValueError(f"{key} is not a valid argument")
 
@@ -694,7 +700,7 @@ def matchup(
     # surface = [x for x in surface if x in valid_surface]
 
     if all_df is None:
-        all_df = extract_variable_mapping(sim_dir, exclude=exclude, n_check=n_check)
+        all_df = extract_variable_mapping(sim_dir, exclude=exclude, n_check=n_check, fvcom = fvcom)
 
         # add in anything that is missing
         all_vars = valid_vars
@@ -744,23 +750,27 @@ def matchup(
         break
 
     ds = nc.open_data(path, checks=False)
-    ds_extent = get_extent(ds[0])
-    lon_max = ds_extent[1]
-    lon_min = ds_extent[0]
-    lat_max = ds_extent[3]
-    lat_min = ds_extent[2]
+    if fvcom is False:
+        ds_extent = get_extent(ds[0])
+        lon_max = ds_extent[1]
+        lon_min = ds_extent[0]
+        lat_max = ds_extent[3]
+        lat_min = ds_extent[2]
 
-    global_grid = False
-    if lon_max - lon_min > 350:
-        global_grid = True
-    if lat_max - lat_min > 170:
-        global_grid = True
-    if lon_max > 50:
-        global_grid = True
+        global_grid = False
+        if lon_max - lon_min > 350:
+            global_grid = True
+        if lat_max - lat_min > 170:
+            global_grid = True
+        if lon_max > 50:
+            global_grid = True
 
-    if global_grid:
-        model_domain = "global"
+        if global_grid:
+            model_domain = "global"
+        else:
+            model_domain = "nws"
     else:
+        global_grid = False
         model_domain = "nws"
     print("********************************")
 
@@ -782,6 +792,12 @@ def matchup(
     for pp in point_surface:
         if pp not in valid_points:
             raise ValueError(f"{pp} is not a valid point dataset")
+    if fvcom:
+        point_surface = []
+    if fvcom:
+        point_bottom = []
+        point_benthic = []
+        point_all = []
 
     if global_grid:
         if session_info["user_dir"]:
@@ -836,6 +852,13 @@ def matchup(
         benthic = [x for x in benthic if x in valid_vars]
         bottom = valid_bottom
         bottom = [x for x in bottom if x in valid_vars]
+    
+    if fvcom:
+        point_surface = []
+        point_benthic = []
+        point_bottom = []
+        point_all = []
+
 
     if global_grid:
         point_surface = []
@@ -848,6 +871,12 @@ def matchup(
         point_bottom = [x for x in point_bottom if x in valid_bottom]
         surface = [x for x in surface if x in valid_surface]
 
+    if fvcom:
+        point_surface = []
+        point_benthic = []
+        point_bottom = []
+        point_all = []
+
     vars_available = list(
         all_df
         # drop rows where pattern is None
@@ -857,9 +886,16 @@ def matchup(
     )
     # check variables chosen are valid
 
+    remove = []
     for vv in surface_req:
         if vv not in valid_surface:
-            raise ValueError(f"{vv} is not a valid surface dataset")
+            if surface_default:
+                remove.append(vv)
+            else:
+                raise ValueError(f"{vv} is not a valid surface dataset")
+    if surface_default:
+        for vv in remove:
+            surface_req.remove(vv)
     for vv in bottom_req:
         if vv not in valid_bottom:
             raise ValueError(f"{vv} is not a valid bottom dataset")
@@ -905,7 +941,6 @@ def matchup(
                                         "Searching through simulation output to find it"
                                     )
                                     for ff in random_files:
-                                        print(ff)
                                         ds_thickness = nc.open_data(ff, checks=False)
                                         if "e3t" in ds_thickness.variables:
                                             e3t_found = True
@@ -1288,7 +1323,7 @@ def matchup(
             for exc in exclude:
                 ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
 
-            ds = nc.open_data(ensemble[0])
+            ds = nc.open_data(ensemble[0], checks = False)
             if "e3t" in ds.variables:
                 print(
                     f"Extracting and saving thickness from {ensemble[0]} as matched/e3t.nc"
@@ -1314,14 +1349,39 @@ def matchup(
         for exc in exclude:
             ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
 
-        ds = xr.open_dataset(ensemble[0])
-        time_name = [x for x in list(ds.dims) if "time" in x][0]
+        if fvcom is False:
+            ds = xr.open_dataset(ensemble[0])
+            time_name = [x for x in list(ds.dims) if "time" in x][0]
 
         for ff in tqdm(ensemble):
-            ds = xr.open_dataset(ff)
-            ff_month = [int(x.dt.month) for x in ds[time_name]]
-            ff_year = [int(x.dt.year) for x in ds[time_name]]
-            days = [int(x.dt.day) for x in ds[time_name]]
+            if fvcom is False:
+                ds = xr.open_dataset(ff)
+                ff_month = [int(x.dt.month) for x in ds[time_name]]
+                ff_year = [int(x.dt.year) for x in ds[time_name]]
+                days = [int(x.dt.day) for x in ds[time_name]]
+            else:
+                ds = nc.open_data(ff, checks = False)
+                ds_times = ds.times
+                ff_month = [int(x.month) for x in ds_times]
+                ff_year = [int(x.year) for x in ds_times]
+                days = [int(x.day) for x in ds_times]
+                if len(ds_times) == 0:
+                    try:
+                        ds = xr.open_dataset(ff, decode_times = False)
+                        times = [x for x in ds.Times.values]
+                        # decode bytes
+                        times = [x.decode() for x in times]
+                        # times are of the format YYYY-MM-DDTHH:MM:SSZ
+                        times = [x.split('T')[0] for x in times]
+                        years = [x.split('-')[0] for x in times]
+                        months = [x.split('-')[1] for x in times]
+                        days = [x.split('-')[2] for x in times]
+                        # convert to int
+                        ff_year = [int(x) for x in years]
+                        ff_month = [int(x) for x in months]
+                        days = [int(x) for x in days]
+                    except:
+                        raise ValueError("No times found in the file")
             df_ff = pd.DataFrame(
                 {
                     "year": ff_year,
@@ -1338,9 +1398,22 @@ def matchup(
     print("********************************")
 
     # figure out the lon/lat extent in the model
-    ds_extent = get_extent(ensemble[0])
-    lons = [ds_extent[0], ds_extent[1]]
-    lats = [ds_extent[2], ds_extent[3]]
+    if fvcom is False:
+        ds_extent = get_extent(ensemble[0])
+        lons = [ds_extent[0], ds_extent[1]]
+        lats = [ds_extent[2], ds_extent[3]]
+    else:
+        drop_variables = ["siglay", "siglev"]
+        ds= xr.open_dataset( ff, drop_variables=drop_variables, decode_times=False)
+        lon = ds.lon.values
+        lon_min = float(lon.min())
+        lon_max = float(lon.max())
+        lat = ds.lat.values
+        lat_min = float(lat.min())
+        lat_max = float(lat.max())
+        lons = [lon_min, lon_max]
+        lats = [lat_min, lat_max]
+
 
     all_df = all_df.dropna().reset_index(drop=True)
     df_mapping = all_df
@@ -1943,6 +2016,7 @@ def matchup(
         lat_lim=lat_lim,
         times_dict=times_dict,
         ds_thickness=thickness,
+        fvcom = fvcom
     )
 
     os.system("pandoc matchup_report.md --pdf-engine wkhtmltopdf -o matchup_report.pdf")
@@ -1956,146 +2030,3 @@ def matchup(
             print(x)
         print("########################################")
         print("########################################")
-
-    # currently redundant fvcom code. Add in later...
-    # if fvcom:
-
-    #     # matching up when fvcom
-    #     print("Creating gridded data for NSBC matchups")
-
-    #     vars = [
-    #         "ammonium",
-    #         "chlorophyll",
-    #         "nitrate",
-    #         "phosphate",
-    #         "oxygen",
-    #         "silicate",
-    #         "temperature",
-    #         "salinity",
-    #     ]
-    #     vars = [x for x in vars if x in var_choice]
-
-    #     ds_total = nc.open_data()
-
-    #     for vv in vars:
-    #         pattern = all_df.query("variable == @vv").reset_index(drop=True).pattern[0]
-
-    #         good_to_go = True
-
-    #         if pattern is not None:
-    #             final_extension = extension_of_directory(folder)
-    #             ersem_paths = glob.glob(folder + final_extension + pattern)
-    #             if len(ersem_paths) > 0:
-    #                 good_to_go = True
-
-    #         if good_to_go:
-    #             final_extension = extension_of_directory(folder)
-    #             ersem_paths = glob.glob(folder + final_extension + pattern)
-
-    #             for exc in exclude:
-    #                 ersem_paths = [
-    #                     x for x in ersem_paths if f"{exc}" not in os.path.basename(x)
-    #                 ]
-
-    #             ds_all = nc.open_data()
-
-    #             for ff in ersem_paths:
-    #                 drop_variables = ["siglay", "siglev"]
-    #                 ds_xr = xr.open_dataset(
-    #                     ff, drop_variables=drop_variables, decode_times=False
-    #                 )
-    #                 model_variables = (
-    #                     all_df.query("variable == @vv")
-    #                     .reset_index(drop=True)
-    #                     .model_variable
-    #                 )
-    #                 ds_xr = ds_xr[model_variables[0].split("+")]
-    #                 ds1 = nc.from_xarray(ds_xr)
-    #                 ds1.nco_command("ncks -d siglay,0,0")
-    #                 if vv == "temp":
-    #                     ds1.nco_command("ncks -O -C -v temp")
-    #                 lon = ds1.to_xarray().lon.values
-    #                 lat = ds1.to_xarray().lat.values
-    #                 grid = pd.DataFrame({"lon": lon, "lat": lat})
-    #                 out_grid = nc.generate_grid.generate_grid(grid)
-    #                 ds1.subset(variables=model_variables[0].split("+"))
-    #                 ds1.run()
-    #                 out_grid = nc.generate_grid.generate_grid(grid)
-    #                 nc.session.append_safe(out_grid)
-    #                 os.path.exists(out_grid)
-    #                 ds2 = ds1.copy()
-    #                 ds2.run()
-    #                 ds2.cdo_command(f"setgrid,{out_grid}")
-    #                 ds2.as_missing(0)
-
-    #                 if vv == "doc":
-    #                     command = "-aexpr,doc=" + model_variables[0]
-    #                     ds2.cdo_command(command)
-    #                     drop_these = model_variables[0].split("+")
-    #                     ds_contents = ds2.contents
-    #                     ds_contents = ds_contents.query("variable in @drop_these")
-    #                     doc_unit = ds_contents.unit[0]
-    #                     ds2.set_units({"doc": doc_unit})
-    #                     ds2.drop(variables=drop_these)
-
-    #                 if vv == "chlorophyll":
-    #                     command = "-aexpr,chlorophyll=" + model_variables[0]
-    #                     ds2.cdo_command(command)
-    #                     drop_these = model_variables[0].split("+")
-    #                     ds_contents = ds2.contents
-    #                     ds_contents = ds_contents.query("variable in @drop_these")
-    #                     chl_unit = ds_contents.unit[0]
-    #                     ds2.set_units({"chlorophyll": chl_unit})
-    #                     ds2.drop(variables=drop_these)
-
-    #                 ds_nsbc = nc.open_data(
-    #                     f"{data_dir}/nsbc/level_3/climatological_monthly_mean/NSBC_Level3_phosphate__UHAM_ICDC__v1.1__0.25x0.25deg__OAN_1960_2014.nc",
-    #                     checks=False,
-    #                 )
-    #                 ds2.regrid(ds_nsbc, "nn")
-    #                 # create a netcdf mask for the fvcom grid
-    #                 df_mask = grid.assign(value=1)
-    #                 bin_res = 0.25
-    #                 df_mask["lon"] = bin_value(df_mask["lon"], bin_res)
-    #                 df_mask["lat"] = bin_value(df_mask["lat"], bin_res)
-    #                 df_mask = df_mask.groupby(["lon", "lat"]).sum().reset_index()
-    #                 df_mask = df_mask.set_index(["lat", "lon"])
-    #                 ds_mask = nc.from_xarray(df_mask.to_xarray())
-    #                 os.system(f"cdo griddes {ds_mask[0]} > /tmp/mygrid")
-    #                 # open the text file text.txt and replace the string "generic" with "lonlat"
-    #                 with open("/tmp/mygrid", "r") as f:
-    #                     lines = f.readlines()
-
-    #                 # write line by line to /tmp/newgrid
-
-    #                 with open("/tmp/newgrid", "w") as f:
-    #                     for ll in lines:
-    #                         f.write(ll.replace("generic", "lonlat"))
-    #                 ds_mask.cdo_command(f"setgrid,/tmp/newgrid")
-    #                 ds_mask.regrid(ds_nsbc, "bil")
-    #                 ds_mask > 0
-
-    #                 ds4 = ds2.copy()
-    #                 # rename the variable to the correct name
-    #                 ds4.rename({ds4.variables[0]: vv})
-    #                 ds_all.append(ds4)
-    #             ds_all.merge("time")
-
-    #             out = "matched/gridded/nsbc/nsbc_" + vv + ".nc"
-    #             if not os.path.exists(os.path.dirname(out)):
-    #                 os.makedirs(os.path.dirname(out))
-
-    #             ds_total.append(ds_all)
-
-    #     ds_year = min(ds_total.year)
-
-    #     ds_total.merge("variables", ["year", "month", "day"])
-    #     ds_total.set_year(ds_year)
-
-    #     out = "matched/gridded/nsbc/nsbc_model.nc"
-    #     if not os.path.exists(os.path.dirname(out)):
-    #         os.makedirs(os.path.dirname(out))
-
-    #     ds_total.to_nc(out, zip=True, overwrite=True)
-
-    #     return None
