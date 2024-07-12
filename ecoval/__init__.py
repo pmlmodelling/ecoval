@@ -350,12 +350,35 @@ def compare(model_dict=None):
             with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "w") as file:
                 file.write(filedata)
 
+            # for i in range(len(new_lines)):
+            #     if "the_test_status" in new_lines[i]:
+            #         if test:  
+            #             new_lines[i] = new_lines[i].replace("the_test_status", "True")
+            #         else:
+            #             new_lines[i] = new_lines[i].replace("the_test_status", "False")
+    
+        
+        
+
 
     # sync the notebooks
 
     os.system("jupytext --set-formats ipynb,py:percent book/compare/notebooks/*.ipynb")
 
     add_chunks()
+
+    # replace the test status in the notebooks
+    books = glob.glob("book/compare/notebooks/*.py")
+    for book in books:
+        with open(book, "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("the_test_status", "False")
+
+        # Write the file out again
+        with open(book, "w") as file:
+            file.write(filedata)
 
     # fix the chunks
     os.system("jupytext --sync book/compare/notebooks/*.ipynb")
