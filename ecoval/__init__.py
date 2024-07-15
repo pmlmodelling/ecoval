@@ -862,6 +862,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     new_lines.append(line)
             # loop through all lines in lines and replace the_test_status with True
             for i in range(len(new_lines)):
+                if build == "html":
+                    new_lines[i] = new_lines[i].replace("latexpagebreak", "")
                 if "the_test_status" in new_lines[i]:
                     if test:  
                         new_lines[i] = new_lines[i].replace("the_test_status", "True")
