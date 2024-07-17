@@ -915,71 +915,68 @@ def matchup(
 
     if len(point_bottom) > 0 or mld or len(point_all) > 0:
         ds_depths = False
-        if True:
+        try:
             if True:
-                if True:
-                    try:
-                        if True:
-                            with warnings.catch_warnings(record=True) as w:
-                                # extract the thickness dataset
-                                e3t_found = False
-                                if thickness is not None:
-                                    ds_thickness = nc.open_data(thickness, checks=False)
-                                    if len(ds_thickness.variables) != 1:
-                                        raise ValueError(
-                                            "The thickness file has more than one variable. Please provide a single variable!"
-                                        )
-                                    ds_thickness.rename(
-                                        {ds_thickness.variables[0]: "e3t"}
-                                    )
-                                    e3t_found = True
-                                else:
-                                    print(
-                                        "Vertical thickness is required for your matchups, but they are not supplied"
-                                    )
-                                    print(
-                                        "Searching through simulation output to find it"
-                                    )
-                                    for ff in random_files:
-                                        ds_thickness = nc.open_data(ff, checks=False)
-                                        if "e3t" in ds_thickness.variables:
-                                            e3t_found = True
-                                            break
-                                if not e3t_found:
-                                    raise ValueError("Unable to find e3t")
+                with warnings.catch_warnings(record=True) as w:
+                    # extract the thickness dataset
+                    e3t_found = False
+                    if thickness is not None:
+                        ds_thickness = nc.open_data(thickness, checks=False)
+                        if len(ds_thickness.variables) != 1:
+                            raise ValueError(
+                                "The thickness file has more than one variable. Please provide a single variable!"
+                            )
+                        ds_thickness.rename(
+                            {ds_thickness.variables[0]: "e3t"}
+                        )
+                        e3t_found = True
+                    else:
+                        print(
+                            "Vertical thickness is required for your matchups, but they are not supplied"
+                        )
+                        print(
+                            "Searching through simulation output to find it"
+                        )
+                        for ff in random_files:
+                            ds_thickness = nc.open_data(ff, checks=False)
+                            if "e3t" in ds_thickness.variables:
+                                e3t_found = True
+                                break
+                    if not e3t_found:
+                        raise ValueError("Unable to find e3t")
 
-                                ds_thickness.subset(time=0, variables="e3t")
-                                ds_thickness.as_missing(0)
-                                #####
-                                # now output the bathymetry if it does not exists
-                                if not os.path.exists("matched/model_bathymetry.nc"):
-                                    ds_bath = ds_thickness.copy()
-                                    ds_bath.vertical_sum()
-                                    ds_bath.to_nc(
-                                        "matched/model_bathymetry.nc", zip=True
-                                    )
+                    ds_thickness.subset(time=0, variables="e3t")
+                    ds_thickness.as_missing(0)
+                    #####
+                    # now output the bathymetry if it does not exists
+                    if not os.path.exists("matched/model_bathymetry.nc"):
+                        ds_bath = ds_thickness.copy()
+                        ds_bath.vertical_sum()
+                        ds_bath.to_nc(
+                            "matched/model_bathymetry.nc", zip=True
+                        )
 
-                                # thickness needs to be inverted if the sea surface is at the bottom
+                    # thickness needs to be inverted if the sea surface is at the bottom
 
-                                if surface_level == "bottom":
-                                    ds_thickness.cdo_command("invertlev")
-                                ds_thickness.run()
-                                ds_depths = ds_thickness.copy()
+                    if surface_level == "bottom":
+                        ds_thickness.cdo_command("invertlev")
+                    ds_thickness.run()
+                    ds_depths = ds_thickness.copy()
 
-                                ds_depths.vertical_cumsum()
-                                ds_thickness / 2
-                                ds_depths - ds_thickness
-                                ds_depths.run()
-                                ds_depths.rename({ds_depths.variables[0]: "depth"})
-                                if surface_level == "bottom":
-                                    ds_depths.cdo_command("invertlev")
-                                ds_depths.run()
+                    ds_depths.vertical_cumsum()
+                    ds_thickness / 2
+                    ds_depths - ds_thickness
+                    ds_depths.run()
+                    ds_depths.rename({ds_depths.variables[0]: "depth"})
+                    if surface_level == "bottom":
+                        ds_depths.cdo_command("invertlev")
+                    ds_depths.run()
 
-                            for ww in w:
-                                if str(ww.message) not in session_warnings:
-                                    session_warnings.append(str(ww.message))
-                    except:
-                        pass
+                for ww in w:
+                    if str(ww.message) not in session_warnings:
+                        session_warnings.append(str(ww.message))
+        except:
+            pass
         if ds_depths is False:
             raise ValueError(
                 "You have asked for variables that require the specification of thickness"
@@ -1652,7 +1649,10 @@ def matchup(
                                 amm7 = False
                                 if max(ds_grid.contents.npoints) == 111375:
                                     amm7 = True
-                                    ds_grid.fix_amm7_grid()
+                                    try:
+                                        ds_grid.fix_amm7_grid()
+                                    except:
+                                        pass
                                 ds_xr = ds_grid.to_xarray()
                             for ww in w:
                                 if str(ww.message) not in session_warnings:
@@ -1708,7 +1708,10 @@ def matchup(
                                             ds_grid.bottom()
                                         ds_grid.as_missing(0)
                                         if max(ds_grid.contents.npoints) == 111375:
-                                            ds_grid.fix_amm7_grid()
+                                            try:
+                                                ds_grid.fix_amm7_grid()
+                                            except:
+                                                pass
                                         df_grid = (
                                             ds_grid.to_dataframe()
                                             .reset_index()
@@ -1749,8 +1752,9 @@ def matchup(
                                 if layer == "surface":
                                     bottom_layer = True
                                     top_layer = False
-                            if vv == "benbio":
+                            if depths == "benthic":
                                 bottom_layer = False
+                                ds_depths = None
                                 top_layer = False
 
                             temp = pool.apply_async(
@@ -1970,6 +1974,7 @@ def matchup(
                                 f"Matching up model {vv_variable} with near-bottom point {vv_variable} data"
                             )
                     if depths == "benthic":
+                        ds_depths = None
                         print(
                             f"Matching up model {vv_variable} with benthic point data"
                         )
@@ -1981,7 +1986,7 @@ def matchup(
                         except:
                             pass
                     else:
-                        point_match(vv, ds_depths=ds_depths)
+                        # point_match(vv, ds_depths=ds_depths)
                         try:
                             point_match(vv, ds_depths=ds_depths)
                         except:

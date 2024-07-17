@@ -453,7 +453,10 @@ def gridded_matchup(
                     amm7 = False
                     if domain == "nws":
                         if max(ds_surface.contents.npoints) == 111375:
-                            ds_surface.fix_amm7_grid()
+                            try:
+                                ds_surface.fix_amm7_grid()
+                            except:
+                                pass
                             amm7 = True
                             ds_surface.subset(lon=[-19, 9], lat=[41, 64.3])
 
