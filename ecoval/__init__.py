@@ -939,7 +939,13 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         os.system(f"jupyter-book build {book_dir}/ --builder pdflatex")
         # Now the latex file needs to be modified and re-compiled
         # open the latex file and ensure tables have an hline after the header 
-        with open(f"{book_dir}/_build/latex/python.tex", "r") as file:
+        # find latex file in directory
+        latex_path = glob.glob(f"{book_dir}/_build/latex/*.tex")
+        if len(latex_path) != 1:
+            raise ValueError("Boo: Jupyter book's API must have changed!")
+        latex_path = latex_path[0]
+
+        with open(latex_path, "r") as file:
             filedata = file.read()
 
         # Replace the target string
@@ -1023,7 +1029,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         filedata = "\n".join(new_lines)
 
         # Write the file out again
-        with open(f"{book_dir}/_build/latex/python.tex", "w") as file:
+        with open(latex_path, "w") as file:
             file.write(filedata)
         makecmd = os.environ.get("MAKE", "make")
         # remove the pdf file
