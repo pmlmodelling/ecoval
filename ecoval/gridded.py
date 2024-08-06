@@ -530,19 +530,38 @@ def gridded_matchup(
                     lat_max = extent[3]
                     lat_min = extent[2]
 
+                    #if fvcom:
+                        #ds_ 
                     lon_min = max(lon_min, lon_min_model)
                     lon_max = min(lon_max, lon_max_model)
                     lat_min = max(lat_min, lat_min_model)
                     lat_max = min(lat_max, lat_max_model)
+                    if lon_min < -180:
+                        lon_min = -180
+                    if lon_max > 180:
+                        lon_max = 180
+                    if lat_min < -90:
+                        lat_min = -90
+                    if lat_max > 90:
+                        lat_max = 90
+                    # coerce to floats
+                    lon_min = float(lon_min)
+                    lon_max = float(lon_max)
+                    lat_min = float(lat_min)
+                    lat_max = float(lat_max)
 
                     lons = [lon_min, lon_max]
                     lats = [lat_min, lat_max]
+                    
+                    # if fvcom use the extent to work this out instead
+                    lons = [session_info["extent"][0], session_info["extent"][1]]
+                    lats = [session_info["extent"][2], session_info["extent"][3]]
 
-                    if domain != "global":
+                    if domain != "global" or fvcom:
                         ds_surface.subset(lon=lons, lat=lats)
                         ds_obs.subset(lon=lons, lat=lats)
 
-                    if domain == "global":
+                    if domain == "global" and fvcom is False:
                         model_extent = get_extent(ds_surface[0])
                         obs_extent = get_extent(ds_obs[0])
                         lon_min = max(model_extent[0], obs_extent[0])
