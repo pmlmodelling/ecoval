@@ -15,7 +15,6 @@ import xarray as xr
 from ecoval.session import session_info
 from multiprocessing import Manager
 from tqdm import tqdm
-from ecoval.utils import session
 from ecoval.utils import extension_of_directory, get_extent
 from ecoval.parsers import generate_mapping
 from ecoval.gridded import gridded_matchup
@@ -67,7 +66,7 @@ def mm_match(
     df: pd.DataFrame
         Dataframe of observational data
     df_times: pd.DataFrame
-        Dataframe of observational data with time information
+        Dataframe of observational data with /erie_0001.nctime information
     ds_depths: list
         Depths to match
 
@@ -227,9 +226,13 @@ def extract_variable_mapping(folder, exclude=[], n_check=None, fvcom = False):
     all_df : pd.DataFrame
         A DataFrame containing the paths to the netCDF files
     """
+
+    # add restart to exclude
+    exclude.append("restart")
+
     while True:
 
-        levels = session["levels_down"]
+        levels = session_info["levels_down"]
 
         new_directory = folder + "/"
         if levels > 0:
@@ -454,6 +457,8 @@ def matchup(
 
     if "fvcom" not in kwargs:
         fvcom = False
+    if "erie" not in kwargs:
+        erie = False
 
     # check everything is valid
 
@@ -515,9 +520,9 @@ def matchup(
         session_info["out_dir"] = ""
 
     if levels_down is not None:
-        session["levels_down"] = levels_down
+        session_info["levels_down"] = levels_down
     else:
-        session["levels_down"] = 2
+        session_info["levels_down"] = 2
 
     if obs_dir != "default":
         session_info["user_dir"] = True
@@ -641,6 +646,9 @@ def matchup(
                 key_failed = False
         if key == "fvcom":
             fvcom = kwargs[key]
+            key_failed = False
+        if key == "erie":
+            erie = kwargs[key]
             key_failed = False
         if key_failed:
             raise ValueError(f"{key} is not a valid argument")
@@ -770,8 +778,12 @@ def matchup(
         else:
             model_domain = "nws"
     else:
-        global_grid = False
-        model_domain = "nws"
+        if erie is False:
+            global_grid = False
+            model_domain = "nws"
+        else:
+            global_grid = True
+            model_domain = "global"
     print("********************************")
 
     if session_info["user_dir"]:
@@ -1351,6 +1363,8 @@ def matchup(
             time_name = [x for x in list(ds.dims) if "time" in x][0]
 
         for ff in tqdm(ensemble):
+            if "restart" in ff:
+                continue
             if fvcom is False:
                 ds = xr.open_dataset(ff)
                 ff_month = [int(x.dt.month) for x in ds[time_name]]
@@ -2007,6 +2021,10 @@ def matchup(
                     # empty session warnings
         while len(session_warnings) > 0:
             session_warnings.pop()
+
+    # print the time dictionary
+    print("********************************")
+    print(times_dict)
 
     gridded_matchup(
         df_mapping=df_mapping,
