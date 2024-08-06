@@ -6,71 +6,17 @@ import numpy as np
 import subprocess
 import pandas as pd
 from tqdm import tqdm
+from ecoval.session import session_info
 
-session = dict()
 
 
 def bin_value(x, bin_res):
     return np.floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
 
-def get_extent(ff):
-    # add docstring
-    """ "
-    Get the extent of a netcdf file
-
-    Parameters
-    ----------
-    ff : str
-        The path to the netcdf file
-
-    Returns
-    -------
-    extent : list
-        A list of the form [lon_min, lon_max, lat_min, lat_max]
-
-    """
-
-    ds = nc.open_data(ff)
-    ds.subset(variables=ds.variables[0])
-    ds.top()
-    ds.subset(time=0)
-    ds_xr = ds.to_xarray()
-    lon_name = [x for x in ds_xr.coords if "lon" in x][0]
-    lat_name = [x for x in ds_xr.coords if "lat" in x][0]
-    lons = ds_xr[lon_name].values
-    lons = lons.flatten()
-    # as a unique, sorted list
-    lons = list(set(lons))
-    lats = ds_xr[lat_name].values
-    lats = lats.flatten()
-    # as a unique, sorted list
-    lats = list(set(lats))
-    lon_res = np.abs(lons[2] - lons[1])
-    lat_res = np.abs(lats[2] - lats[1])
-    ds = nc.open_data(ff)
-    ds.subset(variables=ds.variables[0])
-    ds.top()
-    ds.tmax()
-    ds.to_latlon(lon=[-180, 180], lat=[-90, 90], res=[lon_res, lat_res])
-    df = ds.to_dataframe().dropna().reset_index()
-    lon_min = df.lon.min()
-    lon_max = df.lon.max()
-    lat_min = df.lat.min()
-    lat_max = df.lat.max()
-    lons = [lon_min, lon_max]
-    lats = [lat_min, lat_max]
-    extent = [
-        lons[0] - lon_res,
-        lons[1] + lon_res,
-        lats[0] - lat_res,
-        lats[1] + lat_res,
-    ]
-    #
-    return extent
 
 
 def extension_of_directory(starting_directory, exclude=[]):
-    levels = session["levels_down"]
+    levels = session_info["levels_down"]
 
     new_directory = ""
     for i in range(levels):
@@ -194,6 +140,18 @@ def fvcom_regrid(ff, new_grid, vv):
         ds1 = nc.from_xarray(ds_xr[vv])
         lon = ds1.to_xarray().lon.values
         lat = ds1.to_xarray().lat.values
+
+        lon_min = float(lon.min())
+        lon_max = float(lon.max())
+        lat_min = float(lat.min())
+        lat_max = float(lat.max())
+        # handle longitudes over 180 appropriately
+        if lon_min > 180:
+            lon_min = lon_min - 360
+        if lon_max > 180:
+            lon_max = lon_max - 360
+        extent = [lon_min, lon_max, lat_min, lat_max]
+        session_info["extent"] = extent
 
         ds1.run()
         ds1.nco_command( "ncks -d siglay,0,0")
