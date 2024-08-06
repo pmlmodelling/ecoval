@@ -554,8 +554,9 @@ def gridded_matchup(
                     lats = [lat_min, lat_max]
                     
                     # if fvcom use the extent to work this out instead
-                    lons = [session_info["extent"][0], session_info["extent"][1]]
-                    lats = [session_info["extent"][2], session_info["extent"][3]]
+                    if fvcom:
+                        lons = [session_info["extent"][0], session_info["extent"][1]]
+                        lats = [session_info["extent"][2], session_info["extent"][3]]
 
                     if domain != "global" or fvcom:
                         ds_surface.subset(lon=lons, lat=lats)
