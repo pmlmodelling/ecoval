@@ -79,6 +79,9 @@ def mm_match(
         with warnings.catch_warnings(record=True) as w:
             ds = nc.open_data(ff, checks=False)
             var_match = ersem_variable.split("+")
+            if variable == "carbon":
+                var_match.append("Q7_pen_depth_c")
+                var_match.append("Q6_pen_depth_c")
 
             valid_locs = ["lon", "lat", "year", "month", "day", "depth"]
             valid_locs = [x for x in valid_locs if x in df.columns]
@@ -131,7 +134,16 @@ def mm_match(
             ds.run()
             if variable != "pft":
                 if len(var_match) > 1:
-                    ds.sum_all()
+                    if variable == "carbon":
+
+                        ds.assign(total1 = lambda x: x.Q6_c * (1 - exp(-0.1 / x.Q6_pen_depth_c)))
+                        ds.assign(total2 = lambda x: x.Q7_c * (1 - exp(-0.1 / x.Q7_pen_depth_c)))
+                        ds.assign(total =  lambda x: (x.total1 + x.total2)/0.1, drop = True)
+                        ds * ds * 1e-6
+
+                        ds.set_units({"total":"kg/m3"})
+                    else:
+                        ds.sum_all()
 
             if len(df_locs) > 0:
                 if top_layer:
@@ -2023,8 +2035,8 @@ def matchup(
             session_warnings.pop()
 
     # print the time dictionary
-    print("********************************")
-    print(times_dict)
+    #print("********************************")
+    #print(times_dict)
 
     gridded_matchup(
         df_mapping=df_mapping,
