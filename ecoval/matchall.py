@@ -195,11 +195,13 @@ def get_time_res(x, folder=None):
 
     wild_card = final_extension + x
     wild_card = wild_card.replace("**", "*")
-    for x in pathlib.Path(folder).glob(wild_card):
-        path = x
-        # convert to string
-        path = str(path)
-        break
+    # figure out if the session is fvcom
+    if True:
+        for x in pathlib.Path(folder).glob(wild_card):
+            path = x
+            # convert to string
+            path = str(path)
+            break
 
     ds = nc.open_data(path, checks=False)
     ds_times = ds.times
@@ -330,6 +332,9 @@ def extract_variable_mapping(folder, exclude=[], n_check=None, fvcom = False):
 
             # replace integers with 4 or more digits with **
             new_name = re.sub(r"\d{4,}", "**", new_name)
+            # replace strings of the form _12. with _**.
+            new_name = re.sub(r"\d{2,}", "**", new_name)
+            #new_name = re.sub(r"_\d{2,}\.", "_**.", new_name)
 
             all_df.append(
                 pd.DataFrame.from_dict(new_dict).melt().assign(pattern=new_name)
@@ -337,7 +342,11 @@ def extract_variable_mapping(folder, exclude=[], n_check=None, fvcom = False):
 
     all_df = pd.concat(all_df).reset_index(drop=True)
 
-    all_df["resolution"] = [get_time_res(x, folder) for x in all_df.pattern]
+    patterns = set(all_df.pattern)
+    resolution_dict = dict()
+    for folder in patterns:
+        resolution_dict[folder] = get_time_res(folder, new_directory)
+    all_df["resolution"] = [resolution_dict[x] for x in all_df.pattern]
 
     all_df = (
         all_df.sort_values("resolution").groupby("value").head(1).reset_index(drop=True)
@@ -664,6 +673,8 @@ def matchup(
             key_failed = False
         if key_failed:
             raise ValueError(f"{key} is not a valid argument")
+        
+    session_info["fvcom"] = fvcom
 
     if end is not None:
         sim_end = end
