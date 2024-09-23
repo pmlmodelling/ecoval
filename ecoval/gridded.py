@@ -334,6 +334,7 @@ def gridded_matchup(
                             ds_ff = fvcom_regrid(ff, vv_file, selection)
                             ds_surface.append(ds_ff)
                         ds_surface.merge("time")
+                        ds_surface.subset(years=sim_years)
                         ds_surface.tmean(["year", "month"])
                         ds_surface.tmean("month")
 
