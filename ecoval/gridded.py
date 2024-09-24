@@ -211,10 +211,22 @@ def gridded_matchup(
                     all_years += list(times_dict[ff].year)
                 all_years = list(set(all_years))
 
+
                 sim_years = range(sim_start, sim_end + 1)
                 sim_years = [x for x in all_years if x in sim_years]
                 # now simplify paths, so that only the relevant years are used
                 new_paths = []
+                year_options =   list(set(
+                    pd.concat([x for x in times_dict.values()]).loc[:,["year", "month"]]
+                    .drop_duplicates()
+                    .groupby("year")
+                    .size()
+                    # must be at least 12
+                    .pipe(lambda x: x[x >= 12])
+                    .reset_index()
+                    .year
+                ))
+                sim_years = [x for x in sim_years if x in year_options]
 
                 for ff in paths:
                     if len([x for x in times_dict[ff].year if x in sim_years]) > 0:
@@ -284,7 +296,7 @@ def gridded_matchup(
                                 # ds_mm.nco_command(nco_command, ensemble = False)
                                 ds_mm.subset(variables=selection)
                                 ds_mm.subset(month=mm, time=0)
-                                ds_mm.tmean(["year", "month"])
+                                ds_mm.tmean(["year", "month"], align = "left")
                                 ds_mm.ensemble_mean()
                                 ds_mm.set_date(year=2000, month=mm, day=1)
                                 ds_mm.as_missing(0)
@@ -300,7 +312,7 @@ def gridded_matchup(
                                         f"ncks -F -d deptht,1 -v {nco_selection}"
                                     )
                                     ds_surface.as_missing(0)
-                                    ds_surface.tmean(["year", "month"])
+                                    ds_surface.tmean(["year", "month"], align = "left")
                                     if surface == "top":
                                         ds_surface.top()
                                     else:
@@ -308,7 +320,7 @@ def gridded_matchup(
                                 else:
                                     ds_surface.nco_command(f"ncks -F -v {nco_selection}")
                                     ds_surface.as_missing(0)
-                                    ds_surface.tmean(["year", "month"])
+                                    ds_surface.tmean(["year", "month"], align = "left")
                                     ds_surface = ds_vertical.copy()
                                     if surface == "top":
                                         ds_surface.top()
@@ -322,7 +334,7 @@ def gridded_matchup(
                                     else:
                                         ds_surface.bottom()
                                     ds_surface.as_missing(0)
-                                    ds_surface.tmean(["year", "month"])
+                                    ds_surface.tmean(["year", "month"], align = "left")
                     else:
                         files = paths
                         ds_surface = nc.open_data()
@@ -334,15 +346,13 @@ def gridded_matchup(
                             ds_ff = fvcom_regrid(ff, vv_file, selection)
                             ds_surface.append(ds_ff)
                         ds_surface.merge("time")
+                        ds_surface.run()
                         ds_surface.subset(years=sim_years)
-                        ds_surface.tmean(["year", "month"])
-                        ds_surface.tmean("month")
-
-
+                        ds_surface.tmean(["year", "month"], align = "left")
 
                     if vv_source == "glodap":
                         ds_surface.merge("time")
-                        ds_surface.tmean()
+                        ds_surface.tmean( align = "left")
 
                     # the code below needs to be simplifed
                     # essentially anything with a + in the mapping should be split out
@@ -393,7 +403,7 @@ def gridded_matchup(
                                     )
 
                                 ds_surface.run()
-                                ds_surface.tmean(["year", "month"])
+                                ds_surface.tmean(["year", "month"], align = "left")
                                 ds_surface.merge("time")
                                 ds_surface.subset(years=sim_years)
                                 ds_surface.run()
@@ -446,10 +456,10 @@ def gridded_matchup(
                     if vv_source != "woa":
                         if len(obs_years) == 1:
                             ds_surface.merge("time")
-                            ds_surface.tmean("month")
+                            ds_surface.tmean("month", align = "left")
                         else:
                             ds_surface.merge("time")
-                            ds_surface.tmean(["year", "month"])
+                            ds_surface.tmean(["year", "month"], align = "left")
 
                     amm7 = False
                     if domain == "nws":
@@ -474,14 +484,14 @@ def gridded_matchup(
                             continue
                         ds_obs.subset(years=sim_years)
                         ds_obs.merge("time")
-                        ds_obs.tmean("month")
-                        ds_surface.tmean("month")
+                        ds_obs.tmean("month", align = "left")
+                        ds_surface.tmean("month", align = "left")
 
                     if vv in ["temperature"]:
                         ds_obs.subset(years=sim_years)
-                        ds_obs.tmean(["year", "month"])
+                        ds_obs.tmean(["year", "month"], align = "left")
                         ds_obs.merge("time")
-                        ds_obs.tmean(["year", "month"])
+                        ds_obs.tmean(["year", "month"], align = "left")
 
                     if vv in ["salinity"] and domain != "nws":
                         if vv_source != "woa":
@@ -492,9 +502,9 @@ def gridded_matchup(
                         ds_obs.merge("time")
                         ds_obs.tmean("month")
                         ds_surface.merge("time")
-                        ds_surface.tmean("month")
+                        ds_surface.tmean("month", align = "left")
                         ds_obs_annual.subset(years=sub_years)
-                        ds_obs_annual.tmean()
+                        ds_obs_annual.tmean(align = "left")
                     if vv in ["chlorophyll"] and domain != "nws":
                         ds_obs.top()
                         sub_years = [x for x in ds_surface.years if x in ds_obs.years]
@@ -503,7 +513,7 @@ def gridded_matchup(
                         ds_obs.merge("time")
                         ds_obs.tmean("month")
                         ds_surface.merge("time")
-                        ds_surface.tmean("month")
+                        ds_surface.tmean("month", align = "left")
 
                     if vv not in ["poc", "temperature"]:
                         if len(ds_obs.times) > 12:
@@ -655,6 +665,7 @@ def gridded_matchup(
                     if vv_source == "occci":
                         years = [x for x in ds_obs.years if x in ds_surface.years]
                         years = list(set(years))
+
 
                         ds_obs.subset(years=years)
                         ds_obs.tmean(["year", "month"])
