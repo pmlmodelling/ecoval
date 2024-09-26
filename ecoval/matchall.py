@@ -195,10 +195,21 @@ def get_time_res(x, folder=None):
 
     wild_card = final_extension + x
     wild_card = wild_card.replace("**", "*")
+    # replace double stars with 1
+    wild_card = wild_card.replace("**", "*")
+
     # figure out if the session is fvcom
-    if True:
+
+    if session_info["fvcom"]:
         for x in pathlib.Path(folder).glob(wild_card):
             path = x
+            # convert to string
+            path = str(path)
+            break
+    else:
+        wild_card = os.path.basename(wild_card)
+        for y in pathlib.Path(folder).glob(wild_card):
+            path = y
             # convert to string
             path = str(path)
             break
