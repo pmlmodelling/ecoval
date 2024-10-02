@@ -150,6 +150,19 @@ def generate_mapping(ds, fvcom = False):
                 and "benthic" not in x.lower()
                 and "river" not in x.lower()
             ]
+
+            if len(the_vars) > 1:
+                the_vars = [
+                    x
+                    for x in ds_contents.long_name
+                    if ("silicate silicate" in x or "silicic" in x)
+                    and "benthic" not in x.lower()
+                    and "river" not in x.lower()
+                ]
+
+
+
+
         if vv == "oxygen":
             the_vars = [
                 x
