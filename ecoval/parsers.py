@@ -169,6 +169,9 @@ def generate_mapping(ds, fvcom = False):
                 for x in ds_contents.long_name
                 if "oxygen" in x.lower()
                 and "benthic" not in x.lower()
+                and "saturation" not in x.lower()
+                and "util" not in x.lower()
+                and "flux" not in x.lower()
                 and "river" not in x.lower()
             ]
 
