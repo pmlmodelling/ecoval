@@ -1521,6 +1521,7 @@ def matchup(
             point_vars.sort()
 
             for vv in point_vars:
+                print(vv)
                 all_df = df_mapping
                 all_df = all_df.query("model_variable in @good_model_vars").reset_index(
                     drop=True
@@ -1704,9 +1705,9 @@ def matchup(
                             lat_min = float(df.lat.min())
                             lat_max = float(df.lat.max())
 
-                            ds_all = nc.open_data()
                             df_times_new = copy.deepcopy(df_times)
                             if session_info["fvcom"]:
+                                ds_all = nc.open_data()
                                 for ff in paths:
                                     ds_ff = fvcom_regrid(ff = ff, vv = ersem_variable, lons = [lon_min, lon_max], lats = [lat_min, lat_max], res = 0.05)
                                     # time axis needs to be set
@@ -1735,7 +1736,7 @@ def matchup(
 
                                     ds_all.append(ds_ff[0])
 
-                            paths = ds_all.current
+                                    paths = ds_all.current
 
                             with warnings.catch_warnings(record=True) as w:
                                 ds_grid = nc.open_data(paths[0], checks=False)
