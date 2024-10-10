@@ -15,7 +15,7 @@ import xarray as xr
 from ecoval.session import session_info
 from multiprocessing import Manager
 from tqdm import tqdm
-from ecoval.utils import extension_of_directory, get_extent
+from ecoval.utils import extension_of_directory, get_extent, fvcom_regrid
 from ecoval.parsers import generate_mapping
 from ecoval.gridded import gridded_matchup
 
@@ -839,8 +839,6 @@ def matchup(
         if pp not in valid_points:
             raise ValueError(f"{pp} is not a valid point dataset")
     if fvcom:
-        point_surface = []
-    if fvcom:
         point_bottom = []
         point_benthic = []
         point_all = []
@@ -900,7 +898,6 @@ def matchup(
         bottom = [x for x in bottom if x in valid_vars]
     
     if fvcom:
-        point_surface = []
         point_benthic = []
         point_bottom = []
         point_all = []
@@ -918,7 +915,6 @@ def matchup(
         surface = [x for x in surface if x in valid_surface]
 
     if fvcom:
-        point_surface = []
         point_benthic = []
         point_bottom = []
         point_all = []
@@ -1405,28 +1401,40 @@ def matchup(
                 ff_year = [int(x.dt.year) for x in ds[time_name]]
                 days = [int(x.dt.day) for x in ds[time_name]]
             else:
-                ds = nc.open_data(ff, checks = False)
-                ds_times = ds.times
-                ff_month = [int(x.month) for x in ds_times]
-                ff_year = [int(x.year) for x in ds_times]
-                days = [int(x.day) for x in ds_times]
-                if len(ds_times) == 0:
-                    try:
-                        ds = xr.open_dataset(ff, decode_times = False)
-                        times = [x for x in ds.Times.values]
-                        # decode bytes
-                        times = [x.decode() for x in times]
-                        # times are of the format YYYY-MM-DDTHH:MM:SSZ
-                        times = [x.split('T')[0] for x in times]
-                        years = [x.split('-')[0] for x in times]
-                        months = [x.split('-')[1] for x in times]
-                        days = [x.split('-')[2] for x in times]
-                        # convert to int
-                        ff_year = [int(x) for x in years]
-                        ff_month = [int(x) for x in months]
-                        days = [int(x) for x in days]
-                    except:
-                        raise ValueError("No times found in the file")
+                found_times = False
+                try:
+                    ds = xr.open_dataset(ff)
+                    time_name = [x for x in list(ds.dims) if "time" in x][0]
+                    ff_month = [int(x.dt.month) for x in ds[time_name]]
+                    ff_year = [int(x.dt.year) for x in ds[time_name]]
+                    days = [int(x.dt.day) for x in ds[time_name]]
+                    found_times = True
+                except:
+                    found_times = False
+
+                if not found_times:
+                    ds = nc.open_data(ff, checks = False)
+                    ds_times = ds.times
+                    ff_month = [int(x.month) for x in ds_times]
+                    ff_year = [int(x.year) for x in ds_times]
+                    days = [int(x.day) for x in ds_times]
+                    if len(ds_times) == 0:
+                        try:
+                            ds = xr.open_dataset(ff, decode_times = False)
+                            times = [x for x in ds.Times.values]
+                            # decode bytes
+                            times = [x.decode() for x in times]
+                            # times are of the format YYYY-MM-DDTHH:MM:SSZ
+                            times = [x.split('T')[0] for x in times]
+                            years = [x.split('-')[0] for x in times]
+                            months = [x.split('-')[1] for x in times]
+                            days = [x.split('-')[2] for x in times]
+                            # convert to int
+                            ff_year = [int(x) for x in years]
+                            ff_month = [int(x) for x in months]
+                            days = [int(x) for x in days]
+                        except:
+                            raise ValueError("No times found in the file")
             df_ff = pd.DataFrame(
                 {
                     "year": ff_year,
@@ -1468,7 +1476,9 @@ def matchup(
 
     df_mapping = all_df
 
-    # raise ValueError("here")
+    if fvcom:
+        model_domain = "nws"
+
     if model_domain == "nws" or session_info["user_dir"]:
 
         if len(point_all) > 0 or len(point_bottom) > 0:
@@ -1570,7 +1580,7 @@ def matchup(
                     # list of files
                     write_report("List of files:")
 
-                    def point_match(variable, layer="all", ds_depths=None):
+                    def point_match(variable, layer="all", ds_depths=None, df_times = None):
                         with warnings.catch_warnings(record=True) as w:
                             point_variable = variable
                             if variable == "pft":
@@ -1688,6 +1698,44 @@ def matchup(
 
                             manager = Manager()
                             # time to subset the df to the lon/lat ranges
+                            # get the minimum and maximum lon/lat
+                            lon_min = float(df.lon.min())
+                            lon_max = float(df.lon.max())
+                            lat_min = float(df.lat.min())
+                            lat_max = float(df.lat.max())
+
+                            ds_all = nc.open_data()
+                            df_times_new = copy.deepcopy(df_times)
+                            if session_info["fvcom"]:
+                                for ff in paths:
+                                    ds_ff = fvcom_regrid(ff = ff, vv = ersem_variable, lons = [lon_min, lon_max], lats = [lat_min, lat_max], res = 0.05)
+                                    # time axis needs to be set
+                                    ff_times = times_dict[ff]
+                                    ff_size = ff_times.groupby(["year", "month"]).size().max()
+                                    if ff_size > 1:
+                                        res = "1day"
+                                    else:
+                                        res = "1mon"
+                                    ff_year = ff_times.year[0]
+                                    ff_month = ff_times.month[0]
+                                    ff_day = ff_times.day[0]
+                                    # pad in 2
+                                    ff_month = str(ff_month).zfill(2)
+                                    ff_day = str(ff_day).zfill(2)
+                                    ds_ff.cdo_command(f"-setreftime,1980-01-01 -settaxis,{ff_year}-{ff_month}-{ff_day},12:00:00,{res}")
+                                    ds_ff.run()
+                                    df_ff_times = df_times.query("path == @ff").assign(path = ds_ff[0])
+                                    # add to df_times
+                                    try:
+                                        df_times_new = pd.concat([df_times_new, df_ff_times])
+                                    except:
+                                        print("Failing for some reason")
+                                    #df_times = pd.concat([df_times, df_ff_times])
+                                    # print(ds_ff.times)
+
+                                    ds_all.append(ds_ff[0])
+
+                            paths = ds_all.current
 
                             with warnings.catch_warnings(record=True) as w:
                                 ds_grid = nc.open_data(paths[0], checks=False)
@@ -1705,7 +1753,6 @@ def matchup(
                             for ww in w:
                                 if str(ww.message) not in session_warnings:
                                     session_warnings.append(str(ww.message))
-                            # extract the minimum latitude and longitude
                             lon_name = [x for x in list(ds_xr.coords) if "lon" in x][0]
                             lon_min = ds_xr[lon_name].values.min()
                             lon_max = ds_xr[lon_name].values.max()
@@ -1742,6 +1789,8 @@ def matchup(
 
                         pbar = tqdm(total=len(paths), position=0, leave=True)
                         results = dict()
+
+
                         for ff in paths:
                             if grid_setup is False:
                                 if True:
@@ -1811,7 +1860,7 @@ def matchup(
                                     ff,
                                     ersem_variable,
                                     df,
-                                    df_times,
+                                    df_times_new,
                                     ds_depths,
                                     point_variable,
                                     df_all,
@@ -2030,13 +2079,13 @@ def matchup(
                     print("**********************")
                     if depths == "surface":
                         try:
-                            point_match(vv, layer="surface")
+                            point_match(vv, layer="surface", df_times = df_times)
                         except:
                             pass
                     else:
                         # point_match(vv, ds_depths=ds_depths)
                         try:
-                            point_match(vv, ds_depths=ds_depths)
+                            point_match(vv, ds_depths=ds_depths, df_times = df_times)
                         except:
                             pass
 

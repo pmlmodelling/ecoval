@@ -125,7 +125,7 @@ def get_resolution(ff):
 
 
 
-def fvcom_regrid(ff, new_grid, vv):
+def fvcom_regrid(ff = None, new_grid = None, vv = None, lons = None, lats = None, res = None):
     # multiple = False
     # if len(vv) > 1:
     #     ds_all = nc.open_data()
@@ -171,7 +171,12 @@ def fvcom_regrid(ff, new_grid, vv):
         ds2 = ds1.copy()
         ds2.run()
         ds2.cdo_command(f"setgrid,{out_grid}")
-        ds2.regrid(new_grid, method = "nn")
+        if lons is not None:
+            ds2.to_latlon(lon = lons, lat = lats, res = res, method = "nn")
+        else:
+            ds2.regrid(new_grid, method = "nn")
+
+
         ds2.as_missing(0)
         ds2.run()
         df_mask = grid.assign(value=1)
@@ -193,7 +198,7 @@ def fvcom_regrid(ff, new_grid, vv):
 
         ds_mask.cdo_command(f"setgrid,/tmp/newgrid")
         # ds_mask.to_nc("/tmp/mask.nc")
-        ds_mask.regrid(ds2)
+        ds_mask.regrid(ds2, method = "con")
         # ds_mask.to_nc("/tmp/mask1.nc")
         ds_mask > 0
         # ds_mask.to_nc("/tmp/mask2.nc")
