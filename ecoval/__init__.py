@@ -1040,11 +1040,6 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         if output.returncode != 0:
             _error("Error: Failed to build pdf")
             return output.returncode
-        print(f"A PDF of your validation can be found at: {output_path} ")
-
-
-
-
 
 
 
@@ -1061,23 +1056,21 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         if os.path.exists(ff):
             if "nctoolkit" in x:
                 os.remove(ff)
-    # create a symlink  
+
     out_ff = f"{book_dir}/_build/html/index.html"
-
-
-    #if os.path.exists("validation.html"):
-    #    os.remove("validation.html")
-    #os.symlink(out_ff, "validation.html")
-    # clean up with the python files that are now useless
 
     if build == "html":
         webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/html/index.html"))
     else:
         out_ff = f"validation_report.pdf"
+        # turn into a full path
+        out_ff = os.path.abspath(out_ff)
         # make a copy of the pdf
-        shutil.copyfile(f"{book_dir}/_build/latex/python.pdf", out_ff)
+        ff_path = glob.glob(f"{book_dir}/_build/latex/*.pdf")[0]
+        shutil.copyfile(ff_path, out_ff)
 
-        webbrowser.open("file://" + os.path.abspath(f"{book_dir}/_build/latex/python.pdf"))
+        print(f"A PDF of your validation can be found at: {out_ff} ")
+        webbrowser.open(out_ff)
 
 
 def rebuild(build = None):
