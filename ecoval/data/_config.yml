@@ -1,7 +1,7 @@
 title:
 author:
 logo                        : "../pml_logo.jpg" 
-copyright:  2024
+copyright:  Plymouth Marine Laboratory
 execute:
   execute_notebooks: force
   timeout: 500
