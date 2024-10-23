@@ -6,6 +6,7 @@ import subprocess
 import nctoolkit as nc
 import copy
 from ecoval.matchall import matchup
+from ecoval.differences import differences
 from ecoval.fixers import tidy_name
 from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
@@ -14,6 +15,11 @@ from ecoval.chunkers import add_chunks
 import os
 import re
 
+def various_fixes(x):
+    # a number of fixes to ensure the latex is correct
+    # Make sure the 2 in R2 is a superscript
+    x = x.replace("R2", "R$^2$")
+    return x
 
 def fix_toc(book_dir):
     paths = glob.glob(f"{book_dir}/notebooks/*.ipynb")
@@ -980,11 +986,11 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
                          return y
                     if "textbf" not in line:
-                        new_lines.append(make_header_bold(line))
+                        new_lines.append(make_header_bold(various_fixes(line)))
                     else:
-                        new_lines.append(line)
+                        new_lines.append(various_fixes(line))
                 else:
-                    new_lines.append(line)
+                    new_lines.append(various_fixes(line))
                 if i == 0:
                     new_lines.append("\\hline")
                     i = 1
