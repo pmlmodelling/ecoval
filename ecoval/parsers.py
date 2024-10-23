@@ -55,6 +55,8 @@ def generate_mapping(ds, fvcom = False):
         "micro",
         "nano",
         "pico",
+        "benthic_carbon_flux",
+        "mesozoo"
     ]
     if fvcom is False:
         ds1 = nc.open_data(ds[0], checks=False)
@@ -98,6 +100,19 @@ def generate_mapping(ds, fvcom = False):
 
             the_vars = [x for x in the_vars if " loss " not in x]
             the_vars = [x for x in the_vars if "depth" not in x]
+        
+        if vv == "benthic_carbon_flux":
+            the_vars = [
+                x
+                for x in ds_contents_top.long_name
+                if "carbon" in x.lower()
+                and "benth" in x.lower()
+                and "penetr" not in x.lower()
+                and "flux" in x.lower()
+                and "organic" in x.lower()
+                and "inorganic" not in x.lower()
+            ]
+            the_vars = list(set(the_vars))
 
         if vv == "carbon":
             the_vars = [
@@ -182,6 +197,17 @@ def generate_mapping(ds, fvcom = False):
                 if "chloroph" in x and ("micro" in x or "diatom" in x)
             ]
 
+        if vv == "mesozoo":
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "mesozoo" in x and
+                "ingestion" not in x.lower()  and
+                "mortality" not in x.lower()  and
+                "loss" not in x.lower()  
+
+            ]
+
         if vv == "nano":
             the_vars = [
                 x
@@ -196,8 +222,11 @@ def generate_mapping(ds, fvcom = False):
                 if "chloroph" in x.lower() and "pico" in x
             ]
 
-        if vv in ["carbon", "benbio"]:
+        if vv in ["carbon", "benbio", "benthic_carbon_flux"]:
             model_vars = ds_contents_top.query("long_name in @the_vars").variable
+            if len(the_vars) > 0:
+                if vv == "benthic_carbon_flux":
+                    model_vars = [x for x in model_vars if "net" in x]
         else:
             if vv != "co2flux" and vv != "pco2":
                 model_vars = ds_contents.query("long_name in @the_vars").variable

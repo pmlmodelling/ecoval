@@ -37,6 +37,9 @@ valid_vars = [
     "poc",
     "carbon",
     "benbio",
+    "benthic_carbon_flux",
+    "mesozoo"
+
 ]
 
 session_warnings = Manager().list()
@@ -1792,6 +1795,7 @@ def matchup(
                         pbar = tqdm(total=len(paths), position=0, leave=True)
                         results = dict()
 
+                        print(paths)
 
                         for ff in paths:
                             if grid_setup is False:
