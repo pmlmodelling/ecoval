@@ -142,7 +142,7 @@ def mm_match(
                         ds.assign(total1 = lambda x: x.Q6_c * (1 - exp(-0.1 / x.Q6_pen_depth_c)))
                         ds.assign(total2 = lambda x: x.Q7_c * (1 - exp(-0.1 / x.Q7_pen_depth_c)))
                         ds.assign(total =  lambda x: (x.total1 + x.total2)/0.1, drop = True)
-                        ds * ds * 1e-6
+                        ds * 1e-6
 
                         ds.set_units({"total":"kg/m3"})
                     else:
