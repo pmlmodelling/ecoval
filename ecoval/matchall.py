@@ -1298,7 +1298,8 @@ def matchup(
     if global_grid is None:
         final_extension = extension_of_directory(sim_dir)
         path = glob.glob(sim_dir + final_extension + all_df.pattern[0])[0]
-        ds = nc.open_data(path, checks=False).to_xarray()
+        with warnings.catch_warnings(record=True) as w:
+            ds = nc.open_data(path, checks=False).to_xarray()
         lon_name = [x for x in ds.coords if "lon" in x]
         lat_name = [x for x in ds.coords if "lat" in x]
         lon = ds[lon_name[0]].values
@@ -1370,20 +1371,21 @@ def matchup(
             for exc in exclude:
                 ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
 
-            ds = nc.open_data(ensemble[0], checks = False)
-            if "e3t" in ds.variables:
-                print(
-                    f"Extracting and saving thickness from {ensemble[0]} as matched/e3t.nc"
-                )
-                ds.subset(variable="e3t")
-                ds.subset(time=0)
-                ds.as_missing(0)
-                if os.path.exists("matched/e3t.nc"):
-                    os.remove("matched/e3t.nc")
-                ds.to_nc("matched/e3t.nc", zip=True, overwrite=True)
-                thickness = "matched/e3t.nc"
-                thick_found = True
-                break
+            with warnings.catch_warnings(record=True) as w:
+                ds = nc.open_data(ensemble[0], checks = False)
+                if "e3t" in ds.variables:
+                    print(
+                        f"Extracting and saving thickness from {ensemble[0]} as matched/e3t.nc"
+                    )
+                    ds.subset(variable="e3t")
+                    ds.subset(time=0)
+                    ds.as_missing(0)
+                    if os.path.exists("matched/e3t.nc"):
+                        os.remove("matched/e3t.nc")
+                    ds.to_nc("matched/e3t.nc", zip=True, overwrite=True)
+                    thickness = "matched/e3t.nc"
+                    thick_found = True
+                    break
     if not thick_found:
         if thickness is None:
             print("It was not. Assuming files have z-levels for any vertical matchups.")
@@ -1457,12 +1459,15 @@ def matchup(
         pickle.dump(times_dict, f)
 
     print("********************************")
+    print("Extracting the geographic extent of the model output")
+    print("********************************")
 
     # figure out the lon/lat extent in the model
     if fvcom is False:
-        ds_extent = get_extent(ensemble[0])
-        lons = [ds_extent[0], ds_extent[1]]
-        lats = [ds_extent[2], ds_extent[3]]
+        with warnings.catch_warnings(record=True) as w:
+            ds_extent = get_extent(ensemble[0])
+            lons = [ds_extent[0], ds_extent[1]]
+            lats = [ds_extent[2], ds_extent[3]]
     else:
         drop_variables = ["siglay", "siglev"]
         ds= xr.open_dataset( ff, drop_variables=drop_variables, decode_times=False)
@@ -1529,7 +1534,6 @@ def matchup(
             point_vars.sort()
 
             for vv in point_vars:
-                print(vv)
                 all_df = df_mapping
                 all_df = all_df.query("model_variable in @good_model_vars").reset_index(
                     drop=True
@@ -2102,6 +2106,10 @@ def matchup(
                         if ww is not None:
                             if ww in output_warnings:
                                 continue
+                            if "CDO found more than one time variable" in ww:
+                                continue
+                            if "coordinates variable time" in ww:
+                                continue
                             output_warnings.append(str(ww))
 
                     if len(output_warnings) > 0:
@@ -2112,10 +2120,6 @@ def matchup(
                     # empty session warnings
         while len(session_warnings) > 0:
             session_warnings.pop()
-
-    # print the time dictionary
-    #print("********************************")
-    #print(times_dict)
 
     gridded_matchup(
         df_mapping=df_mapping,
