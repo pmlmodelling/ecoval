@@ -653,7 +653,7 @@ def matchup(
     benthic_req = copy.deepcopy(benthic)
 
     # throw an error if all of these are empty
-    if len(surface) == 0 and len(bottom) == 0 and len(benthic) == 0:
+    if len(surface_req) == 0 and len(bottom_req) == 0 and len(point_surface_req) == 0 and len(benthic_req) == 0:
         raise ValueError("Please provide at least one variable to matchup")
 
     if isinstance(exclude, str):
