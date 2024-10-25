@@ -775,15 +775,12 @@ def matchup(
             df_poc["model_variable"] = [poc_mapping]
             df_poc["variable"] = ["poc"]
 
-            all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
+            if "poc" in list(all_df.variable):
+                all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
+                all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
+            else:
+                all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
 
-    # pattern = all_df.iloc[0, :].pattern
-
-    # df = all_df
-    # df = df.dropna()
-    # df = df.iloc[0:1, :]
-    # pattern = list(df.pattern)[0]
-    # pattern = pattern.replace("//", "/")
     pattern = all_df.reset_index(drop=True).iloc[0, :].pattern
 
     final_extension = extension_of_directory(sim_dir)
@@ -801,11 +798,12 @@ def matchup(
 
     ds = nc.open_data(path, checks=False)
     if fvcom is False:
-        ds_extent = get_extent(ds[0])
-        lon_max = ds_extent[1]
-        lon_min = ds_extent[0]
-        lat_max = ds_extent[3]
-        lat_min = ds_extent[2]
+        with warnings.catch_warnings(record=True) as w:
+            ds_extent = get_extent(ds[0])
+            lon_max = ds_extent[1]
+            lon_min = ds_extent[0]
+            lat_max = ds_extent[3]
+            lat_min = ds_extent[2]
 
         global_grid = False
         if lon_max - lon_min > 350:
@@ -988,10 +986,12 @@ def matchup(
                             "Searching through simulation output to find it"
                         )
                         for ff in random_files:
-                            ds_thickness = nc.open_data(ff, checks=False)
-                            if "e3t" in ds_thickness.variables:
-                                e3t_found = True
-                                break
+                            # do this quietly
+                            with warnings.catch_warnings(record=True) as w:
+                                ds_thickness = nc.open_data(ff, checks=False)
+                                if "e3t" in ds_thickness.variables:
+                                    e3t_found = True
+                                    break
                     if not e3t_found:
                         raise ValueError("Unable to find e3t")
 
