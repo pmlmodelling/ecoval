@@ -19,6 +19,11 @@ def various_fixes(x):
     # a number of fixes to ensure the latex is correct
     # Make sure the 2 in R2 is a superscript
     x = x.replace("R2", "R$^2$")
+    # latex to replace
+    # pull the figure name out
+    
+
+
     return x
 
 def fix_toc(book_dir):
@@ -582,6 +587,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     Variable = "pCO2"
                 if vv == "benbio":
                     Variable = "macrobenthos biomass"
+                if vv == "susfrac":
+                    Variable = "suspension feeding fraction"
                 if vv == "pft":
                     Variable = "Plankton Functional Types"
                 vv_file = pp

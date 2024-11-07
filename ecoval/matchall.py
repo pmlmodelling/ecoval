@@ -135,6 +135,12 @@ def mm_match(
                 ds.bottom()
             ds.as_missing(0)
             ds.run()
+            suspension = False
+            if variable == "susfrac":
+                ds_variables = ds.variables
+                if "Y2_c" in ds_variables and "Y3_c" in ds_variables:
+                    ds.assign(fraction = lambda x: x.Y3_c/(x.Y2_c + x.Y3_c), drop = True)
+                    ds.run()
             if variable != "pft":
                 if len(var_match) > 1:
                     if variable == "carbon":
@@ -1280,6 +1286,14 @@ def matchup(
                 print(f"Inferred mapping saved as {mapping}")
                 all_df.to_csv(mapping, index=False)
                 return None
+    
+    # check if benbio is in all_df variable column
+    if "benbio" in list(all_df.variable):
+        # add another column using benbio row
+        df_benbio = all_df.query("variable == 'benbio'").reset_index(drop=True)
+        df_benbio["variable"] = ["susfrac"]
+        all_df = pd.concat([all_df, df_benbio]).reset_index(drop=True)
+        point_benthic.append("susfrac")
 
     if session_info["out_dir"] != "":
         out = session_info["out_dir"] + "/matched/mapping.csv"
@@ -1693,7 +1707,7 @@ def matchup(
                                 df = df.merge(df_include).reset_index(drop=True)
                             sel_these = point_time_res
                             sel_these = [x for x in df.columns if x in sel_these]
-                            if variable not in ["carbon", "benbio"]:
+                            if variable not in ["carbon", "benbio", "susfrac"]:
                                 paths = list(
                                     set(
                                         df.loc[:, sel_these]
