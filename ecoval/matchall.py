@@ -38,7 +38,8 @@ valid_vars = [
     "carbon",
     "benbio",
     "benthic_carbon_flux",
-    "mesozoo"
+    "mesozoo",
+    "oxycons"
 
 ]
 
@@ -152,7 +153,11 @@ def mm_match(
 
                         ds.set_units({"total":"kg/m3"})
                     else:
-                        ds.sum_all()
+                        if variable == "oxycons":
+                            #Y2_fYG3c/12.011 + Y3_fYG3c/12.011 + Y4_fYG3c/12.011 + H1_fHG3c/12.011 + H2_fHG3c/12.011 + 2.0 * ben_nit_nrate
+                            ds.assign(total = lambda x: x.Ymacro_fYG3c_result/12.011 + x.Y4_fYG3c/12.011 + x.H1_fHG3c/12.011 + x.H2_fHG3c/12.011 + 2.0 * x.ben_nit_nrate, drop = True) 
+                        else:
+                            ds.sum_all()
 
             if len(df_locs) > 0:
                 if top_layer:
@@ -285,7 +290,7 @@ def extract_variable_mapping(folder, exclude=[], n_check=None, fvcom = False):
                         pass
         options = glob.glob(new_directory + "/**.nc")
         if True:
-            options = [x for x in options if "part" not in os.path.basename(x)]
+            #options = [x for x in options if "part" not in os.path.basename(x)]
             options = [x for x in options if "restart" not in os.path.basename(x)]
 
         if len([x for x in options if ".nc" in x]) > 0:
@@ -1288,7 +1293,7 @@ def matchup(
                 return None
     
     # check if benbio is in all_df variable column
-    if "benbio" in list(all_df.variable):
+    if "benbio" in point_benthic:
         # add another column using benbio row
         df_benbio = all_df.query("variable == 'benbio'").reset_index(drop=True)
         df_benbio["variable"] = ["susfrac"]
@@ -1617,6 +1622,8 @@ def matchup(
                                     "variable == @point_variable"
                                 ).model_variable
                             )[0]
+
+
                             if session_info["user_dir"]:
                                 paths = glob.glob(
                                     f"{obs_dir}/point/user/**/{variable}/**{variable}**.feather"
@@ -1629,6 +1636,7 @@ def matchup(
                                 paths = glob.glob(
                                     f"{obs_dir}/point/nws/**/{variable}/**{variable}**.feather"
                                 )
+
                             if variable == "pft":
                                 point_variable = "pft"
                             source = os.path.basename(paths[0]).split("_")[0]
@@ -1707,7 +1715,7 @@ def matchup(
                                 df = df.merge(df_include).reset_index(drop=True)
                             sel_these = point_time_res
                             sel_these = [x for x in df.columns if x in sel_these]
-                            if variable not in ["carbon", "benbio", "susfrac"]:
+                            if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
                                 paths = list(
                                     set(
                                         df.loc[:, sel_these]

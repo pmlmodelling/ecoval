@@ -56,7 +56,8 @@ def generate_mapping(ds, fvcom = False):
         "nano",
         "pico",
         "benthic_carbon_flux",
-        "mesozoo"
+        "mesozoo",
+        "oxycons"
     ]
     if fvcom is False:
         ds1 = nc.open_data(ds[0], checks=False)
@@ -221,6 +222,14 @@ def generate_mapping(ds, fvcom = False):
                 for x in ds_contents.long_name
                 if "chloroph" in x.lower() and "pico" in x
             ]
+        
+        if vv == "oxycons":
+            oxy_con_vars = list(set(["Ymacro_fYG3c_result", "Y4_fYG3c", "H1_fHG3c", "H2_fHG3c", "ben_nit_nrate"]))
+            the_vars = [x for x in ds_contents_top.variable if x in oxy_con_vars]
+            print(the_vars)
+            if len(the_vars) != len(oxy_con_vars):
+                the_vars = []
+
 
         if vv in ["carbon", "benbio", "benthic_carbon_flux"]:
             model_vars = ds_contents_top.query("long_name in @the_vars").variable
@@ -241,6 +250,8 @@ def generate_mapping(ds, fvcom = False):
                     ).variable
 
         add = True
+        if vv == "oxycons":
+            model_vars = the_vars
 
         if len(model_vars) > 1 and vv not in [
             "doc",
@@ -248,6 +259,7 @@ def generate_mapping(ds, fvcom = False):
             "carbon",
             "benbio",
             "micro",
+            "oxycons"
         ]:
             add = False
 

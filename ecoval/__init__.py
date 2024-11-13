@@ -587,6 +587,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     Variable = "pCO2"
                 if vv == "benbio":
                     Variable = "macrobenthos biomass"
+                if vv == "oxycons":
+                    Variable = "oxygen consumption"
                 if vv == "susfrac":
                     Variable = "suspension feeding fraction"
                 if vv == "pft":
