@@ -972,9 +972,13 @@ def matchup(
     var_chosen = surface + bottom + point_benthic + point_bottom + point_surface
     var_chosen = list(set(var_chosen))
 
+    # create matched directory
+    if not os.path.exists("matched"):
+        os.mkdir("matched")
+
     if len(point_bottom) > 0 or mld or len(point_all) > 0:
         ds_depths = False
-        try:
+        if True:
             if True:
                 with warnings.catch_warnings(record=True) as w:
                     # extract the thickness dataset
@@ -1010,6 +1014,7 @@ def matchup(
                     ds_thickness.as_missing(0)
                     #####
                     # now output the bathymetry if it does not exists
+
                     if not os.path.exists("matched/model_bathymetry.nc"):
                         ds_bath = ds_thickness.copy()
                         ds_bath.vertical_sum()
@@ -1036,7 +1041,7 @@ def matchup(
                 for ww in w:
                     if str(ww.message) not in session_warnings:
                         session_warnings.append(str(ww.message))
-        except:
+        else:
             pass
         if ds_depths is False:
             raise ValueError(
