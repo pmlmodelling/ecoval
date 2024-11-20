@@ -64,18 +64,30 @@ def simulation_differences_comparison():
     # list files with simdiff
     # use pkg_resources to get all available data
 
-    data_path = pkg_resources.resource_filename(__name__, "data/simdiff_spatial_summaries.ipynb")
-    if not os.path.exists(f"book_comparison/notebooks/simdiff_spatial_summaries.ipynb"):
-        shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_spatial_summaries.ipynb")
+    # list paths in "../../data/"
+    file_paths = glob.glob("data/climatologies/**/**/**", recursive=True)
+    # must be ".nc"
+    file_paths = [x for x in file_paths if ".nc" in x]
 
-    # copy the mapped_differences notebook
-    data_path = pkg_resources.resource_filename(__name__, "data/simdiff_maps_notebook.ipynb")
-    if not os.path.exists(f"book_comparison/notebooks/simdiff_maps_notebook.ipynb"):
-        shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_maps_notebook.ipynb")
-    # copy the temporal_differences notebook
-    data_path = pkg_resources.resource_filename(__name__, "data/simdiff_temporal_differences.ipynb")
-    if not os.path.exists(f"book_comparison/notebooks/simdiff_temporal_differences.ipynb"):
-        shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_temporal_differences.ipynb")
+
+    if len([x for x in file_paths if "phenology-clim" not in x]) > 0:
+        data_path = pkg_resources.resource_filename(__name__, "data/simdiff_spatial_summaries.ipynb")
+        if not os.path.exists(f"book_comparison/notebooks/simdiff_spatial_summaries.ipynb"):
+            shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_spatial_summaries.ipynb")
+
+        # copy the mapped_differences notebook
+        data_path = pkg_resources.resource_filename(__name__, "data/simdiff_maps_notebook.ipynb")
+        if not os.path.exists(f"book_comparison/notebooks/simdiff_maps_notebook.ipynb"):
+            shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_maps_notebook.ipynb")
+        # copy the temporal_differences notebook
+        data_path = pkg_resources.resource_filename(__name__, "data/simdiff_temporal_differences.ipynb")
+        if not os.path.exists(f"book_comparison/notebooks/simdiff_temporal_differences.ipynb"):
+            shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_temporal_differences.ipynb")
+    # move the phenology notebook
+    if len([x for x in file_paths if "phenology-clim" in x]) > 0:
+        data_path = pkg_resources.resource_filename(__name__, "data/simdiff_phenology.ipynb")
+        if not os.path.exists(f"book_comparison/notebooks/simdiff_phenology.ipynb"):
+            shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_phenology.ipynb")
 
     data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
 
@@ -181,14 +193,32 @@ vertmean_variables = {"oxygen":"O2_o"}
 vertmean_variables["alkalinity"] = "O3_TA"
 vertmean_variables["light_attenuation"] = "light_xEPS"
 
+#  
+
 
 def simulation_differences(
     sim_1 =None,
     sim_2 =None,
-    surface_variables = dict(),
-    bottom_variables = dict(), 
-    vertmean_variables = dict(),
-    integrated_variables = dict(),
+    surface_variables = {'chlorophyll': 'P1_Chl+P2_Chl+P3_Chl+P4_Chl',
+ 'oxygen': 'O2_o',
+ 'phosphate': 'N1_p',
+ 'nitrate': 'N3_n',
+ 'silicate': 'N5_s',
+ 'benthic_biomass': 'Y2_c+Y3_c',
+ 'ph': 'O3_pH',
+ 'co2_flux': 'O3_fair',
+ 'ammonium': 'N4_n',
+ 'pCO2': 'O3_pCO2',
+ 'nano phytoplankton chlorophyll': 'P2_Chl',
+ 'micro phytoplankton chlorophyll': 'P1_Chl+P4_Chl',
+ 'pico phytoplankton chlorophyll': 'P3_Chl',
+ 'mesozooplankton': 'Z4_c'},
+    bottom_variables = {'oxygen': 'O2_o', 'pH': 'O3_pH'}, 
+    vertmean_variables = {'light_attenuation': 'light_xEPS'},
+    integrated_variables = {'DOC': 'R1_c+R2_c+R3_c',
+ 'POC': 'P1_c+P2_c+P3_c+P4_c+Z5_c+Z6_c+R4_c+R6_c+R8_c',
+ 'mesozooplankton': 'Z4_c'},
+    phenology = {"phytoplankton":"P1_c+P2_c+P3_c+P4_c", "mesozooplankt":  "Z4_c"},
     start=None,
     end=None,
     surface_level=None,
@@ -257,6 +287,19 @@ def simulation_differences(
     >>> matchup(folder = "path/to/folder", start = 2002, end = 2002, surface = {"gridded": ["temperature", "salinity", "oxygen"], "point": None}, surface_level = "top")
 
     """
+
+    # if any dictionarys are None, set them to empty dictionaries
+    if surface_variables is None:
+        surface_variables = dict()
+    if bottom_variables is None:
+        bottom_variables = dict()
+    if vertmean_variables is None:
+        vertmean_variables = dict()
+    if integrated_variables is None:
+        integrated_variables = dict()
+    if phenology is None:
+        phenology = dict()
+
 
     mass = None
 
@@ -390,7 +433,7 @@ def simulation_differences(
     if os.path.exists(ff):
         all_times = pickle.load(open(ff, "rb"))
 
-    for jj in range(4):
+    for jj in range(5):
         if jj == 0:
             var_dict = copy.deepcopy(surface_variables)
             measure = "top"
@@ -403,6 +446,9 @@ def simulation_differences(
         if jj == 3:
             var_dict = copy.deepcopy(integrated_variables)
             measure = "vertical_integration"
+        if jj == 4:
+            var_dict = copy.deepcopy(phenology)
+            measure = "phenology"
 
         pattern_list = []
         all_df_list = []
@@ -609,6 +655,8 @@ def simulation_differences(
                     ds.sum_all()
                     if measure == "top":
                         ds.top()
+                    if measure == "phenology":
+                        ds.top()
                     if measure == "bottom":
                         thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
                         n_levels = len(ds.levels) - 1
@@ -626,12 +674,23 @@ def simulation_differences(
                         thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
                         ds.vertical_integration(thickness = thickness)
                     ds.merge("time")
-                    ds.tmean(["year", "month"])
-                    ds.tmean("month")
-                    # rename the variable
-                    ds.rename({ds.variables[0]: vv})
-                    ds.fix_amm7_grid()
-                    ds.set_units({vv:unit})
+                    if measure == "phenology":
+                        ds.tmean(["year", "day"])
+                    else:
+                        ds.tmean(["year", "month"])
+                        ds.tmean(["month"])
+
+                    ds.run()
+                    try:
+                        ds.fix_amm7_grid()
+                    except:
+                        pass
+                    if measure == "phenology":
+                        ds.phenology(var = ds.variables[0], metric = "peak")
+                        ds.ensemble_mean()
+                    else:
+                        ds.rename({ds.variables[0]: vv})
+                        ds.set_units({vv:unit})
                     if mass is not None:
                         ds * mass
                     sim_name = "sim_" + str(i)
