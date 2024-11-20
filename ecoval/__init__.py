@@ -6,7 +6,7 @@ import subprocess
 import nctoolkit as nc
 import copy
 from ecoval.matchall import matchup
-from ecoval.differences import differences
+from ecoval.differences import simulation_differences, simulation_differences_comparison
 from ecoval.fixers import tidy_name
 from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
@@ -14,6 +14,7 @@ import webbrowser
 from ecoval.chunkers import add_chunks
 import os
 import re
+# pkg_resources.resource_filename(__name__, "data/mask.py")
 
 def various_fixes(x):
     # a number of fixes to ensure the latex is correct
@@ -1106,6 +1107,10 @@ def rebuild(build = None):
         webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/html/index.html"))
     else:
         webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/latex/python.pdf"))
+
+
+
+
 
 
 try:

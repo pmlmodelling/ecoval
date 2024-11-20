@@ -2,22 +2,106 @@ import copy
 import time
 import nctoolkit as nc
 import re
+import shutil
 import glob
 import multiprocessing
 import pathlib
 import os
 import pandas as pd
 import string
+import molmass
+def get_molar_mass(element):
+    from molmass import Formula
+    f = Formula(element)
+    return f.mass
 import random
 import warnings
 import pickle
 import xarray as xr
+import pkg_resources
 from ecoval.session import session_info
 from multiprocessing import Manager
 from tqdm import tqdm
 from ecoval.utils import extension_of_directory, get_extent, fvcom_regrid
 from ecoval.parsers import generate_mapping
 from ecoval.gridded import gridded_matchup
+
+def simulation_differences_comparison():
+    """
+    Compare the model output to observations for a range of variables.
+    """
+
+    if os.path.exists("book_comparison"):
+        #get user input to decide if it should be removed
+        #user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
+        user_input = "y"
+        if user_input.lower() == "y":
+            while True:
+                files = glob.glob("book_comparison/**/**/**", recursive=True)
+                # list all files in book, recursively
+                for ff in files:
+                    if ff.startswith("book_comparison"):
+                        try:
+                            os.remove(ff)
+                        except:
+                            pass
+                files = glob.glob("book_comparison/**/**/**", recursive=True)
+                # only list files
+                files = [x for x in files if os.path.isfile(x)]
+                if len(files) == 0:
+                    break
+        else:
+            print("Exiting")
+            return None
+                # if not os.path.exists(book_dir):
+                    # break
+    # create the directory
+    if not os.path.exists("book_comparison"):
+        os.makedirs("book_comparison")
+    if not os.path.exists("book_comparison/notebooks"):
+        os.makedirs("book_comparison/notebooks")
+
+    # list files with simdiff
+    # use pkg_resources to get all available data
+
+    data_path = pkg_resources.resource_filename(__name__, "data/simdiff_spatial_summaries.ipynb")
+    if not os.path.exists(f"book_comparison/notebooks/simdiff_spatial_summaries.ipynb"):
+        shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_spatial_summaries.ipynb")
+
+    # copy the mapped_differences notebook
+    data_path = pkg_resources.resource_filename(__name__, "data/simdiff_maps_notebook.ipynb")
+    if not os.path.exists(f"book_comparison/notebooks/simdiff_maps_notebook.ipynb"):
+        shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_maps_notebook.ipynb")
+    # copy the temporal_differences notebook
+    data_path = pkg_resources.resource_filename(__name__, "data/simdiff_temporal_differences.ipynb")
+    if not os.path.exists(f"book_comparison/notebooks/simdiff_temporal_differences.ipynb"):
+        shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_temporal_differences.ipynb")
+
+    data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
+
+    out = "book_comparison/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out) 
+
+    shutil.copyfile(data_path, out)
+
+    data_path = pkg_resources.resource_filename(__name__, "data/intro.md")
+
+    out = "book_comparison/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out)
+
+    data_path = pkg_resources.resource_filename(__name__, "data/_config.yml")
+
+    out = "book_comparison/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out)
+
+    os.system("jupyter-book build book_comparison/")
+    import webbrowser
+
+    webbrowser.open("file://" + os.path.abspath("book_comparison/_build/html/index.html"))
+
 
 # a list of valid variables for validation
 valid_vars = [
@@ -45,131 +129,6 @@ nc.options(parallel=True)
 nc.options(progress=False)
 
 
-def mm_match(
-    ff,
-    ersem_variable,
-    df,
-    df_times,
-    ds_depths,
-    variable,
-    df_all,
-    top_layer=False,
-    bottom_layer=False,
-):
-    """
-    Parameters
-    -------------
-    ff: str
-        Path to file
-    ersem_variable: str
-        Variable name in ERSEM
-    df: pd.DataFrame
-        Dataframe of observational data
-    df_times: pd.DataFrame
-        Dataframe of observational data with /erie_0001.nctime information
-    ds_depths: list
-        Depths to match
-
-    """
-    df_ff = None
-
-    if ds_depths is not None:
-        nc.session.append_safe(ds_depths[0])
-    try:
-        with warnings.catch_warnings(record=True) as w:
-            ds = nc.open_data(ff, checks=False)
-            var_match = ersem_variable.split("+")
-            if variable == "carbon":
-                var_match.append("Q7_pen_depth_c")
-                var_match.append("Q6_pen_depth_c")
-
-            valid_locs = ["lon", "lat", "year", "month", "day", "depth"]
-            valid_locs = [x for x in valid_locs if x in df.columns]
-
-            valid_times = (
-                "year" in df.columns or "month" in df.columns or "day" in df.columns
-            )
-
-            if valid_times:
-                df_locs = (
-                    df_times.query("path == @ff")
-                    .merge(df)
-                    .loc[:, valid_locs]
-                    .drop_duplicates()
-                    .reset_index(drop=True)
-                )
-            else:
-                df_locs = df.loc[:, valid_locs]
-
-            t_subset = False
-            if (
-                "year" in df_locs.columns
-                or "month" in df_locs.columns
-                or "day" in df_locs.columns
-            ):
-                # idenify if the files have data from multiple days
-                if "day" in df_locs.columns:
-                    if len(set(df_locs.day)) < 10:
-                        df_locs = (
-                            df_locs.drop(columns=["month"])
-                            .drop_duplicates()
-                            .reset_index(drop=True)
-                        )
-                ff_indices = df_times.query("path == @ff")
-
-                ff_indices = ff_indices.reset_index(drop=True).reset_index()
-                ff_indices = ff_indices
-                ff_indices = ff_indices.merge(df_locs)
-                ff_indices = ff_indices["index"].values
-                ff_indices = [int(x) for x in ff_indices]
-                ff_indices = list(set(ff_indices))
-                t_subset = True
-                ds.subset(time=ff_indices)
-            ds.subset(variables=var_match)
-            if top_layer:
-                ds.top()
-            if bottom_layer:
-                ds.bottom()
-            ds.as_missing(0)
-            ds.run()
-            if variable != "pft":
-                if len(var_match) > 1:
-                    if variable == "carbon":
-
-                        ds.assign(total1 = lambda x: x.Q6_c * (1 - exp(-0.1 / x.Q6_pen_depth_c)))
-                        ds.assign(total2 = lambda x: x.Q7_c * (1 - exp(-0.1 / x.Q7_pen_depth_c)))
-                        ds.assign(total =  lambda x: (x.total1 + x.total2)/0.1, drop = True)
-                        ds * ds * 1e-6
-
-                        ds.set_units({"total":"kg/m3"})
-                    else:
-                        ds.sum_all()
-
-            if len(df_locs) > 0:
-                if top_layer:
-                    df_ff = ds.match_points(df_locs, quiet=True, top=top_layer)
-                else:
-                    df_ff = ds.match_points(
-                        df_locs, depths=ds_depths, quiet=True, top=top_layer
-                    )
-                if df_ff is not None:
-                    valid_vars = ["lon", "lat", "year", "month", "day", "depth"]
-                    for vv in ds.variables:
-                        valid_vars.append(vv)
-                    valid_vars = [x for x in valid_vars if x in df_ff.columns]
-                    df_ff = df_ff.loc[:, valid_vars]
-                    df_all.append(df_ff)
-            else:
-                return None
-        if df_ff is not None:
-            for ww in w:
-                if str(ww.message) not in session_warnings:
-                    session_warnings.append(str(ww.message))
-
-    except Exception as e:
-        print(e)
-
-
 def get_time_res(x, folder=None):
     """
     Get the time resolution of the netCDF files
@@ -188,31 +147,7 @@ def get_time_res(x, folder=None):
 
     """
 
-    final_extension = extension_of_directory(folder)
-
-    if final_extension[0] == "/":
-        final_extension = final_extension[1:]
-
-    wild_card = final_extension + x
-    wild_card = wild_card.replace("**", "*")
-    # replace double stars with 1
-    wild_card = wild_card.replace("**", "*")
-
-    # figure out if the session is fvcom
-
-    if session_info["fvcom"]:
-        for x in pathlib.Path(folder).glob(wild_card):
-            path = x
-            # convert to string
-            path = str(path)
-            break
-    else:
-        wild_card = os.path.basename(wild_card)
-        for y in pathlib.Path(folder).glob(wild_card):
-            path = y
-            # convert to string
-            path = str(path)
-            break
+    path = x
 
     ds = nc.open_data(path, checks=False)
     ds_times = ds.times
@@ -234,168 +169,37 @@ def get_time_res(x, folder=None):
 random_files = []
 
 
-def extract_variable_mapping(folder, exclude=[], n_check=None, fvcom = False):
-    """
-    Find paths to netCDF files
-    Parameters
-    -------------
-    folder : str
-        The folder containing the netCDF files
-    exclude : list
-        List of strings to exclude
-    n_check : int
-        Number of files to check
+surface_variables = {"benthic_biomass":"Y2_c+Y3_c"}
+surface_variables["co2_flux"] = "O3_fair"
 
-    Returns
-    -------------
-    all_df : pd.DataFrame
-        A DataFrame containing the paths to the netCDF files
-    """
-
-    # add restart to exclude
-    exclude.append("restart")
-
-    while True:
-
-        levels = session_info["levels_down"]
-
-        new_directory = folder + "/"
-        if levels > 0:
-            for i in range(levels + 1):
-                dir_glob = glob.glob(new_directory + "/**")
-                # randomize dir_glob
-
-                random.shuffle(dir_glob)
-                for x in dir_glob:
-                    # figure out if the the base directory is an integer
-                    try:
-                        if levels != 0:
-                            y = int(os.path.basename(x))
-                        new_directory = x + "/"
-                    except:
-                        pass
-        options = glob.glob(new_directory + "/**.nc")
-        if True:
-            options = [x for x in options if "part" not in os.path.basename(x)]
-            options = [x for x in options if "restart" not in os.path.basename(x)]
-
-        if len([x for x in options if ".nc" in x]) > 0:
-            break
-
-    all_df = []
-    print("********************************")
-    print("Parsing model information from netCDF files")
-
-    # remove any files from options if parts of exclude are in them
-    for exc in exclude:
-        options = [x for x in options if f"{exc}" not in os.path.basename(x)]
-
-    print("Searching through files in a random directory to identify variable mappings")
-    # randomize options
-    if n_check is not None:
-        options = random.sample(options, n_check)
-    for ff in tqdm(options):
-        random_files.append(ff)
-        ds = nc.open_data(ff, checks=False)
-        stop = True
-        ds_dict = generate_mapping(ds, fvcom = fvcom)
-        try:
-            ds_dict = generate_mapping(ds, fvcom = fvcom)
-            stop = False
-        # output error and ff
-        except:
-            pass
-        if stop:
-            continue
-
-        ds_vars = ds.variables
-        # vosaline and votemper are special cases
-
-        if "vosaline" in ds_vars:
-            if ds_dict["salinity"] is None:
-                ds_dict["salinity"] = "vosaline"
-
-        if "votemper" in ds_vars:
-            if ds_dict["temperature"] is None:
-                ds_dict["temperature"] = "votemper"
-
-        if len([x for x in ds_dict.values() if x is not None]) > 0:
-            new_name = ""
-            for x in os.path.basename(ff).split("_"):
-                try:
-                    y = int(x)
-                    if len(new_name) > 0:
-                        new_name = new_name + "_**"
-                    else:
-                        new_name = new_name + "**"
-                except:
-                    if len(new_name) > 0:
-                        new_name = new_name + "_" + x
-                    else:
-                        new_name = x
-            # replace integers in new_name with **
-
-            new_dict = dict()
-            for key in ds_dict:
-                if ds_dict[key] is not None:
-                    new_dict[ds_dict[key]] = [key]
-            # new_name. Replace numbers between _ with **
-
-            # replace integers with 4 or more digits with **
-            new_name = re.sub(r"\d{4,}", "**", new_name)
-            # replace strings of the form _12. with _**.
-            new_name = re.sub(r"\d{2,}", "**", new_name)
-            #new_name = re.sub(r"_\d{2,}\.", "_**.", new_name)
-
-            all_df.append(
-                pd.DataFrame.from_dict(new_dict).melt().assign(pattern=new_name)
-            )
-
-    all_df = pd.concat(all_df).reset_index(drop=True)
-
-    patterns = set(all_df.pattern)
-    resolution_dict = dict()
-    for folder in patterns:
-        resolution_dict[folder] = get_time_res(folder, new_directory)
-    all_df["resolution"] = [resolution_dict[x] for x in all_df.pattern]
-
-    all_df = (
-        all_df.sort_values("resolution").groupby("value").head(1).reset_index(drop=True)
-    )
-    all_df = all_df.rename(columns={"variable": "model_variable"})
-    all_df = all_df.rename(columns={"value": "variable"})
-    all_df = all_df.drop(columns="resolution")
-    all_df = all_df.loc[:, ["variable", "model_variable", "pattern"]]
-
-    return all_df
+surface_variables["chlorophyll"] = "P1_Chl+P2_Chl+P3_Chl+P4_Chl"
+bottom_variables = {"oxygen":"O2_o", "pH":"O3_pH"},
+integrated_variables = {"phosphate": "N1_p", "nitrate": "N3_n", "silicate": "N5_s", "doc":"R1_c+R2_c+R3_c"}
+integrated_variables["poc"] = "P1_c+P2_c+P3_c+P4_c+Z5_c+Z6_c+R4_c+R6_c+R8_c"
+integrated_variables["ammonium"] = "N4_n" 
+vertmean_variables = {"oxygen":"O2_o"}
+vertmean_variables["alkalinity"] = "O3_TA"
+vertmean_variables["light_attenuation"] = "light_xEPS"
 
 
-def differences(
-    sim_dir_1 =None,
-    sim_dir_2 =None,
-    #variables = {"temperature":["votemper", "votemper"]}, # this approach would be smarter....
-    variables = "temperature",
+def simulation_differences(
+    sim_1 =None,
+    sim_2 =None,
+    surface_variables = dict(),
+    bottom_variables = dict(), 
+    vertmean_variables = dict(),
+    integrated_variables = dict(),
     start=None,
     end=None,
     surface_level=None,
-    surface="default",
-    bottom=["ph", "oxygen"],
-    benthic=["carbon", "benbio"],
-    pft=False,
     cores=None,
     thickness=None,
-    mapping=None,
-    mld=False,
     exclude=[],
     n_dirs_down=2,
-    point_time_res=["year", "month", "day"],
     lon_lim=None,
     lat_lim=None,
-    obs_dir="default",
     n_check=None,
-    everything=False,
     overwrite=True,
-    point_all=[],
     ask=True,
     out_dir="",
     **kwargs,
@@ -406,41 +210,38 @@ def differences(
     Parameters
     -------------
 
-    sim_dir : str
-        Folder containing model output
+    sim_dir_1 : str
+        The directory containing the first model directory
+    sim_dir_2 : str
+        The directory containing the second simulation
+    surface_variables : dict
+        The surface variables to matchup
+    bottom_variables : dict
+        The bottom variables to matchup
+    vertmean_variables : dict
+        The vertical mean variables to matchup
+    integrated_variables : dict
+        The integrated variables to matchup
     start : int
-        Start year. First year of the simulations to matchup.
-        This must be supplied
+        The start year
     end : int
-        End year. Final year of the simulations to matchup.
-        This must be supplied
+        The end year
     surface_level : str
-        Surface level of the model netCDF files. Either 'top' or 'bottom'. This must be supplied.
+        The surface level
     cores : int
-        Number of cores to use for parallel extraction and matchups of data.
-        Default is None, which means all cores are used.
-        If you use a large number of cores you may run into RAM issues, so keep an eye on things.
-    thickness : str
-        Path to a thickness file, i.e. cell vertical thickness. This only needs to be supplied if the variable is missing from the raw data.
-        If the e3t variable is in the raw data, it will be used, and thickness does not need to be supplied.
-    n_dirs_down : int
-        Number of levels down to look for netCDF files. Default is 2, ie. the files are of the format */*/*.nc.
+        The number of cores to use
+    thickness : int
+        The thickness of the layer to match
     exclude : list
-        List of strings to exclude. This is useful if you have files in the directory that you do not want to include in the matchup.
+        The files to exclude
+    n_dirs_down : int
+        The number of directories to go down
     lon_lim : list
-        List of two floats. The first is the minimum longitude, the second is the maximum longitude. Default is None.
+        The longitude limits
     lat_lim : list
-        List of two floats. The first is the minimum latitude, the second is the maximum latitude. Default is None.
+        The latitude limits
     n_check : int
-        Number of files when identifying mapping. Default is None, which means all files are checked.
-        The mapping is identified by looking at a random output file directory on the assumption on all directories have the same structure.
-        In general each directory will only have a small number of files. Only set n_check if there are many files.
-    kwargs: dict
-        Additional arguments
-    ask : bool
-        If True, the user will be asked if they are happy with the matchups. Default is True.
-    out_dir : str
-        Path to output directory. Default is "", so the output will be saved in the current directory.
+
 
     Returns
     -------------
@@ -455,9 +256,30 @@ def differences(
 
     >>> matchup(folder = "path/to/folder", start = 2002, end = 2002, surface = {"gridded": ["temperature", "salinity", "oxygen"], "point": None}, surface_level = "top")
 
-
-
     """
+
+    mass = None
+
+
+    # check if sim_1 is a dict
+    if isinstance(sim_1, dict):
+        sim_dir_1 = list(sim_1.values())[0]
+        sim_name_1 = list(sim_1.keys())[0]
+    else:
+        raise ValueError("sim_1 must be a dict")
+    if isinstance(sim_2, dict):
+        sim_dir_2 = list(sim_2.values())[0]
+        sim_name_2 = list(sim_2.keys())[0]
+    else:
+        raise ValueError("sim_2 must be a dict")
+    
+    
+    sim_dict = {"sim0": sim_name_1, "sim1": sim_name_2}
+    # save this as a pickle
+    with open("sim_dict.pkl", "wb") as f:
+        pickle.dump(sim_dict, f) 
+
+
     levels_down = n_dirs_down
 
     if "fvcom" not in kwargs:
@@ -525,21 +347,6 @@ def differences(
     else:
         session_info["levels_down"] = 2
 
-    if obs_dir != "default":
-        session_info["user_dir"] = True
-
-    surface_default = False
-    if surface == "default":
-        surface_default = True
-    if isinstance(surface, list):
-        surface_default = True
-
-    if obs_dir != "default":
-        if not os.path.exists(obs_dir):
-            raise ValueError(f"{obs_dir} does not exist")
-        session_info["obs_dir"] = obs_dir
-    else:
-        obs_dir = session_info["obs_dir"]
 
     # loop through kwargs, if first three characters match arg and arg is None, set arg to value
 
@@ -574,243 +381,271 @@ def differences(
     all_df = None
 
 
-
-    var_choice = [variables]
-
-    for vv in var_choice:
-        if vv not in valid_vars and vv != "all":
-            # suggest another variable based on similarity to valid_vars
-            from difflib import get_close_matches
-
-            close = get_close_matches(vv, valid_vars)
-            if len(close) > 0:
-                raise ValueError(
-                    f"{vv} is not a valid variable. Did you mean {close[0]}?"
-                )
-            raise ValueError(
-                f"{vv} is not a valid variable. Please choose from {valid_vars}"
-            )
-    if len(bottom) > 0:
-        if bottom != "all":
-            point_bottom = bottom
-
     # restrict surface to valids
 
     # surface = [x for x in surface if x in valid_surface]
 
-    pattern_list = []
-    all_df_list = []
-    times_dict_list = []
-    pattern_files_list = []
-    for sim_dir in [sim_dir_1, sim_dir_2]:
-        if all_df is None:
-            all_df = extract_variable_mapping(sim_dir, exclude=exclude, n_check=n_check, fvcom = fvcom)
+    ff = "times_dict.pkl"
+    all_times = dict()
+    if os.path.exists(ff):
+        all_times = pickle.load(open(ff, "rb"))
 
-            # add in anything that is missing
-            all_vars = valid_vars
+    for jj in range(4):
+        if jj == 0:
+            var_dict = copy.deepcopy(surface_variables)
+            measure = "top"
+        if jj == 1:
+            var_dict = copy.deepcopy(bottom_variables)
+            measure = "bottom"
+        if jj == 2:
+            var_dict = copy.deepcopy(vertmean_variables)
+            measure = "vertical_mean"
+        if jj == 3:
+            var_dict = copy.deepcopy(integrated_variables)
+            measure = "vertical_integration"
 
-            missing_df = pd.DataFrame({"variable": all_vars}).assign(
-                model_variable=None, pattern=None
-            )
+        pattern_list = []
+        all_df_list = []
+        times_dict_list = []
+        pattern_files_list = []
 
-            all_df = (
-                pd.concat([all_df, missing_df])
-                .groupby("variable")
-                .head(1)
-                .reset_index(drop=True)
-            )
-            # add in poc
-            df_poc = all_df.query("variable == 'chlorophyll'").reset_index(drop=True)
-            if df_poc.model_variable[0] is not None:
-                poc_mapping = df_poc.model_variable[0]
-                # replace Chl with c
-                poc_mapping = poc_mapping.replace("Chl", "c")
-                poc_mapping = poc_mapping + "+Z5_c+Z6_c+R4_c+R6_c+R8_c"
-                df_poc["model_variable"] = [poc_mapping]
-                df_poc["variable"] = ["poc"]
+        for kk in range(len(var_dict)):
+            for ii in range(2):
+                while True:
+                    if ii == 0:
+                        folder = sim_dir_1
+                    else:
+                        folder = sim_dir_2
+                    levels = session_info["levels_down"]
 
-                all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
+                    new_directory = folder + "/"
+                    if levels > 0:
+                        for i in range(levels + 1):
+                            dir_glob = glob.glob(new_directory + "/**")
+                            # randomize dir_glob
 
-            print(all_df)
+                            random.shuffle(dir_glob)
+                            for x in dir_glob:
+                                # figure out if the the base directory is an integer
+                                try:
+                                    if levels != 0:
+                                        y = int(os.path.basename(x))
+                                    new_directory = x + "/"
+                                except:
+                                    pass
+                    options = glob.glob(new_directory + "/**.nc")
+                    if True:
+                        #options = [x for x in options if "part" not in os.path.basename(x)]
+                        options = [x for x in options if "restart" not in os.path.basename(x)]
 
+                    if len([x for x in options if ".nc" in x]) > 0:
+                        break
 
-        pattern = all_df.reset_index(drop=True).iloc[0, :].pattern
+                print("********************************")
+                print("Parsing model information from netCDF files")
+                print("********************************")
 
-        final_extension = extension_of_directory(sim_dir)
+                # remove any files from options if parts of exclude are in them
+                for exc in exclude:
+                    options = [x for x in options if f"{exc}" not in os.path.basename(x)]
 
-        if final_extension[0] == "/":
-            final_extension = final_extension[1:]
+                var_choice = list(var_dict.keys())[kk]
+                var_choice = var_choice.replace(" ", "_")
+                vv = var_choice
+                # replace " " with "_"
+                model_vars = list(var_dict.values())[kk]
 
-        wild_card = final_extension + pattern
-        wild_card = wild_card.replace("**", "*")
-        for x in pathlib.Path(sim_dir).glob(wild_card):
-            path = x
-            # convert to string
-            path = str(path)
-            break
+                t_res = None 
+                pattern = None
+                n_check = 8
+                i = 0
 
-        ds = nc.open_data(path, checks=False)
-        if fvcom is False:
-            ds_extent = get_extent(ds[0])
-            lon_max = ds_extent[1]
-            lon_min = ds_extent[0]
-            lat_max = ds_extent[3]
-            lat_min = ds_extent[2]
+                for ff in options:
+                    ds_ff = nc.open_data(ff, checks = False)
+                    the_vars = ds_ff.variables
+                    var1 = model_vars.split("+")[0]
+                    if var1 in the_vars:
+                        ff_pattern = os.path.basename(ff)
+                        # replace integers with 4 or more digits with **
+                        ff_pattern = re.sub(r"\d{4,}", "**", ff_pattern)
+                        # replace strings of the form _12. with _**.
+                        ff_pattern = re.sub(r"\d{2,}", "**", ff_pattern)
+                        ff_res = get_time_res(ff, folder)
+                        if t_res is None:
+                            pattern = ff_pattern
+                        else:
+                            if ff_res == "d":
+                                pattern = ff_pattern
+                    i+= 1
+                    if i > n_check:
+                        break 
+                print("********************************")
+                print("Extracting times from netCDF files")
+                print("********************************")
 
-            global_grid = False
-            if lon_max - lon_min > 350:
-                global_grid = True
-            if lat_max - lat_min > 170:
-                global_grid = True
-            if lon_max > 50:
-                global_grid = True
-
-            if global_grid:
-                model_domain = "global"
-            else:
-                model_domain = "nws"
-        else:
-            if erie is False:
-                global_grid = False
-                model_domain = "nws"
-            else:
-                global_grid = True
-                model_domain = "global"
-        # pattern = pattern.replace("//", "/")
-        all_vars = [variables]
-        df_variables = all_df.query("variable in @all_vars").reset_index(drop=True)
-        # remove rows where model_variable is None
-        df_variables = df_variables.dropna().reset_index(drop=True)
-
-        patterns = list(set(df_variables.pattern))
-
-        times_dict = dict()
-
-        pattern_files = {}
-        for pattern in patterns:
-            print(f"Indexing file time information for {pattern} files")
-            final_extension = extension_of_directory(sim_dir)
-
-            ensemble = glob.glob(sim_dir + final_extension + pattern)
-            for exc in exclude:
-                ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
-            pattern_files[pattern] = ensemble
-
-            if fvcom is False:
+                if pattern is None:
+                    raise ValueError("No daily data found")
+                pattern_list.append(pattern)
+                search_pattern = folder + "/"
+                for i in range(n_dirs_down):
+                    search_pattern = search_pattern + "/**"
+                search_pattern = search_pattern + "/" + pattern
+                ensemble = glob.glob(search_pattern, recursive = True)
+                #  remove anything with restart
+                ensemble = [x for x in ensemble if "restart" not in x]
+                # nothing with spinup
+                ensemble = [x for x in ensemble if "spinup" not in x]
+                ensemble = list(set(ensemble))
+                pattern_files_list.append(ensemble)
                 ds = xr.open_dataset(ensemble[0])
                 time_name = [x for x in list(ds.dims) if "time" in x][0]
+                ensemble = list(set(ensemble))
 
-            for ff in tqdm(ensemble):
-                if "restart" in ff:
-                    continue
-                if fvcom is False:
-                    ds = xr.open_dataset(ff)
-                    ff_month = [int(x.dt.month) for x in ds[time_name]]
-                    ff_year = [int(x.dt.year) for x in ds[time_name]]
-                    days = [int(x.dt.day) for x in ds[time_name]]
-                else:
-                    found_times = False
-                    try:
+                # randomize ensemble
+                random.shuffle(ensemble)
+
+                times_dict = dict()
+                for ff in tqdm(ensemble):
+                    if ff in all_times:
+                        times_dict[ff] = all_times[ff]
+                        continue
+
+                    if "restart" in ff:
+                        continue
+                    if True:
                         ds = xr.open_dataset(ff)
-                        time_name = [x for x in list(ds.dims) if "time" in x][0]
                         ff_month = [int(x.dt.month) for x in ds[time_name]]
                         ff_year = [int(x.dt.year) for x in ds[time_name]]
                         days = [int(x.dt.day) for x in ds[time_name]]
-                        found_times = True
-                    except:
-                        found_times = False
+                    df_ff = pd.DataFrame(
+                        {
+                            "year": ff_year,
+                            "month": ff_month,
+                            "day": days,
+                        }
+                    )
+                    times_dict[ff] = df_ff
+                    all_times[ff] = df_ff
+                times_dict_list.append(times_dict)
 
-                    if not found_times:
-                        ds = nc.open_data(ff, checks = False)
-                        ds_times = ds.times
-                        ff_month = [int(x.month) for x in ds_times]
-                        ff_year = [int(x.year) for x in ds_times]
-                        days = [int(x.day) for x in ds_times]
-                        if len(ds_times) == 0:
-                            try:
-                                ds = xr.open_dataset(ff, decode_times = False)
-                                times = [x for x in ds.Times.values]
-                                # decode bytes
-                                times = [x.decode() for x in times]
-                                # times are of the format YYYY-MM-DDTHH:MM:SSZ
-                                times = [x.split('T')[0] for x in times]
-                                years = [x.split('-')[0] for x in times]
-                                months = [x.split('-')[1] for x in times]
-                                days = [x.split('-')[2] for x in times]
-                                # convert to int
-                                ff_year = [int(x) for x in years]
-                                ff_month = [int(x) for x in months]
-                                days = [int(x) for x in days]
-                            except:
-                                raise ValueError("No times found in the file")
-                df_ff = pd.DataFrame(
-                    {
-                        "year": ff_year,
-                        "month": ff_month,
-                        "day": days,
-                    }
-                )
-                times_dict[ff] = df_ff
+            # write all times to a pickle
+            pickle.dump(all_times, open("times_dict.pkl", "wb")) 
 
-        # save this as a pickle
-        # make sure directory exist
-        if not os.path.exists(session_info["out_dir"] + "matched"):
-            os.makedirs(session_info["out_dir"] + "matched")
-        with open(session_info["out_dir"] + "matched/times_dict.pkl", "wb") as f:
-            pickle.dump(times_dict, f)
-        
-        # add results to lists
-        pattern_list.append(patterns)
-        all_df_list.append(all_df)
-        times_dict_list.append(times_dict)
-        pattern_files_list.append(pattern_files)
+            if True:
+                # now create a climatology for each variable
+                min_year = start
+                max_year = end
+                for i in range(2):
+                    pattern = pattern_list[i] 
+                    pattern_files = pattern_files_list[i]
+                    times_dict = times_dict_list[i]
+                    i_years = []
+                    for ff in pattern_files:
+                        ff_times = times_dict[ff]
+                        i_years += list(set(ff_times.year))
+                    min_year = max(min(i_years), min_year)
+                    max_year = min(max(i_years), max_year)
+
+                if min_year > max_year:
+                    raise ValueError("No data found for the specified years")
+
+                # now do the climatology
+                for i in range(2):
+                    sim_name = "sim_" + str(i)
+                    out_file = f"data/climatologies/{vv}/{measure}/{measure}-climatology-{vv}-{sim_name}.nc"
+                    if session_info["overwrite"] is False:
+                        if os.path.exists(out_file):
+                            continue
+                    var_files = []
+                    # get the files first
+                    pattern = pattern_list[i] 
+                    pattern_files = pattern_files_list[i]
+                    times_dict = times_dict_list[i]
+                    for ff in pattern_files:
+                        ff_times = times_dict[ff]
+                        ff_times = ff_times.query("year >= @min_year and year <= @max_year")
+                        if len(ff_times) > 0:
+                            var_files.append(ff)
+
+                    ds = nc.open_data(var_files)
+                    ds_contents = ds.contents
+                    vv_model = model_vars.split("+")
+                    unit = ds_contents.query("variable in @vv_model").reset_index(drop = True).unit[0]
+                    long_name = ds_contents.query("variable in @vv_model").reset_index(drop = True).long_name[0]
+                    if measure == "vertical_integration":
+                        if "mmol" in unit:
+                            if "mmol" in unit:
+                                mass = None
+                                element = unit.split("/")[0].split(" ")[-1]
+                                if element == "O_2":
+                                    element = "O"
+                                try:
+                                    mass = get_molar_mass(element)
+                                except:
+                                    if "alkalinity" in long_name:
+                                        pass
+                                    else:
+                                        if "oxygen" in long_name:
+                                            element = "O"
+                                        if "phosphate" in long_name:
+                                            element = "P"
+                                        if "nitrate" in long_name:
+                                            element = "N"
+                                        if "nitrogen" in long_name:
+                                            element = "N"
+                                        if "silicate" in long_name:
+                                            element = "Si"
+                                        if "carbon carbon" in long_name:
+                                            element = "C"
+                                        mass = get_molar_mass(element)
+                                        # figure out if you can modify the variable
+                                if mass is not None:
+                                    unit = unit.replace("mmol", "mg")
+                                    # ds.set_units({vv_model[0]:unit})
 
 
-    for vv in var_choice:
-        # now create a climatology for each variable
-        min_year = start
-        max_year = end
-        for i in range(2):
-            print(all_df_list[i])
-            pattern = all_df_list[i].query("variable == @vv").reset_index(drop=True).pattern[0]
-            pattern_files = pattern_files_list[0][pattern]
-            times_dict = times_dict_list[0]
-            i_years = []
-            for ff in pattern_files:
-                ff_times = times_dict[ff]
-                i_years += list(set(ff_times.year))
-            min_year = max(min(i_years), min_year)
-            max_year = min(max(i_years), max_year)
-            
-        if min_year > max_year:
-            raise ValueError("No data found for the specified years")
-        
-        # now do the climatology
-        for i in range(2):
-            var_files = []
-            # get the files first
-            pattern = all_df_list[i].query("variable == @vv").reset_index(drop=True).pattern[0]
-            pattern_files = pattern_files_list[i][pattern]
-            times_dict = times_dict_list[i]
-            for ff in pattern_files:
-                ff_times = times_dict[ff]
-                ff_times = ff_times.query("year >= @min_year and year <= @max_year")
-                if len(ff_times) > 0:
-                    var_files.append(ff)
-            
-            ds = nc.open_data(var_files)
-            vv_model = all_df_list[i].query("variable == @vv").reset_index(drop=True).model_variable[0]
-            ds.subset(variables = vv_model)
-            ds.top()
-            ds.merge("time")
-            ds.tmean("year")
-            ds.tmean()
-            sim_name = "sim_" + str(i)
-            out_file = f"data/climatologies/{vv}/climatology_{vv}_{sim_name}.nc"
-            # ensure directory exists
-            if not os.path.exists(f"data/climatologies/{vv}"):
-                os.makedirs(f"data/climatologies/{vv}")
-            ds.to_nc(out_file)
+                    ds.subset(variables = vv_model)
+                    ds.as_missing(0)
+                    ds.sum_all()
+                    if measure == "top":
+                        ds.top()
+                    if measure == "bottom":
+                        thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                        n_levels = len(ds.levels) - 1
+                        ds.cdo_command(f"sellevidx,1/{n_levels}")
+                        ds.cdo_command("bottomvalue")
+                        # ds.cdo_command("bottomvalue")
+                    if measure == "vertical_mean":
+                        thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                        n_levels = len(ds.levels) - 1
+                        ds_thickness = nc.open_data(thickness)
+                        ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
+                        ds.cdo_command(f"sellevidx,1/{n_levels}")
+                        ds.vertical_mean(thickness = ds_thickness)
+                    if measure == "vertical_integration":
+                        thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                        ds.vertical_integration(thickness = thickness)
+                    ds.merge("time")
+                    ds.tmean(["year", "month"])
+                    ds.tmean("month")
+                    # rename the variable
+                    ds.rename({ds.variables[0]: vv})
+                    ds.fix_amm7_grid()
+                    ds.set_units({vv:unit})
+                    if mass is not None:
+                        ds * mass
+                    sim_name = "sim_" + str(i)
+                    out_file = f"data/climatologies/{vv}/{measure}/{measure}-climatology-{vv}-{sim_name}.nc"
+                    # if this exists, delte it
+                    if os.path.exists(out_file):
+                        os.remove(out_file)
+                    # ensure directory exists
+                    if not os.path.exists(os.path.dirname(out_file)):
+                        os.makedirs(os.path.dirname(out_file))
+                    ds.set_fill(-9999)
+                    ds.to_nc(out_file, zip = True)
+
+    simulation_differences_comparison()
 
 
         
