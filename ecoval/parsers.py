@@ -226,7 +226,6 @@ def generate_mapping(ds, fvcom = False):
         if vv == "oxycons":
             oxy_con_vars = list(set(["Ymacro_fYG3c_result", "Y4_fYG3c", "H1_fHG3c", "H2_fHG3c", "ben_nit_nrate"]))
             the_vars = [x for x in ds_contents_top.variable if x in oxy_con_vars]
-            print(the_vars)
             if len(the_vars) != len(oxy_con_vars):
                 the_vars = []
 
