@@ -39,7 +39,8 @@ valid_vars = [
     "benbio",
     "benthic_carbon_flux",
     "mesozoo",
-    "oxycons"
+    "oxycons",
+    "spm"
 
 ]
 
@@ -105,6 +106,8 @@ def mm_match(
             else:
                 df_locs = df.loc[:, valid_locs]
 
+            ds.subset(variables=var_match)
+
             t_subset = False
             if (
                 "year" in df_locs.columns
@@ -128,8 +131,10 @@ def mm_match(
                 ff_indices = [int(x) for x in ff_indices]
                 ff_indices = list(set(ff_indices))
                 t_subset = True
+
+                if len(ff_indices) == 0:
+                    return None
                 ds.subset(time=ff_indices)
-            ds.subset(variables=var_match)
             if top_layer:
                 ds.top()
             if bottom_layer:
