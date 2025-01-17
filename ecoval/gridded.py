@@ -91,6 +91,7 @@ def gridded_matchup(
         "ph",
         "alkalinity",
         "doc",
+        "spm"
     ]
     vars = [x for x in vars if x in var_choice]
     vars.sort()
@@ -211,6 +212,8 @@ def gridded_matchup(
                     all_years += list(times_dict[ff].year)
                 all_years = list(set(all_years))
 
+                print(all_years)
+                print(sim_end)
 
                 sim_years = range(sim_start, sim_end + 1)
                 sim_years = [x for x in all_years if x in sim_years]
@@ -226,7 +229,16 @@ def gridded_matchup(
                     .reset_index()
                     .year
                 ))
+                old_years = sim_years
                 sim_years = [x for x in sim_years if x in year_options]
+                month_sel = range(1, 13)
+                if len(sim_years) == 0:
+                    sim_years = old_years
+                    month_sel =   list(set(
+                        pd.concat([x for x in times_dict.values()]).loc[:,["year", "month"]]
+                        .drop_duplicates()
+                        .month
+                    ))
 
                 for ff in paths:
                     if len([x for x in times_dict[ff].year if x in sim_years]) > 0:
@@ -428,6 +440,7 @@ def gridded_matchup(
                         vv_file,
                         checks=False,
                     )
+                    ds_obs.subset(months = month_sel)
                     if vv_source == "occci":
                         ds_obs.subset(variable="chlor_a")
                         ds_obs.subset(years=range(start_year, end_year + 1))
@@ -440,6 +453,7 @@ def gridded_matchup(
                             vv_file,
                             checks=False,
                         )
+                        ds_obs_annual.subset(months = month_sel)
                         ds_obs_annual.rename(
                             {ds_obs_annual.variables[0]: "observation"}
                         )
