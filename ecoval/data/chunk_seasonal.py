@@ -195,7 +195,8 @@ library(dplyr, warn.conflicts = FALSE)
 df_model <- arrow::read_feather("adhoc/df_model_model.feather")
 
 
-if("month" %in% colnames(df_model)){
+max_month = max(df_model$month)
+if("month" %in% colnames(df_model) & max_month < 7){
 
     model_unit = str_replace(model_unit, "/m\\^3", "m<sup>-3</sup>")
 
@@ -456,7 +457,8 @@ library(dplyr, warn.conflicts = FALSE)
 
 df_model <- arrow::read_feather("adhoc/df_model_model.feather")
 
-if ("month" %in% colnames(df_model)){
+max_month = max(df_model$month)
+if("month" %in% colnames(df_model) & max_month > 6){
 
     df_model_raw <- drop_na(df_model)
     df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
