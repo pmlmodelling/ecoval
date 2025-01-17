@@ -57,6 +57,7 @@ def generate_mapping(ds, fvcom = False):
         "pico",
         "benthic_carbon_flux",
         "mesozoo",
+        "spm",
         "oxycons"
     ]
     if fvcom is False:
@@ -80,6 +81,12 @@ def generate_mapping(ds, fvcom = False):
                 if vv_check.lower() in x
                 and "benthic" not in x.lower()
                 and "river" not in x.lower()
+            ]
+        if vv == "spm":
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "chloroph" in x and ("micro" in x)
             ]
         if vv == "doc":
             # doc = [x for x in ds.contents.long_name if "arbon" in x and "iss" in x and " organic" in x and "benthic" not in x]
