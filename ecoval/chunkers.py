@@ -17,7 +17,7 @@ def is_chunk(x):
     except:
         return False
 
-def add_chunks(build = "html"):
+def add_chunks(build = "html", cdf = False):
 
     nws = False
     if len(glob.glob("matched/gridded/nws/**/*.nc")) > 0:
@@ -41,6 +41,9 @@ def add_chunks(build = "html"):
                 # get the file names
                 chunk_file = line.replace("\n", "") + ".py"
                 # check if globals is in chunk file
+                if cdf == False:
+                    if "chunk_cdf" in chunk_file:
+                        continue
                 if "globals" in chunk_file:
                 #     # now, we need to figure out if it's a global grid
                     try:

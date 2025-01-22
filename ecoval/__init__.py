@@ -414,7 +414,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None, test = False):
+def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None, cdf = False, test = False):
     # docstring
     """
     Run the model evaluation for all of the available datasets, and generate a validation report.
@@ -434,6 +434,9 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
     model : str
         The name of the model. This is only for providing model info and a schematic.
         The only option right now is "ersem". 
+    cdf : bool
+        Whether to calculate the cumulative distribution function for variables. Default is False 
+
 
 
     Returns
@@ -860,7 +863,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         os.system(f"jupytext --set-formats ipynb,py:percent {book_dir}/notebooks/*.ipynb")
 
         # add the chunks
-        add_chunks(build)
+        add_chunks(build, cdf = cdf)
 
         # loop through the notebooks and set r warnings options
         for ff in glob.glob(f"{book_dir}/notebooks/*.py"):
