@@ -223,7 +223,7 @@ def simulation_differences(
     end=None,
     surface_level=None,
     cores=None,
-    thickness=None,
+    thickness_files=[None, None],
     exclude=[],
     n_dirs_down=2,
     lon_lim=None,
@@ -308,7 +308,7 @@ def simulation_differences(
     if isinstance(sim_1, dict):
         sim_dir_1 = list(sim_1.values())[0]
         sim_name_1 = list(sim_1.keys())[0]
-    else:
+    else: 
         raise ValueError("sim_1 must be a dict")
     if isinstance(sim_2, dict):
         sim_dir_2 = list(sim_2.values())[0]
@@ -496,10 +496,14 @@ def simulation_differences(
                     options = [x for x in options if f"{exc}" not in os.path.basename(x)]
 
                 var_choice = list(var_dict.keys())[kk]
+
                 var_choice = var_choice.replace(" ", "_")
                 vv = var_choice
                 # replace " " with "_"
                 model_vars = list(var_dict.values())[kk]
+
+                # if isinstance(model_vars, list):
+                    # model_vars = model_vars[ii]
 
                 t_res = None 
                 pattern = None
@@ -509,7 +513,10 @@ def simulation_differences(
                 for ff in options:
                     ds_ff = nc.open_data(ff, checks = False)
                     the_vars = ds_ff.variables
-                    var1 = model_vars.split("+")[0]
+                    if isinstance(model_vars, list):
+                        var1 = model_vars[ii].split("+")[0]
+                    else:
+                        var1 = model_vars.split("+")[0]
                     if var1 in the_vars:
                         ff_pattern = os.path.basename(ff)
                         # replace integers with 4 or more digits with **
@@ -615,7 +622,11 @@ def simulation_differences(
 
                     ds = nc.open_data(var_files)
                     ds_contents = ds.contents
-                    vv_model = model_vars.split("+")
+                    if isinstance(model_vars, list):
+                        vv_model = model_vars[i].split("+")
+                    else:
+                        vv_model = model_vars.split("+")
+
                     unit = ds_contents.query("variable in @vv_model").reset_index(drop = True).unit[0]
                     long_name = ds_contents.query("variable in @vv_model").reset_index(drop = True).long_name[0]
                     if measure == "vertical_integration":
@@ -658,24 +669,33 @@ def simulation_differences(
                     if measure == "phenology":
                         ds.top()
                     if measure == "bottom":
-                        thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                        if thickness_files[i] is not None:
+                            thickness = thickness_files[i]
+                        else:
+                            thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
                         n_levels = len(ds.levels) - 1
                         ds.cdo_command(f"sellevidx,1/{n_levels}")
                         ds.cdo_command("bottomvalue")
                         # ds.cdo_command("bottomvalue")
                     if measure == "vertical_mean":
-                        thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                        if thickness_files[i] is not None:
+                            thickness = thickness_files[i]
+                        else:
+                            thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
                         n_levels = len(ds.levels) - 1
                         ds_thickness = nc.open_data(thickness)
                         ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
                         ds.cdo_command(f"sellevidx,1/{n_levels}")
                         ds.vertical_mean(thickness = ds_thickness)
                     if measure == "vertical_integration":
-                        thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                        if thickness_files[i] is not None:
+                            thickness = thickness_files[i]
+                        else:
+                            thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
                         ds.vertical_integration(thickness = thickness)
                     ds.merge("time")
                     if measure == "phenology":
-                        ds.tmean(["year", "day"])
+                        ds.tmean(["year", "month", "day"])
                     else:
                         ds.tmean(["year", "month"])
                         ds.tmean(["month"])
