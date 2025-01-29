@@ -237,6 +237,10 @@ def generate_mapping(ds, fvcom = False):
                 the_vars = []
 
 
+        if vv == "chlorophyll":
+            if len(the_vars) > 1:
+                the_vars = [x for x in the_vars if "total" not in x.lower()]
+
         if vv in ["carbon", "benbio", "benthic_carbon_flux"]:
             model_vars = ds_contents_top.query("long_name in @the_vars").variable
             if len(the_vars) > 0:
