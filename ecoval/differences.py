@@ -232,6 +232,7 @@ def simulation_differences(
     overwrite=True,
     ask=True,
     out_dir="",
+    build = True,
     **kwargs,
 ):
     """
@@ -627,8 +628,14 @@ def simulation_differences(
                     else:
                         vv_model = model_vars.split("+")
 
-                    unit = ds_contents.query("variable in @vv_model").reset_index(drop = True).unit[0]
-                    long_name = ds_contents.query("variable in @vv_model").reset_index(drop = True).long_name[0]
+                    try:
+                        unit = ds_contents.query("variable in @vv_model").reset_index(drop = True).unit[0]
+                    except:
+                        unit = ""
+                    try:
+                        long_name = ds_contents.query("variable in @vv_model").reset_index(drop = True).long_name[0]
+                    except:
+                        long_name = ""
                     if measure == "vertical_integration":
                         if "mmol" in unit:
                             if "mmol" in unit:
@@ -661,6 +668,7 @@ def simulation_differences(
                                     # ds.set_units({vv_model[0]:unit})
 
 
+                    
                     ds.subset(variables = vv_model)
                     ds.as_missing(0)
                     ds.sum_all()
@@ -724,7 +732,8 @@ def simulation_differences(
                     ds.set_fill(-9999)
                     ds.to_nc(out_file, zip = True)
 
-    simulation_differences_comparison()
+    if build:
+        simulation_differences_comparison()
 
 
         
