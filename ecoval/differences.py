@@ -21,7 +21,6 @@ import xarray as xr
 import pkg_resources
 from ecoval.session import session_info
 from multiprocessing import Manager
-from tqdm import tqdm
 from ecoval.utils import extension_of_directory, get_extent, fvcom_regrid
 from ecoval.parsers import generate_mapping
 from ecoval.gridded import gridded_matchup
@@ -453,10 +452,26 @@ def simulation_differences(
 
         pattern_list = []
         all_df_list = []
-        times_dict_list = []
-        pattern_files_list = []
 
         for kk in range(len(var_dict)):
+            var_choice = list(var_dict.keys())[kk]
+            var_choice = var_choice.replace(" ", "_")
+
+            measure_name = measure
+            if measure_name == "top":
+                measure_name = "surface"
+            if measure_name == "bottom":
+                measure_name = "bottom"
+            if measure_name == "vertical_mean":
+                measure_name = "vertically averaged"
+            if measure_name == "vertical_integration":
+                measure_name = "vertically integrated"
+            if measure_name == "phenology":
+                measure_name = "phenology of"
+            print(f"********* Extracting data for {measure} {var_choice} ************")
+            print("Identifying time info and finding relevant files")
+
+            pattern_files_list = []
             for ii in range(2):
                 while True:
                     if ii == 0:
@@ -487,10 +502,6 @@ def simulation_differences(
 
                     if len([x for x in options if ".nc" in x]) > 0:
                         break
-
-                print("********************************")
-                print("Parsing model information from netCDF files")
-                print("********************************")
 
                 # remove any files from options if parts of exclude are in them
                 for exc in exclude:
@@ -528,14 +539,11 @@ def simulation_differences(
                         if t_res is None:
                             pattern = ff_pattern
                         else:
-                            if ff_res == "d":
-                                pattern = ff_pattern
+                            # if ff_res in ["d", "m"]:
+                            pattern = ff_pattern
                     i+= 1
                     if i > n_check:
                         break 
-                print("********************************")
-                print("Extracting times from netCDF files")
-                print("********************************")
 
                 if pattern is None:
                     raise ValueError("No daily data found")
@@ -558,19 +566,16 @@ def simulation_differences(
                 # randomize ensemble
                 random.shuffle(ensemble)
 
-                times_dict = dict()
-                for ff in tqdm(ensemble):
-                    if ff in all_times:
-                        times_dict[ff] = all_times[ff]
+                for ff in ensemble:
+                    if ff in all_times.keys():
                         continue
 
                     if "restart" in ff:
                         continue
-                    if True:
-                        ds = xr.open_dataset(ff)
-                        ff_month = [int(x.dt.month) for x in ds[time_name]]
-                        ff_year = [int(x.dt.year) for x in ds[time_name]]
-                        days = [int(x.dt.day) for x in ds[time_name]]
+                    ds = xr.open_dataset(ff)
+                    ff_month = [int(x.dt.month) for x in ds[time_name]]
+                    ff_year = [int(x.dt.year) for x in ds[time_name]]
+                    days = [int(x.dt.day) for x in ds[time_name]]
                     df_ff = pd.DataFrame(
                         {
                             "year": ff_year,
@@ -578,12 +583,7 @@ def simulation_differences(
                             "day": days,
                         }
                     )
-                    times_dict[ff] = df_ff
                     all_times[ff] = df_ff
-                times_dict_list.append(times_dict)
-
-            # write all times to a pickle
-            pickle.dump(all_times, open("times_dict.pkl", "wb")) 
 
             if True:
                 # now create a climatology for each variable
@@ -592,10 +592,9 @@ def simulation_differences(
                 for i in range(2):
                     pattern = pattern_list[i] 
                     pattern_files = pattern_files_list[i]
-                    times_dict = times_dict_list[i]
                     i_years = []
                     for ff in pattern_files:
-                        ff_times = times_dict[ff]
+                        ff_times = all_times[ff]
                         i_years += list(set(ff_times.year))
                     min_year = max(min(i_years), min_year)
                     max_year = min(max(i_years), max_year)
@@ -605,6 +604,10 @@ def simulation_differences(
 
                 # now do the climatology
                 for i in range(2):
+                    if i == 0:
+                        print(f"Extracting data for {measure} {var_choice} for the first simulation")
+                    else:
+                        print(f"Extracting data for {measure} {var_choice} for the second simulation")
                     sim_name = "sim_" + str(i)
                     out_file = f"data/climatologies/{vv}/{measure}/{measure}-climatology-{vv}-{sim_name}.nc"
                     if session_info["overwrite"] is False:
@@ -614,14 +617,13 @@ def simulation_differences(
                     # get the files first
                     pattern = pattern_list[i] 
                     pattern_files = pattern_files_list[i]
-                    times_dict = times_dict_list[i]
                     for ff in pattern_files:
-                        ff_times = times_dict[ff]
+                        ff_times = all_times[ff]
                         ff_times = ff_times.query("year >= @min_year and year <= @max_year")
                         if len(ff_times) > 0:
                             var_files.append(ff)
 
-                    ds = nc.open_data(var_files)
+                    ds = nc.open_data(var_files, checks = False)
                     ds_contents = ds.contents
                     if isinstance(model_vars, list):
                         vv_model = model_vars[i].split("+")
@@ -666,70 +668,70 @@ def simulation_differences(
                                 if mass is not None:
                                     unit = unit.replace("mmol", "mg")
                                     # ds.set_units({vv_model[0]:unit})
-
-
                     
-                    ds.subset(variables = vv_model)
-                    ds.as_missing(0)
-                    ds.sum_all()
-                    if measure == "top":
-                        ds.top()
-                    if measure == "phenology":
-                        ds.top()
-                    if measure == "bottom":
-                        if thickness_files[i] is not None:
-                            thickness = thickness_files[i]
+                    # capture warning
+                    with warnings.catch_warnings(record=True) as w:
+                        ds.subset(variables = vv_model)
+                        ds.as_missing(0)
+                        ds.sum_all()
+                        if measure == "top":
+                            ds.top()
+                        if measure == "phenology":
+                            ds.top()
+                        if measure == "bottom":
+                            if thickness_files[i] is not None:
+                                thickness = thickness_files[i]
+                            else:
+                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                            n_levels = len(ds.levels) - 1
+                            ds.cdo_command(f"sellevidx,1/{n_levels}")
+                            ds.cdo_command("bottomvalue")
+                            # ds.cdo_command("bottomvalue")
+                        if measure == "vertical_mean":
+                            if thickness_files[i] is not None:
+                                thickness = thickness_files[i]
+                            else:
+                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                            n_levels = len(ds.levels) - 1
+                            ds_thickness = nc.open_data(thickness, checks = False)
+                            ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
+                            ds.cdo_command(f"sellevidx,1/{n_levels}")
+                            ds.vertical_mean(thickness = ds_thickness)
+                        if measure == "vertical_integration":
+                            if thickness_files[i] is not None:
+                                thickness = thickness_files[i]
+                            else:
+                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                            ds.vertical_integration(thickness = thickness)
+                        ds.merge("time")
+                        if measure == "phenology":
+                            ds.tmean(["year", "month", "day"])
                         else:
-                            thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
-                        n_levels = len(ds.levels) - 1
-                        ds.cdo_command(f"sellevidx,1/{n_levels}")
-                        ds.cdo_command("bottomvalue")
-                        # ds.cdo_command("bottomvalue")
-                    if measure == "vertical_mean":
-                        if thickness_files[i] is not None:
-                            thickness = thickness_files[i]
-                        else:
-                            thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
-                        n_levels = len(ds.levels) - 1
-                        ds_thickness = nc.open_data(thickness)
-                        ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
-                        ds.cdo_command(f"sellevidx,1/{n_levels}")
-                        ds.vertical_mean(thickness = ds_thickness)
-                    if measure == "vertical_integration":
-                        if thickness_files[i] is not None:
-                            thickness = thickness_files[i]
-                        else:
-                            thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
-                        ds.vertical_integration(thickness = thickness)
-                    ds.merge("time")
-                    if measure == "phenology":
-                        ds.tmean(["year", "month", "day"])
-                    else:
-                        ds.tmean(["year", "month"])
-                        ds.tmean(["month"])
+                            ds.tmean(["year", "month"])
+                            ds.tmean(["month"])
 
-                    ds.run()
-                    try:
-                        ds.fix_amm7_grid()
-                    except:
-                        pass
-                    if measure == "phenology":
-                        ds.phenology(var = ds.variables[0], metric = "peak")
-                        ds.ensemble_mean()
-                    else:
-                        ds.rename({ds.variables[0]: vv})
-                        ds.set_units({vv:unit})
-                    if mass is not None:
-                        ds * mass
-                    sim_name = "sim_" + str(i)
-                    out_file = f"data/climatologies/{vv}/{measure}/{measure}-climatology-{vv}-{sim_name}.nc"
-                    # if this exists, delte it
-                    if os.path.exists(out_file):
-                        os.remove(out_file)
-                    # ensure directory exists
-                    if not os.path.exists(os.path.dirname(out_file)):
-                        os.makedirs(os.path.dirname(out_file))
-                    ds.set_fill(-9999)
+                        ds.run()
+                        try:
+                            ds.fix_amm7_grid()
+                        except:
+                            pass
+                        if measure == "phenology":
+                            ds.phenology(var = ds.variables[0], metric = "peak")
+                            ds.ensemble_mean()
+                        else:
+                            ds.rename({ds.variables[0]: vv})
+                            ds.set_units({vv:unit})
+                        if mass is not None:
+                            ds * mass
+                        sim_name = "sim_" + str(i)
+                        out_file = f"data/climatologies/{vv}/{measure}/{measure}-climatology-{vv}-{sim_name}.nc"
+                        # if this exists, delte it
+                        if os.path.exists(out_file):
+                            os.remove(out_file)
+                        # ensure directory exists
+                        if not os.path.exists(os.path.dirname(out_file)):
+                            os.makedirs(os.path.dirname(out_file))
+                        ds.set_fill(-9999)
                     ds.to_nc(out_file, zip = True)
 
     if build:
