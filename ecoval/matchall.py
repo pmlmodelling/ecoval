@@ -781,21 +781,24 @@ def matchup(
             .head(1)
             .reset_index(drop=True)
         )
+        # check if poc in variables
+        if "poc" in surface_req:
         # add in poc
-        df_poc = all_df.query("variable == 'chlorophyll'").reset_index(drop=True)
-        if df_poc.model_variable[0] is not None:
-            poc_mapping = df_poc.model_variable[0]
-            # replace Chl with c
-            poc_mapping = poc_mapping.replace("Chl", "c")
-            poc_mapping = poc_mapping + "+Z5_c+Z6_c+R4_c+R6_c+R8_c"
-            df_poc["model_variable"] = [poc_mapping]
-            df_poc["variable"] = ["poc"]
+            df_poc = all_df.query("variable == 'chlorophyll'").reset_index(drop=True)
+            if df_poc.model_variable[0] is not None:
+                poc_mapping = df_poc.model_variable[0]
+                # replace Chl with c
+                poc_mapping = poc_mapping.replace("Chl", "c")
+                poc_mapping = poc_mapping + "+Z5_c+Z6_c+R4_c+R6_c+R8_c"
+                df_poc["model_variable"] = [poc_mapping]
+                df_poc["variable"] = ["poc"]
 
-            if "poc" in list(all_df.variable):
-                all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
-                all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
-            else:
-                all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
+                if "poc" in list(all_df.variable):
+                    all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
+                    all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
+                else:
+                    all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
+    
 
     pattern = all_df.reset_index(drop=True).iloc[0, :].pattern
 
@@ -1012,11 +1015,22 @@ def matchup(
                                 if "e3t" in ds_thickness.variables:
                                     e3t_found = True
                                     break
+                                else:
+                                    if len([x for x in ds_thickness.variables if "e3t" in x]) > 0:
+                                        e3t_found = True
+                                        break   
+
                     if not e3t_found:
                         raise ValueError("Unable to find e3t")
 
-                    ds_thickness.subset(time=0, variables="e3t")
+                    ds_thickness.subset(time=0, variables="e3t*")
                     ds_thickness.as_missing(0)
+                    if len(ds_thickness.variables) > 1:
+                        if "e3t" in ds_thickness.variables:
+                            ds_thickness.subset(variables="e3t")
+                        else:
+                            ds_thickness.subset(variables= ds_thickness.variables[0])
+
                     #####
                     # now output the bathymetry if it does not exists
 
