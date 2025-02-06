@@ -14,7 +14,7 @@ Matchups and validation
    matchup 
    validate 
    rebuild 
-   compare
+   compare_simulations
    matchup_starting_point
 
 
