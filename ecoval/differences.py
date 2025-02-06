@@ -241,7 +241,7 @@ def compare_simulations(
     **kwargs,
 ):
     """
-    Match up model with observational data
+    Directly compare two simulations 
 
     Parameters
     -------------
