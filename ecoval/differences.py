@@ -247,36 +247,49 @@ def compare_simulations(
     -------------
 
     sim_dir_1 : str
-        The directory containing the first model directory
+        The directory containing the first model directory  
     sim_dir_2 : str
         The directory containing the second simulation
     surface_variables : dict
-        The surface variables to matchup
+        A dictionary of variables to compare at the surface
     bottom_variables : dict
-        The bottom variables to matchup
+        A dictionary of variables to compare at the bottom
     vertmean_variables : dict
-        The vertical mean variables to matchup
+        A dictionary of variables to compare vertically averaged
     integrated_variables : dict
-        The integrated variables to matchup
+        A dictionary of variables to compare vertically integrated
+    phenology : dict
+        A dictionary of variables to compare phenology
+    depth_profile : dict
+        A dictionary of variables to compare depth profiles
     start : int
         The start year
     end : int
         The end year
     surface_level : str
-        The surface level
+        The level of the surface
     cores : int
         The number of cores to use
-    thickness : int
-        The thickness of the layer to match
-    exclude : list
-        The files to exclude
-    n_dirs_down : int
-        The number of directories to go down
-    lon_lim : list
-        The longitude limits
-    lat_lim : list
-        The latitude limits
+    thickness_files : list  
+        A list of thickness files
+    exclude : list  
+        A list of strings to exclude
+    n_dirs_down : int   
+        The number of directories down
+    lon_lim : list  
+        A list of longitude limits
+    lat_lim : list  
+        A list of latitude limits
     n_check : int
+        The number of files to check
+    overwrite : bool
+        Whether to overwrite existing files
+    out_dir : str
+        The output directory
+    build : bool
+        Whether to build the book
+    kwargs : dict
+        Additional arguments
 
 
     Returns
@@ -284,13 +297,6 @@ def compare_simulations(
     None
     Data will be stored in the matched directory.
 
-
-    Examples
-    -------------
-
-    If you wanted to matchup temperature, salinity and oxygen at the surface for gridded data and the near-bottom, for the year 2002 you would run:
-
-    >>> matchup(folder = "path/to/folder", start = 2002, end = 2002, surface = {"gridded": ["temperature", "salinity", "oxygen"], "point": None}, surface_level = "top")
 
     """
 
