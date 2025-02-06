@@ -1469,9 +1469,6 @@ def matchup(
         #     os.remove("foo.nc")
         # ds_thickness.to_nc("foo.nc")
 
-    if os.path.exists("foo.nc"):
-        os.remove("foo.nc")
-    ds_depths.to_nc("foo.nc")
 
     print("*************************************")
     for pattern in patterns:
