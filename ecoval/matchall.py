@@ -505,6 +505,7 @@ def matchup(
 
 
     """
+    ds_depths = None
     levels_down = n_dirs_down
 
     if "fvcom" not in kwargs:
@@ -994,9 +995,10 @@ def matchup(
                     if thickness is not None:
                         ds_thickness = nc.open_data(thickness, checks=False)
                         if len(ds_thickness.variables) != 1:
-                            raise ValueError(
-                                "The thickness file has more than one variable. Please provide a single variable!"
-                            )
+                            if len([x for x in ds_thickness.variables if "e3t" in x]) == 0:
+                                raise ValueError(
+                                    "The thickness file has more than one variable and none include e3t. Please provide a single variable!"
+                                )
                         ds_thickness.rename(
                             {ds_thickness.variables[0]: "e3t"}
                         )
@@ -1023,13 +1025,24 @@ def matchup(
                     if not e3t_found:
                         raise ValueError("Unable to find e3t")
 
-                    ds_thickness.subset(time=0, variables="e3t*")
+                    if len(ds_thickness.times) > 0:
+                        ds_thickness.subset(time=0, variables="e3t*")
+                    else:
+                        ds_thickness.subset(variables="e3t*")
+                    ds_thickness.run()
+                    var_sel = ds_thickness.contents.query("variable.str.contains('e3t')").query("nlevels > 1").variable
+                    ds_thickness.subset(variables = var_sel)
                     ds_thickness.as_missing(0)
                     if len(ds_thickness.variables) > 1:
                         if "e3t" in ds_thickness.variables:
                             ds_thickness.subset(variables="e3t")
                         else:
                             ds_thickness.subset(variables= ds_thickness.variables[0])
+                    # try:
+                    #     ds_thickness.fix_amm7_grid()
+                    # except:
+                    #     pass
+                    # fix the ds_thickness
 
                     #####
                     # now output the bathymetry if it does not exists
@@ -1056,6 +1069,10 @@ def matchup(
                     if surface_level == "bottom":
                         ds_depths.cdo_command("invertlev")
                     ds_depths.run()
+                    try:
+                        ds_depths.fix_amm7_grid()
+                    except:
+                        pass
 
                 for ww in w:
                     if str(ww.message) not in session_warnings:
@@ -1405,33 +1422,56 @@ def matchup(
     times_dict = dict()
 
     print("*************************************")
-    thick_found = False
-    if thickness is None:
-        print("Identifying whether e3t exists in the files")
-        for pattern in patterns:
-            final_extension = extension_of_directory(sim_dir)
-            ensemble = glob.glob(sim_dir + final_extension + pattern)
-            for exc in exclude:
-                ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
+    # thick_found = False
+    # if thickness is None:
+    #     print("Identifying whether e3t exists in the files")
+    #     for pattern in patterns:
+    #         final_extension = extension_of_directory(sim_dir)
+    #         ensemble = glob.glob(sim_dir + final_extension + pattern)
+    #         for exc in exclude:
+    #             ensemble = [x for x in ensemble if f"{exc}" not in os.path.basename(x)]
 
-            with warnings.catch_warnings(record=True) as w:
-                ds = nc.open_data(ensemble[0], checks = False)
-                if "e3t" in ds.variables:
-                    print(
-                        f"Extracting and saving thickness from {ensemble[0]} as matched/e3t.nc"
-                    )
-                    ds.subset(variable="e3t")
-                    ds.subset(time=0)
-                    ds.as_missing(0)
-                    if os.path.exists("matched/e3t.nc"):
-                        os.remove("matched/e3t.nc")
-                    ds.to_nc("matched/e3t.nc", zip=True, overwrite=True)
-                    thickness = "matched/e3t.nc"
-                    thick_found = True
-                    break
-    if not thick_found:
-        if thickness is None:
-            print("It was not. Assuming files have z-levels for any vertical matchups.")
+    #         with warnings.catch_warnings(record=True) as w:
+    #             ds = nc.open_data(ensemble[0], checks = False)
+    #             if len([x for x in ds.variables if "e3t" in x]) > 0:
+    #                 print(
+    #                     f"Extracting and saving thickness from {ensemble[0]} as matched/e3t.nc"
+    #                 )
+    #                 ds.subset(variable="e3t*")
+    #                 ds.subset(time=0)
+    #                 ds.as_missing(0)
+    #                 ds.run()
+    #                 if len(ds.variables) > 1:
+    #                     if "e3t" in ds.variables:
+    #                         ds.subset(variables="e3t")
+    #                     else:
+    #                         ds.subset(variables= ds.variables[0])
+    #                 if os.path.exists("matched/e3t.nc"):
+    #                     os.remove("matched/e3t.nc")
+    #                 ds.to_nc("matched/e3t.nc", zip=True, overwrite=True)
+    #                 thickness = "matched/e3t.nc"
+    #                 thick_found = True
+    #                 break
+    # if not thick_found:
+    #     if thickness is None:
+    #         print("It was not. Assuming files have z-levels for any vertical matchups.")
+    if ds_depths is not None:
+        # run cdo griddes on the file and figure out if generic shows up
+        import subprocess
+        output = subprocess.check_output(["cdo", "griddes", ds_depths[0]])
+        if "generic" in str(output):
+            # raise ValueError("The thickness file is on a generic grid. Please provide a specific grid")
+            ff1 = path
+            ds_depths.cdo_command(f"setgrid,{ff1}")
+            # ds_
+            # print(ds_thickness.history)
+        # if os.path.exists("foo.nc"):
+        #     os.remove("foo.nc")
+        # ds_thickness.to_nc("foo.nc")
+
+    if os.path.exists("foo.nc"):
+        os.remove("foo.nc")
+    ds_depths.to_nc("foo.nc")
 
     print("*************************************")
     for pattern in patterns:

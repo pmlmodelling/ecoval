@@ -212,9 +212,6 @@ def gridded_matchup(
                     all_years += list(times_dict[ff].year)
                 all_years = list(set(all_years))
 
-                print(all_years)
-                print(sim_end)
-
                 sim_years = range(sim_start, sim_end + 1)
                 sim_years = [x for x in all_years if x in sim_years]
                 # now simplify paths, so that only the relevant years are used
