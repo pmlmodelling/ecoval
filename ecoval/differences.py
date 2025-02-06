@@ -87,6 +87,11 @@ def simulation_differences_comparison():
         data_path = pkg_resources.resource_filename(__name__, "data/simdiff_phenology.ipynb")
         if not os.path.exists(f"book_comparison/notebooks/simdiff_phenology.ipynb"):
             shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_phenology.ipynb")
+    # move the depth_profile notebook
+    if len([x for x in file_paths if "depth_profile" in x]) > 0:
+        data_path = pkg_resources.resource_filename(__name__, "data/simdiff_depth_profile.ipynb")
+        if not os.path.exists(f"book_comparison/notebooks/simdiff_depth_profile.ipynb"):
+            shutil.copyfile(data_path, "book_comparison/notebooks/simdiff_depth_profile.ipynb")
 
     data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
 
@@ -195,7 +200,7 @@ vertmean_variables["light_attenuation"] = "light_xEPS"
 #  
 
 
-def simulation_differences(
+def compare_simulations(
     sim_1 =None,
     sim_2 =None,
     surface_variables = {'chlorophyll': 'P1_Chl+P2_Chl+P3_Chl+P4_Chl',
@@ -218,6 +223,7 @@ def simulation_differences(
  'POC': 'P1_c+P2_c+P3_c+P4_c+Z5_c+Z6_c+R4_c+R6_c+R8_c',
  'mesozooplankton': 'Z4_c'},
     phenology = {"phytoplankton":"P1_c+P2_c+P3_c+P4_c", "mesozooplankt":  "Z4_c"},
+    depth_profile = None,
     start=None,
     end=None,
     surface_level=None,
@@ -355,14 +361,14 @@ def simulation_differences(
         raise ValueError("Please provide a sim_dir_1 directory")
 
     if not os.path.exists(sim_dir_1):
-        raise ValueError(f"{sim_dir} does not exist")
+        raise ValueError(f"{sim_dir_1} does not exist")
     
     if sim_dir_2 is None:
         raise ValueError("Please provide a sim_dir_2 directory")
 
     if sim_dir_2 is not None:
         if not os.path.exists(sim_dir_2):
-            raise ValueError(f"{sim_dir} does not exist")
+            raise ValueError(f"{sim_dir_2} does not exist")
 
     if not isinstance(cores, int):
         raise ValueError("Please set cores to int")
@@ -433,7 +439,7 @@ def simulation_differences(
     if os.path.exists(ff):
         all_times = pickle.load(open(ff, "rb"))
 
-    for jj in range(5):
+    for jj in range(6):
         if jj == 0:
             var_dict = copy.deepcopy(surface_variables)
             measure = "top"
@@ -449,11 +455,15 @@ def simulation_differences(
         if jj == 4:
             var_dict = copy.deepcopy(phenology)
             measure = "phenology"
+        if jj == 5:
+            var_dict = copy.deepcopy(depth_profile)
+            measure = "depth_profile"
 
         pattern_list = []
         all_df_list = []
 
         for kk in range(len(var_dict)):
+            print(var_dict)
             var_choice = list(var_dict.keys())[kk]
             var_choice = var_choice.replace(" ", "_")
 
@@ -468,6 +478,8 @@ def simulation_differences(
                 measure_name = "vertically integrated"
             if measure_name == "phenology":
                 measure_name = "phenology of"
+            if measure_name == "depth_profile":
+                measure_name = "depth_profile of"
             print(f"********* Extracting data for {measure} {var_choice} ************")
             print("Identifying time info and finding relevant files")
 
@@ -697,6 +709,34 @@ def simulation_differences(
                             ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
                             ds.cdo_command(f"sellevidx,1/{n_levels}")
                             ds.vertical_mean(thickness = ds_thickness)
+
+                        if measure == "depth_profile":
+                            if thickness_files[i] is not None:
+                                thickness = thickness_files[i]
+                            else:
+                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                            ds_depth = nc.open_data(thickness)
+                            ds_depth.subset(variable = "e3t", time = 0)
+                            ds_e3t = ds_depth.copy() 
+                            ds_e3t / 2
+                            ds_depth - ds_e3t
+                            ds_depth.vertical_cumsum()
+                            ds_depth.run()
+                            ds_depth.rename({"e3t": "depth"})
+                            ds_e3t = nc.open_data(ff)
+                            ds_e3t.subset(variable = "e3t", time = 0)
+                            ds_e3t.run()
+                            ds_depth.append(ds_e3t)
+                            ds_depth.merge("variables")
+                            ds.tmean()
+                            ds.ensemble_mean()
+                            ds.append(ds_depth)
+                            ds.merge("variable")
+                            ds.assign(total_e3t = lambda x: x.total * x.e3t, total_e3t_depth = lambda x: x.total * x.e3t * x.depth)
+                            ds.run()
+                            ds.vertical_sum()
+                            ds.assign(total_depth = lambda x: x.total_e3t_depth/x.total_e3t, drop = True)
+
                         if measure == "vertical_integration":
                             if thickness_files[i] is not None:
                                 thickness = thickness_files[i]
