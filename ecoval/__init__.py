@@ -6,7 +6,7 @@ import subprocess
 import nctoolkit as nc
 import copy
 from ecoval.matchall import matchup
-from ecoval.differences import simulation_differences, simulation_differences_comparison
+from ecoval.differences import compare_simulations, simulation_differences_comparison
 from ecoval.fixers import tidy_name
 from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
