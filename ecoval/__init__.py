@@ -174,6 +174,9 @@ def compare(model_dict=None):
 
 
     """
+    # provide a deprecation warning
+    import warnings
+    warnings.warn("This function is deprecated. Please use the compare_validations function instead.")
     if os.path.exists("book"):
         #get user input to decide if it should be removed
         user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
@@ -1125,3 +1128,256 @@ try:
     __version__ = _version("ecoval")
 except Exception:
     __version__ = "999"
+
+def compare_validations(model_dict=None):
+    """
+    Compare pre-validated simulations.
+    This function will compare the validition output from two models.
+
+    Parameters
+    ----------
+    model_dict : dict
+        A dictionary of model names and the paths to the validation output. Default is None.
+        Example: {"model1": "/path/to/model1", "model2": "/path/to/model2"}
+        If the models have different grids, put the model with the smallest grid first.
+
+
+    """
+    if os.path.exists("book"):
+        #get user input to decide if it should be removed
+        user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
+        if user_input.lower() == "y":
+            while True:
+                files = glob.glob("book/**/**/**", recursive=True)
+                # list all files in book, recursively
+                for ff in files:
+                    if ff.startswith("book"):
+                        try:
+                            os.remove(ff)
+                        except:
+                            pass
+                files = glob.glob("book/**/**/**", recursive=True)
+                # only list files
+                files = [x for x in files if os.path.isfile(x)]
+                if len(files) == 0:
+                    break
+        else:
+            print("Exiting")
+            return None
+                # if not os.path.exists(book_dir):
+                    # break
+
+    # make a folder called book/compare
+
+    data_path = pkg_resources.resource_filename(__name__, "data/mask.py")
+    if not os.path.exists(f"book/compare/notebooks/mask.py"):
+        if not os.path.exists("book/compare/notebooks"):
+            # create directory recursively
+            os.makedirs("book/compare/notebooks")
+        shutil.copyfile(data_path, "book/compare/notebooks/mask.py")
+
+    if not os.path.exists("book/compare"):
+        # create directory recursively
+        os.makedirs("book/compare")
+
+    # move toc etc to book/compare
+
+    data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
+
+    out = "book/compare/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out)
+
+    fix_toc_comparison()
+
+    data_path = pkg_resources.resource_filename(__name__, "data/requirements.txt")
+
+    out = "book/compare/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out)
+
+    data_path = pkg_resources.resource_filename(__name__, "data/intro.md")
+
+    out = "book/compare/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out)
+
+    # copy config
+
+    data_path = pkg_resources.resource_filename(__name__, "data/_config.yml")
+
+    out = "book/compare/" + os.path.basename(data_path)
+
+    shutil.copyfile(data_path, out)
+
+    # copy the comparison_seasonal notebook
+
+    # make sure the directory exists
+
+    if not os.path.exists("book/compare/notebooks"):
+        # create directory recursively
+        os.makedirs("book/compare/notebooks")
+
+    file1 = pkg_resources.resource_filename(__name__, "data/comparison_seasonal.ipynb")
+    if len(glob.glob("book/compare/notebooks/*comparison_seasonal.ipynb")) == 0:
+        shutil.copyfile(file1, "book/compare/notebooks/comparison_seasonal.ipynb")
+
+    model_dict_str = str(model_dict)
+
+    with open("book/compare/notebooks/comparison_seasonal.ipynb", "r") as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("model_dict_str", model_dict_str)
+
+    # Write the file out again
+
+    with open("book/compare/notebooks/comparison_seasonal.ipynb", "w") as file:
+        file.write(filedata)
+
+    # now sort out the comparison_spatial notebook
+
+    file1 = pkg_resources.resource_filename(__name__, "data/comparison_spatial.ipynb")
+    if len(glob.glob("book/compare/notebooks/*comparison_spatial.ipynb")) == 0:
+        shutil.copyfile(file1, "book/compare/notebooks/comparison_spatial.ipynb")
+    
+
+
+    model_dict_str = str(model_dict)
+
+    with open("book/compare/notebooks/comparison_spatial.ipynb", "r") as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("model_dict_str", model_dict_str)
+
+    # Write the file out again
+
+    with open("book/compare/notebooks/comparison_spatial.ipynb", "w") as file:
+        file.write(filedata)
+
+    # move the regional book
+
+    file1 = pkg_resources.resource_filename(__name__, "data/comparison_regional.ipynb")
+    if len(glob.glob("book/compare/notebooks/*comparison_regional.ipynb")) == 0:
+        shutil.copyfile(file1, "book/compare/notebooks/comparison_regional.ipynb")
+
+    model_dict_str = str(model_dict)
+
+    with open("book/compare/notebooks/comparison_regional.ipynb", "r") as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("model_dict_str", model_dict_str)
+
+    # Write the file out again
+
+    with open("book/compare/notebooks/comparison_regional.ipynb", "w") as file:
+        file.write(filedata)
+
+
+    # now to comparison_bias
+
+    file1 = pkg_resources.resource_filename(__name__, "data/comparison_bias.ipynb")
+
+    if len(glob.glob("book/compare/notebooks/*comparison_bias.ipynb")) == 0:
+        shutil.copyfile(file1, "book/compare/notebooks/comparison_bias.ipynb")
+
+    model_dict_str = str(model_dict)
+
+    with open("book/compare/notebooks/comparison_bias.ipynb", "r") as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("model_dict_str", model_dict_str)
+
+    # Write the file out again
+
+    with open("book/compare/notebooks/comparison_bias.ipynb", "w") as file:
+        file.write(filedata)
+
+    # figure out if both simulations have point data
+
+    i = 0    
+    
+    if i == 0:
+        for ss in ["surface", "bottom", "benthic"]:
+            file1 = pkg_resources.resource_filename(__name__, "data/comparison_point.ipynb")
+
+            if len(glob.glob(f"book/compare/notebooks/*comparison_point_{ss}.ipynb")) == 0:
+                shutil.copyfile(file1, f"book/compare/notebooks/comparison_point_{ss}.ipynb")
+
+            model_dict_str = str(model_dict)
+
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "r") as file:
+                filedata = file.read()
+
+            # Replace the target string
+            filedata = filedata.replace("model_dict_str", model_dict_str)
+
+            # Write the file out again
+
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "w") as file:
+                file.write(filedata)
+            # replace layer in the notebook with ss
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "r") as file:
+                filedata = file.read()
+
+            # Replace the target string
+            filedata = filedata.replace("layer", ss)
+
+            # Write the file out again
+
+            with open(f"book/compare/notebooks/comparison_point_{ss}.ipynb", "w") as file:
+                file.write(filedata)
+
+            # for i in range(len(new_lines)):
+            #     if "the_test_status" in new_lines[i]:
+            #         if test:  
+            #             new_lines[i] = new_lines[i].replace("the_test_status", "True")
+            #         else:
+            #             new_lines[i] = new_lines[i].replace("the_test_status", "False")
+    
+        
+        
+
+
+    # sync the notebooks
+
+    os.system("jupytext --set-formats ipynb,py:percent book/compare/notebooks/*.ipynb")
+
+    add_chunks()
+
+    # replace the test status in the notebooks
+    books = glob.glob("book/compare/notebooks/*.py")
+    for book in books:
+        with open(book, "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("the_test_status", "False")
+
+        # Write the file out again
+        with open(book, "w") as file:
+            file.write(filedata)
+
+    # fix the chunks
+    os.system("jupytext --sync book/compare/notebooks/*.ipynb")
+
+    # loop through notebooks and change fast_plot_value to fast_plot
+
+    for ff in glob.glob("book/compare/notebooks/*.ipynb"):
+        with open(ff, "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("fast_plot_value", "False")
+
+        # Write the file out again
+        with open(ff, "w") as file:
+            file.write(filedata)
+
+    os.system("jupyter-book build book/compare/")
+    import webbrowser
+
+    webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
