@@ -303,7 +303,7 @@ def compare_simulations(
     Example
     -------------
 
-    If you wanted to compare surface chlorophyll, bottom oxygen, and integrated phosphate, nitrate, and silicate, you could do the following:   
+    If you wanted to compare surface chlorophyll, bottom oxygen, and integrated phosphate, nitrate, and silicate, the phenology of chlorophyll, and the depth profile of oxygen, you would run:  
 
     ecoval.compare_simulations(
         sim_dir_1 = "/data/foo",
