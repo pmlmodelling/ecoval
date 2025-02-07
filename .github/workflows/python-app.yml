@@ -27,7 +27,7 @@ jobs:
         with:
           micromamba-version: '1.4.5-0'
           environment-name: foo
-          create-args: nctoolkit cmocean cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book r-mapdata
+          create-args: nctoolkit cmocean cartopy pandoc python=3.11 rpy2 r-base r-tidyverse r-ggtext jupyter-book r-mapdata texlive-core
           init-shell: >-
             bash
             powershell
@@ -37,7 +37,7 @@ jobs:
         shell: bash -l {0}
         run: |
         
-          sudo apt-get install texlive
+          ##sudo apt-get install texlive
           mamba install pandoc r-ggthemes r-ggridges r-maps r-plotrix r-arrow r-pyarrow r-cowplot  -y
           python -m pip install .
           pip install PyPDF2
