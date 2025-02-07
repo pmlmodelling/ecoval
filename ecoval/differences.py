@@ -205,26 +205,27 @@ vertmean_variables["light_attenuation"] = "light_xEPS"
 def compare_simulations(
     sim_1 =None,
     sim_2 =None,
-    surface_variables = {'chlorophyll': 'P1_Chl+P2_Chl+P3_Chl+P4_Chl',
- 'oxygen': 'O2_o',
- 'phosphate': 'N1_p',
- 'nitrate': 'N3_n',
- 'silicate': 'N5_s',
- 'benthic_biomass': 'Y2_c+Y3_c',
- 'ph': 'O3_pH',
- 'co2_flux': 'O3_fair',
- 'ammonium': 'N4_n',
- 'pCO2': 'O3_pCO2',
- 'nano phytoplankton chlorophyll': 'P2_Chl',
- 'micro phytoplankton chlorophyll': 'P1_Chl+P4_Chl',
- 'pico phytoplankton chlorophyll': 'P3_Chl',
- 'mesozooplankton': 'Z4_c'},
-    bottom_variables = {'oxygen': 'O2_o', 'pH': 'O3_pH'}, 
-    vertmean_variables = {'light_attenuation': 'light_xEPS'},
-    integrated_variables = {'DOC': 'R1_c+R2_c+R3_c',
- 'POC': 'P1_c+P2_c+P3_c+P4_c+Z5_c+Z6_c+R4_c+R6_c+R8_c',
- 'mesozooplankton': 'Z4_c'},
-    phenology = {"phytoplankton":"P1_c+P2_c+P3_c+P4_c", "mesozooplankt":  "Z4_c"},
+    surface_variables = None,
+#     {'chlorophyll': 'P1_Chl+P2_Chl+P3_Chl+P4_Chl',
+#  'oxygen': 'O2_o',
+#  'phosphate': 'N1_p',
+#  'nitrate': 'N3_n',
+#  'silicate': 'N5_s',
+#  'benthic_biomass': 'Y2_c+Y3_c',
+#  'ph': 'O3_pH',
+#  'co2_flux': 'O3_fair',
+#  'ammonium': 'N4_n',
+#  'pCO2': 'O3_pCO2',
+#  'nano phytoplankton chlorophyll': 'P2_Chl',
+#  'micro phytoplankton chlorophyll': 'P1_Chl+P4_Chl',
+#  'pico phytoplankton chlorophyll': 'P3_Chl',
+#  'mesozooplankton': 'Z4_c'},
+    bottom_variables = None, 
+    vertmean_variables = None, 
+    integrated_variables = None, 
+#  'POC': 'P1_c+P2_c+P3_c+P4_c+Z5_c+Z6_c+R4_c+R6_c+R8_c',
+#  'mesozooplankton': 'Z4_c'},
+    phenology = None, 
     depth_profile = None,
     start=None,
     end=None,
@@ -298,6 +299,35 @@ def compare_simulations(
     -------------
     None
     Data will be stored in the matched directory.
+
+    Example
+    -------------
+
+    If you wanted to compare surface chlorophyll, bottom oxygen, and integrated phosphate, nitrate, and silicate, you could do the following:   
+
+    ecoval.compare_simulations(
+        sim_dir_1 = "/data/foo",
+        sim_dir_2 = "/data/bar",
+        surface_variables = {"chlorophyll": "P1_Chl+P2_Chl+P3_Chl+P4_Chl"},
+        bottom_variables = {"oxygen": "O2_o", "pH": "O3_pH"},
+        vertmean_variables = {"oxygen": "O2_o"},
+        integrated_variables = {"phosphate": "N1_p", "nitrate": "N3_n", "silicate": "N5_s"},
+        phenology = {"chlorophyll": "P1_Chl+P2_Chl+P3_Chl+P4_Chl"},
+        depth_profile = {"oxygen": "O2_o"},
+        start = 2021,
+        end = 2022,
+        surface_level = "top",
+        cores = 1,
+        thickness_files = [None, None],
+        exclude = [],
+        n_dirs_down = 2,
+        lon_lim = None,
+        lat_lim = None,
+        n_check = None,
+        overwrite = True,
+        out_dir = "",
+        build = True
+    )
 
 
     """
@@ -567,7 +597,7 @@ def compare_simulations(
                         break 
 
                 if pattern is None:
-                    raise ValueError("No daily data found")
+                    raise ValueError(f"Unable to identify any files with {var1} in them. Double check the variable names supplied!")
                 pattern_list.append(pattern)
                 search_pattern = folder + "/"
                 for i in range(n_dirs_down):
