@@ -703,7 +703,7 @@ def compare_simulations(
                             if thickness_files[i] is not None:
                                 thickness = thickness_files[i]
                             else:
-                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                                thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
                             n_levels = len(ds.levels) - 1
                             ds.cdo_command(f"sellevidx,1/{n_levels}")
                             ds.cdo_command("bottomvalue")
@@ -712,7 +712,7 @@ def compare_simulations(
                             if thickness_files[i] is not None:
                                 thickness = thickness_files[i]
                             else:
-                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                                thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
                             n_levels = len(ds.levels) - 1
                             ds_thickness = nc.open_data(thickness, checks = False)
                             ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
@@ -723,7 +723,7 @@ def compare_simulations(
                             if thickness_files[i] is not None:
                                 thickness = thickness_files[i]
                             else:
-                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                                thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
                             ds_depth = nc.open_data(thickness)
                             ds_depth.subset(variable = "e3t", time = 0)
                             ds_e3t = ds_depth.copy() 
@@ -750,7 +750,7 @@ def compare_simulations(
                             if thickness_files[i] is not None:
                                 thickness = thickness_files[i]
                             else:
-                                thickness = "/data/proteus1/scratch/rwi/evaldata/data/grids/amm7_e3t.nc"
+                                thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
                             ds.vertical_integration(thickness = thickness)
                         ds.merge("time")
                         if measure == "phenology":

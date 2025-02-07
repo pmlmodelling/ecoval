@@ -65,7 +65,7 @@ def matchup_starting_point(ff, obs_dir = None):
     data_dir = val_dir
     with warnings.catch_warnings(record=True) as w:
         if data_dir is None:
-            data_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
+            data_dir = session_info["obs_dir"] 
         ds = xr.open_dataset(ff)
         lon_name = [x for x in ds.coords if "lon" in x]
         lat_name = [x for x in ds.coords if "lat" in x]

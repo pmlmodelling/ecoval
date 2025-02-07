@@ -84,7 +84,8 @@ ices_variables = [
     "alkalinity",
     "benbio"
 ]
-obs_dir = "/data/proteus1/scratch/rwi/evaldata/data/"
+
+obs_dir = session_info["obs_dir"]
 
 
 def find_config():
@@ -708,7 +709,7 @@ def trends(
                 with open(amm7_out, "w") as f:
                     f.write("")
 
-                obs_dir = "/data/proteus1/scratch/rwi/evaldata/data"
+                obs_dir = session_info["obs_dir"]
 
                 ff_grid = f"{obs_dir}/amm7_val_subdomains.nc"
                 ds_grid.cdo_command(f"setgrid,{ff_grid}")

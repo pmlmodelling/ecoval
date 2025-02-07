@@ -2,7 +2,7 @@
 
 Simulations were compared using the Python package ecoVal.
 
-You can find installation instructions for ecoval [here](https://github.com/pmlmodelling/ecoval).
+You can find installation instructions for ecoVal [here](https://github.com/pmlmodelling/ecoval).
 
 A website with more information on ecoVal can be found [here](https://ecoval-pml.readthedocs.io/en/latest/?badge=latest).
 
