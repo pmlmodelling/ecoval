@@ -646,51 +646,56 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
             for vv in [
                 os.path.basename(x).split("_")[1].replace(".nc", "") for x in gridded_paths
             ]:
-                source = os.path.basename(glob.glob(f"matched/gridded/**/**/**_{vv}_**.nc")[0]).split("_")[0]
+                for source in [os.path.basename(x).split("_")[0] for x in glob.glob(f"matched/gridded/**/**/**_{vv}_**.nc")]:
+                # source = os.path.basename(glob.glob(f"matched/gridded/**/**/**_{vv}_**.nc")[0]).split("_")[0]
 
-                variable = vv
-                if variables != "all":
-                    if vv not in variables:
-                        continue
-                if not os.path.exists(f"{book_dir}/notebooks/{source}_{variable}.ipynb"):
-                    if variable == "ph":
-                        Variable = "pH"
-                    else:
-                        Variable = variable
-                    if variable == "co2flux":
-                        Variable = "air-sea CO2 flux"
-                    if variable in ["poc", "doc"]:
-                        Variable = Variable.upper()
-                    if variable == "benbio":
-                        Variable = "macrobenthos biomass"
-                    if variable == "pco2":
-                        Variable = "pCO2"
-                    if variable == "pft":
-                        Variable = "PFT"
-                    file1 = pkg_resources.resource_filename(
-                        __name__, "data/gridded_template.ipynb"
-                    )
-                    if len(glob.glob(f"{book_dir}/notebooks/*{source}_{variable}.ipynb")) == 0:
-                        with open(file1, "r") as file:
-                            filedata = file.read()
-
-                        # Replace the target string
-                        filedata = filedata.replace("template_variable", variable)
-                        filedata = filedata.replace("template_title", Variable)
-
-                        # Write the file out again
-                        with open(f"{book_dir}/notebooks/{source}_{variable}.ipynb", "w") as file:
-                            file.write(filedata)
-
-                        variable = vv
-                        path_df.append(
-                            pd.DataFrame(
-                                {
-                                    "variable": [variable],
-                                    "path": [f"{book_dir}/notebooks/{source}_{variable}.ipynb"],
-                                }
-                            )
+                    variable = vv
+                    if variables != "all":
+                        if vv not in variables:
+                            continue
+                    if not os.path.exists(f"{book_dir}/notebooks/{source}_{variable}.ipynb"):
+                        if variable == "ph":
+                            Variable = "pH"
+                        else:
+                            Variable = variable
+                        if variable == "co2flux":
+                            Variable = "air-sea CO2 flux"
+                        if variable in ["poc", "doc"]:
+                            Variable = Variable.upper()
+                        if variable == "benbio":
+                            Variable = "macrobenthos biomass"
+                        if variable == "pco2":
+                            Variable = "pCO2"
+                        if variable == "pft":
+                            Variable = "PFT"
+                        file1 = pkg_resources.resource_filename(
+                            __name__, "data/gridded_template.ipynb"
                         )
+                        if len(glob.glob(f"{book_dir}/notebooks/*{source}_{variable}.ipynb")) == 0:
+                            with open(file1, "r") as file:
+                                filedata = file.read()
+
+                            # Replace the target string
+                            filedata = filedata.replace("template_variable", variable)
+                            filedata = filedata.replace("template_title", Variable)
+                            filedata = filedata.replace("source_name", source)
+                            # make every letter a capital
+                            source_capital = source.upper()
+                            filedata = filedata.replace("source_title", source_capital)
+
+                            # Write the file out again
+                            with open(f"{book_dir}/notebooks/{source}_{variable}.ipynb", "w") as file:
+                                file.write(filedata)
+
+                            variable = vv
+                            path_df.append(
+                                pd.DataFrame(
+                                    {
+                                        "variable": [variable],
+                                        "path": [f"{book_dir}/notebooks/{source}_{variable}.ipynb"],
+                                    }
+                                )
+                            )
 
         # figure out if mld needs to be calculated...
 
@@ -729,7 +734,6 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
         # copy pft ntoebook over
 
-        #/data/proteus1/scratch/rwi/pygetm/pft/matched/point/nws/surface/pft/cefas_surface_pft.csv
         if os.path.exists("matched/point/nws/surface/pft/cefas_surface_pft.csv"):
             if not os.path.exists(f"{book_dir}/notebooks/surface_pft.ipynb"):
                 file1 = pkg_resources.resource_filename(__name__, "data/pft_template.ipynb")
