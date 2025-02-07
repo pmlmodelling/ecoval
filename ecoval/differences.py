@@ -311,7 +311,8 @@ def compare_simulations(
         integrated_variables = dict()
     if phenology is None:
         phenology = dict()
-
+    if depth_profile is None:
+        depth_profile = dict()
 
     mass = None
 
