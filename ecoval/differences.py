@@ -30,6 +30,8 @@ def simulation_differences_comparison():
     Compare the model output to observations for a range of variables.
     """
 
+    shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"pml_logo.jpg")
+
     if os.path.exists("book_comparison"):
         #get user input to decide if it should be removed
         #user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
@@ -101,9 +103,9 @@ def simulation_differences_comparison():
 
     shutil.copyfile(data_path, out)
 
-    data_path = pkg_resources.resource_filename(__name__, "data/intro.md")
+    data_path = pkg_resources.resource_filename(__name__, "data/intro_compare_simulations.md")
 
-    out = "book_comparison/" + os.path.basename(data_path)
+    out = "book_comparison/" + "intro.md" 
 
     shutil.copyfile(data_path, out)
 
