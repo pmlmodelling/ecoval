@@ -502,7 +502,6 @@ def compare_simulations(
         all_df_list = []
 
         for kk in range(len(var_dict)):
-            print(var_dict)
             var_choice = list(var_dict.keys())[kk]
             var_choice = var_choice.replace(" ", "_")
 
@@ -558,6 +557,8 @@ def compare_simulations(
                 for exc in exclude:
                     options = [x for x in options if f"{exc}" not in os.path.basename(x)]
 
+                random.shuffle(options)
+
                 var_choice = list(var_dict.keys())[kk]
 
                 var_choice = var_choice.replace(" ", "_")
@@ -570,8 +571,6 @@ def compare_simulations(
 
                 t_res = None 
                 pattern = None
-                n_check = 8
-                i = 0
 
                 for ff in options:
                     ds_ff = nc.open_data(ff, checks = False)
@@ -593,8 +592,9 @@ def compare_simulations(
                             # if ff_res in ["d", "m"]:
                             pattern = ff_pattern
                     i+= 1
-                    if i > n_check:
-                        break 
+                    if n_check is not None:
+                        if i > n_check:
+                            break 
 
                 if pattern is None:
                     raise ValueError(f"Unable to identify any files with {var1} in them. Double check the variable names supplied!")
