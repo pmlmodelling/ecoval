@@ -11,7 +11,7 @@ ds_annual.rename({ds_obs.variables[0]: "observation"})
 out_dir = "../../results/annual_mean/"
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-out_file = out_dir + f"annualmean_{variable}.nc"
+out_file = out_dir + f"annualmean_{variable}_{source}.nc"
 ds_annual.to_nc(out_file, zip = True, overwrite = True)
 # Calculate the monthly mean and output it
 
@@ -24,7 +24,7 @@ ds_monthly.rename({ds_obs.variables[0]: "observation"})
 out_dir = "../../results/monthly_mean/"
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-out_file = out_dir + f"monthlymean_{variable}.nc"
+out_file = out_dir + f"monthlymean_{variable}_{source}.nc"
 ds_monthly.to_nc(out_file, zip = True, overwrite = True)
 
  

@@ -31,6 +31,16 @@ if build == "pdf":
     chapter = f"{chapter}."
 else:
     chapter = ""
+def tidy_summary_paths(paths):
+    """
+    Function to tidy up the paths for the summary stats
+    Right now this just ignores occci files if chlo and nsbc files are present
+    """
+    paths_new = paths
+    if len([x for x in paths if "chlo" in x and "nsbc" in x]) > 0:
+        paths_new = [x for x in paths if ("chlo" in x and "occci" in x) == False]
+    return paths_new
+
 import glob
 import cmocean as cm
 from tqdm import tqdm
