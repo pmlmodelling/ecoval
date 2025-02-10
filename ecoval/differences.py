@@ -762,7 +762,7 @@ def compare_simulations(
                             ds_depth.vertical_cumsum()
                             ds_depth.run()
                             ds_depth.rename({"e3t": "depth"})
-                            ds_e3t = nc.open_data(ff)
+                            ds_e3t = nc.open_data(thickness)
                             ds_e3t.subset(variable = "e3t", time = 0)
                             ds_e3t.run()
                             ds_depth.append(ds_e3t)
