@@ -489,6 +489,8 @@ def matchup(
         If True, the user will be asked if they are happy with the matchups. Default is True.
     out_dir : str
         Path to output directory. Default is "", so the output will be saved in the current directory.
+    global_data : list
+        List of variables to matchup with global data in addition to regional. Default is [].
 
     Returns
     -------------
