@@ -178,7 +178,7 @@ df_diff.to_feather(tmp_csv)
 
 md(f"The seasonal cycles of simulated and observed {vv_name} are compared in Figure {chapter}{i_figure} below. This figure shows the model and observation average in each month of the year, and the differences between the two each month") 
 
-if build:
+if build == "pdf":
     md("latexpagebreak")
 
 
