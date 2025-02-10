@@ -195,8 +195,8 @@ library(dplyr, warn.conflicts = FALSE)
 df_model <- arrow::read_feather("adhoc/df_model_model.feather")
 
 
-max_month = max(df_model$month)
-if("month" %in% colnames(df_model) & max_month < 7){
+min_month = min(df_model$month)
+if("month" %in% colnames(df_model) & min_month < 7){
 
     model_unit = str_replace(model_unit, "/m\\^3", "m<sup>-3</sup>")
 
