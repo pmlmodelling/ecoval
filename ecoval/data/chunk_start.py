@@ -37,8 +37,13 @@ def tidy_summary_paths(paths):
     Right now this just ignores occci files if chlo and nsbc files are present
     """
     paths_new = paths
-    if len([x for x in paths if "chlo" in x and "nsbc" in x]) > 0:
-        paths_new = [x for x in paths if ("chlo" in x and "occci" in x) == False]
+    paths_nsbc = [x for x in paths if "nsbc" in x]
+    for ff in paths_nsbc:
+        for ff_bad in glob.glob(ff.replace("nsbc", "**")):
+            if "nsbc" not in os.path.basename(ff_bad):
+                paths_new.remove(ff_bad)
+    #if len([x for x in paths if "chlo" in x and "nsbc" in x]) > 0:
+    #    paths_new = [x for x in paths if ("chlo" in x and "occci" in x) == False]
     return paths_new
 
 import glob

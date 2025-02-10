@@ -414,6 +414,7 @@ def matchup(
     point_all=[],
     ask=True,
     out_dir="",
+    global_data = [],
     **kwargs,
 ):
     """
@@ -505,6 +506,17 @@ def matchup(
 
 
     """
+
+    # check variables in global_data are valid
+    # coerce global_data to list
+    if isinstance(global_data, str):
+        global_data = [global_data]
+    for vv in global_data:
+        if vv not in valid_vars:
+            raise ValueError(f"{vv} in global_data is not a valid variable")
+        
+    session_info["global_data"] = global_data
+
     ds_depths = None
     levels_down = n_dirs_down
 

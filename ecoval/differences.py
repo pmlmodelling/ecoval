@@ -746,6 +746,10 @@ def compare_simulations(
                                 thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
                             n_levels = len(ds.levels) - 1
                             ds_thickness = nc.open_data(thickness, checks = False)
+                            if len(ds_thickness.variables) > 1:
+                                raise ValueError("Thickness file has more than one variable. Please provide a thickness file with only one variable")
+                            if "e3t" not in ds_thickness.variables:
+                                ds_thickness.rename({ds_thickness.variables: "e3t"})
                             ds_thickness.cdo_command(f"sellevidx,1/{n_levels}")
                             ds.cdo_command(f"sellevidx,1/{n_levels}")
                             ds.vertical_mean(thickness = ds_thickness)
@@ -756,6 +760,11 @@ def compare_simulations(
                             else:
                                 thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
                             ds_depth = nc.open_data(thickness)
+                            if len(ds_depth.variables) > 1:
+                                raise ValueError("Thickness file has more than one variable. Please provide a thickness file with only one variable")
+                            ds_depth.subset(time = 0)
+                            if "e3t" not in ds_depth.variables:
+                                ds_depth.rename({ds_depth.variables: "e3t"})
                             ds_depth.subset(variable = "e3t", time = 0)
                             ds_e3t = ds_depth.copy() 
                             ds_e3t / 2
@@ -764,6 +773,11 @@ def compare_simulations(
                             ds_depth.run()
                             ds_depth.rename({"e3t": "depth"})
                             ds_e3t = nc.open_data(thickness)
+                            ds_e3t.subset(time = 0)
+                            if len(ds_e3t.variables) > 1:
+                                raise ValueError("Thickness file has more than one variable. Please provide a thickness file with only one variable")
+                            if "e3t" not in ds_e3t.variables:
+                                ds_e3t.rename({ds_e3t.variables: "e3t"})
                             ds_e3t.subset(variable = "e3t", time = 0)
                             ds_e3t.run()
                             ds_depth.append(ds_e3t)
