@@ -907,6 +907,12 @@ def matchup(
             valid_surface = [
                 os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/nws/*")
             ]
+    
+    dirs =  glob.glob(obs_dir + "/gridded/**/**")
+    for ff in dirs: 
+        print(ff)
+        if len(glob.glob(ff + "/*.txt")) != 1:
+            raise ValueError(f"{ff} does not have a single text file to identify data source. Please add an empty file of the format {{source}}.txt")
 
     valid_benthic = [
         os.path.basename(x) for x in glob.glob(obs_dir + "/point/nws/benthic/*")
