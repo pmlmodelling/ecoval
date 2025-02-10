@@ -264,7 +264,8 @@ def compare_simulations(
     phenology : dict
         A dictionary of variables to compare phenology
     depth_profile : dict
-        A dictionary of variables to compare depth profiles
+        A dictionary of variables to compare depth profiles.
+        Note: this is only of real use for concentrations based variables. It will calculate the average depth weighted by the concentration.
     start : int
         The start year
     end : int
