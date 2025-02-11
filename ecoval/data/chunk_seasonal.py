@@ -89,6 +89,7 @@ if lon_min > -30:
         if lat_min > 35:
             if lat_max < 70:
                 regional = True
+                nws = True
 if global_grid:
     regional = True
 

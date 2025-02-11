@@ -63,3 +63,4 @@ if not os.path.exists(".trackers"):
 # save out as empty file
 with open(out, 'w') as f:
     f.write("")
+nws = False
