@@ -3,6 +3,16 @@ nc.options(parallel=True)
 import os
 import pkg_resources
 import pandas as pd
+
+def df_display(df):
+    # only 2 decimal places
+    df = df.round(2)
+    # coerce numeric columns to str
+    df = df.astype(str)
+    # convert nan to N/A
+    df = df.replace("nan", "N/A")
+    return df.style.hide(axis="index")
+
 import warnings
 warnings.filterwarnings('ignore')
 from IPython.display import Markdown as md

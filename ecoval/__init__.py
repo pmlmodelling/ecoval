@@ -1136,7 +1136,7 @@ def rebuild(build = None):
     Parameters
     ----------
     build : str
-        The type of the existing build. Default is None. Options are "html" or "pdf"
+        The type of the existing build. Options are "html" or "pdf".
     """
     # add a deprecation notice
     warnings.warn("This function is deprecated. Please use rebuild_validation instead.")
