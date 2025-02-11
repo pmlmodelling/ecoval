@@ -3,6 +3,7 @@ import pandas as pd
 import shutil
 import glob
 import subprocess
+import warnings
 import nctoolkit as nc
 import copy
 from ecoval.matchall import matchup
@@ -175,7 +176,6 @@ def compare(model_dict=None):
 
     """
     # provide a deprecation warning
-    import warnings
     warnings.warn("This function is deprecated. Please use the compare_validations function instead.")
     if os.path.exists("book"):
         #get user input to decide if it should be removed
@@ -1098,6 +1098,35 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         print(f"A PDF of your validation can be found at: {out_ff} ")
         webbrowser.open(out_ff)
 
+def rebuild_validation(build = None):
+    """
+    Rebuild the validation report after modifying notebooks.
+    Use this if you have modified the notebooks generated and want to create a validation report.
+
+    Parameters
+    ----------
+    build : str
+        The type of the existing build. Default is None. Options are "html" or "pdf"
+    """
+    # add a deprecation notice
+
+    if build is None:
+        raise ValueError("Please provide a build type")
+    os.system(f"jupyter-book build book_{build}/")
+
+    if build == "pdf":
+        out_ff = f"validation_report.pdf"
+        # turn into a full path
+        out_ff = os.path.abspath(out_ff)
+        # make a copy of the pdf
+        ff_path = glob.glob(f"book_{build}/_build/latex/*pdf")[0]
+        shutil.copyfile(ff_path, out_ff)
+
+        print(f"A PDF of your validation can be found at: {out_ff} ")
+        webbrowser.open(out_ff)
+
+    if build == "html":
+        webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/html/index.html"))
 
 def rebuild(build = None):
     """
@@ -1109,6 +1138,8 @@ def rebuild(build = None):
     build : str
         The type of the existing build. Default is None. Options are "html" or "pdf"
     """
+    # add a deprecation notice
+    warnings.warn("This function is deprecated. Please use rebuild_validation instead.")
 
     if build is None:
         raise ValueError("Please provide a build type")
