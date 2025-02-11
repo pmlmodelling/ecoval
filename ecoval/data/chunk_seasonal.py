@@ -22,12 +22,13 @@ ds_cor.to_nc(out, zip = True, overwrite = True)
 
 # output to csv
 
-df_cor = ds_cor.to_dataframe().reset_index()
-df_cor = df_cor.dropna()
-out = f"../../results/temporals/{variable}_cor_{source}.csv"
-if not os.path.exists(os.path.dirname(out)):
-    os.makedirs(os.path.dirname(out))
-df_cor.to_csv(out, index = False)
+if False:
+    df_cor = ds_cor.to_dataframe().reset_index()
+    df_cor = df_cor.dropna()
+    out = f"../../results/temporals/{variable}_cor_{source}.csv"
+    if not os.path.exists(os.path.dirname(out)):
+        os.makedirs(os.path.dirname(out))
+    df_cor.to_csv(out, index = False)
 
 
 # %% tags=["remove-input"]

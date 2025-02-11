@@ -1014,15 +1014,6 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 if i == 0:
                     new_lines.append("\\hline")
                     i = 1
-            #\begin{document}
-            # figure out if line includes \phantomsection\label{\detokenize{intro::doc}}
-            # if "release" in line: 
-            #     # move the logo the latex directory
-            #     if not logo_added:
-            #         shutil.copyfile("pml_logo.jpg", f"{book_dir}/_build/latex/pml_logo.jpg")
-            #         #\center\sphinxincludegraphics[width=500\sphinxpxdimen]{{0b11138af3025ff0aaebf8d6e8d2899e4863b78d2b7ddd3140f9f137fdb74b52}.png}
-            #         new_lines.append("\\center\\sphinxincludegraphics[width=500\\sphinxpxdimen]{pml_logo.jpg}")
-            #         logo_added = True
 
         # now replace noindent with center in lines with sphinxincludegraphics
         for i in range(len(new_lines)):
@@ -1034,20 +1025,6 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 new_lines[i] = new_lines[i].replace("subsubsection*", "section")
                 # raise ValueError(new_lines[i])
 
-        # check_these = copy.deepcopy(new_lines)
-        # for i in range(len(check_these)):
-        #     if "sphinxVerbatimOutput" in check_these[i]:
-        #         if check_these[i] in new_lines:
-        #             new_lines.remove(check_these[i])
-        #     if "sphinxuseclass" in check_these[i]:
-        #         if check_these[i] in new_lines:
-        #             new_lines.remove(check_these[i])
-
-        # for i in range(len(new_lines)):
-        #     #"\newcommand{\sphinxlogo}{\vbox{}}"
-        #     if "sphinxlogo" in new_lines[i]:
-        #         # put pml_logo.png in vbox
-        #         new_lines[i] = "\newcommand{\sphinxlogo}{\vbox{pml_logo.jpg}}}"
         
         # we do not want lines that start with\part{
         new_lines = [x for x in new_lines if not x.startswith("\\part{")]
@@ -1225,6 +1202,9 @@ def compare_validations(model_dict=None):
         # create directory recursively
         os.makedirs("book/compare")
 
+    # copy the pml logo
+    shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), "book/pml_logo.jpg")
+
     # move toc etc to book/compare
 
     data_path = pkg_resources.resource_filename(__name__, "data/_toc.yml")
@@ -1266,6 +1246,12 @@ def compare_validations(model_dict=None):
     file1 = pkg_resources.resource_filename(__name__, "data/comparison_seasonal.ipynb")
     if len(glob.glob("book/compare/notebooks/*comparison_seasonal.ipynb")) == 0:
         shutil.copyfile(file1, "book/compare/notebooks/comparison_seasonal.ipynb")
+    
+    # copy comparison_overall notebook
+
+    file1 = pkg_resources.resource_filename(__name__, "data/comparison_overall.ipynb")
+    if len(glob.glob("book/compare/notebooks/*comparison_overall.ipynb")) == 0:
+        shutil.copyfile(file1, "book/compare/notebooks/comparison_overall.ipynb")
 
     model_dict_str = str(model_dict)
 

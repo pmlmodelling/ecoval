@@ -4,6 +4,79 @@ import os
 import pkg_resources
 import pandas as pd
 
+def fix_variable_name(x):
+    valid_vars = [
+        "temperature", "salinity", "oxygen", "phosphate",
+        "silicate", "nitrate", "ammonium", "alkalinity",
+        "ph", "chlorophyll", "co2flux", "pco2",
+        "doc", "poc", "carbon", "benbio",
+        "benthic_carbon_flux", "mesozoo", "oxycons" ]
+    if x.lower() == "temperature":
+        return "temperature"
+    x_lower = x.lower()
+    if x_lower == "doc":
+        x = "DOC concentration"
+        return x
+    if x_lower == "poc":
+        x = "POC concentration"
+        return x
+    if x_lower == "oxygen":
+        x = "oxygen concentration"
+        return x
+    if x_lower == "phosphate":
+        x = "phosphate concentration"
+        return x
+    if x_lower == "silicate":
+        x = "silicate concentration"
+        return x
+    if x_lower == "nitrate":
+        x = "nitrate concentration"
+        return x
+    if x_lower == "ammonium":
+        x = "ammonium concentration"
+        return x
+    if x_lower == "alkalinity":
+        x = "alkalinity"
+        return x
+    if x_lower == "ph":
+        x = "pH"
+        return x
+    if x_lower == "chlorophyll":
+        x = "chlorophyll concentration"
+        return x
+    if x_lower == "co2flux":
+        x = "air-sea carbon dioxide flux"
+        return x
+    if x_lower == "pco2":
+        x = "pCO2"
+        return x
+    if x_lower == "carbon":
+        x = "carbon concentration in sediments"
+        return x
+    if x_lower == "benbio":
+        x = "macrobenthos biomass concentration"
+        return x
+    if x_lower == "benthic_carbon_flux":
+        x = "carbon flux in sediments"
+        return x
+    if x_lower == "mesozoo":
+        x = "mesozooplankton concentration"
+        return x
+    if x_lower == "oxycons":
+        x = "benthic oxygen consumption"
+        return x
+    if x_lower == "temperature":
+        x = "temperature"
+        return x
+    if x_lower == "salinity":
+        x = "salinity"
+        return x
+
+    return x
+
+
+
+
 def df_display(df):
     # only 2 decimal places
     df = df.round(2)
@@ -15,6 +88,14 @@ def df_display(df):
     # capitalize variable column name, if it exists
     if "variable" in df.columns:
         df = df.rename(columns={"variable": "Variable"})
+        # fix variable names
+        df["Variable"] = df["Variable"].apply(fix_variable_name)
+        # capitalize variable
+        df["Variable"] = df["Variable"].str.capitalize()
+        # ensure "Poc " is "POC "
+        df["Variable"] = df["Variable"].str.replace("Poc ", "POC ")
+        # ensure "Doc" is "DOC"
+        df["Variable"] = df["Variable"].str.replace("Doc", "DOC")
     # convert nan to N/A
     df = df.replace("nan", "N/A")
     return df.style.hide(axis="index")
@@ -47,6 +128,7 @@ if build == "pdf":
     chapter = f"{chapter}."
 else:
     chapter = ""
+import glob
 def tidy_summary_paths(paths):
     """
     Function to tidy up the paths for the summary stats
@@ -62,7 +144,6 @@ def tidy_summary_paths(paths):
     #    paths_new = [x for x in paths if ("chlo" in x and "occci" in x) == False]
     return paths_new
 
-import glob
 import cmocean as cm
 from tqdm import tqdm
 import hvplot.pandas
