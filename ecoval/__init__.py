@@ -1113,10 +1113,20 @@ def rebuild(build = None):
     if build is None:
         raise ValueError("Please provide a build type")
     os.system(f"jupyter-book build book_{build}/")
+
+    if build == "pdf":
+        out_ff = f"validation_report.pdf"
+        # turn into a full path
+        out_ff = os.path.abspath(out_ff)
+        # make a copy of the pdf
+        ff_path = glob.glob(f"book_{build}/_build/latex/*pdf")[0]
+        shutil.copyfile(ff_path, out_ff)
+
+        print(f"A PDF of your validation can be found at: {out_ff} ")
+        webbrowser.open(out_ff)
+
     if build == "html":
         webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/html/index.html"))
-    else:
-        webbrowser.open("file://" + os.path.abspath(f"book_{build}/_build/latex/python.pdf"))
 
 
 
