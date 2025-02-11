@@ -114,7 +114,10 @@ def fix_toc(book_dir):
             if vv == "ph":
                 vv_out = "pH"
             if vv.lower() == "benbio":
-                vv_out = "Benthos"
+                vv_out = "Benthic biomass"
+            if vv.lower() == "susfrac":
+                vv_out = "Suspension feeding fraction"
+
             if vv.lower() == "pft":
                 vv_out = "Plankton Functional Types"
             x = f.write(f"- caption: {vv_out}\n")
