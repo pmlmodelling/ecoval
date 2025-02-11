@@ -4,6 +4,17 @@ import os
 import pkg_resources
 import pandas as pd
 
+def fix_basename(x):
+    #annualmean_nitrate_nsbc.nc
+    # 3 part names like above need the final part removed
+    x_fixed = x.split('_')
+    if len(x_fixed) == 3:
+        x_fixed = x_fixed[:-1] 
+        return '_'.join(x_fixed) + "." + x.split('.')[1] 
+    else:
+        return x
+
+
 def fix_variable_name(x):
     valid_vars = [
         "temperature", "salinity", "oxygen", "phosphate",
