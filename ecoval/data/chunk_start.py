@@ -9,6 +9,12 @@ def df_display(df):
     df = df.round(2)
     # coerce numeric columns to str
     df = df.astype(str)
+    # capitalize unit column name, if it exists
+    if "unit" in df.columns:
+        df = df.rename(columns={"unit": "Unit"})
+    # capitalize variable column name, if it exists
+    if "variable" in df.columns:
+        df = df.rename(columns={"variable": "Variable"})
     # convert nan to N/A
     df = df.replace("nan", "N/A")
     return df.style.hide(axis="index")
