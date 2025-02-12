@@ -275,10 +275,10 @@ def compare_simulations(
     Parameters
     -------------
 
-    sim_dir_1 : str
-        The directory containing the first model directory  
-    sim_dir_2 : str
-        The directory containing the second simulation
+    sim_1 : dict
+        A dictionary of the first simulation. Key, value pair should be the name of the simulation and the directory.
+    sim_2 : dict
+        A dictionary of the second simulation. Key, value pair should be the name of the simulation and the directory.
     surface_variables : dict
         A dictionary of variables to compare at the surface
     bottom_variables : dict
