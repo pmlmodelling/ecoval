@@ -24,6 +24,7 @@ from multiprocessing import Manager
 from ecoval.utils import extension_of_directory, get_extent, fvcom_regrid
 from ecoval.parsers import generate_mapping
 from ecoval.gridded import gridded_matchup
+from ecoval.chunkers import add_chunks
 
 def simulation_differences_comparison():
     """
@@ -114,9 +115,33 @@ def simulation_differences_comparison():
     out = "book_comparison/" + os.path.basename(data_path)
 
     shutil.copyfile(data_path, out)
+#
+    os.system("jupytext --set-formats ipynb,py:percent book_comparison/notebooks/*.ipynb")
+
+    add_chunks(dir = "book_comparison/notebooks/")
+        # replace the test status in the notebooks
+    books = glob.glob("book_comparison/notebooks/*.py")
+    for book in books:
+        with open(book, "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("the_test_status", "False")
+        filedata = filedata.replace("fast_plot_value", "False")
+
+        # Write the file out again
+        with open(book, "w") as file:
+            file.write(filedata)
+
+    os.system("jupytext --sync book_comparison/notebooks/*.ipynb")
 
     os.system("jupyter-book build book_comparison/")
     import webbrowser
+    books = glob.glob("book_comparison/notebooks/*.py")
+    for ff in books:
+        if ff.endswith(".py"):
+            if "book_comparison/notebooks" in ff:
+                os.remove(ff)
 
     webbrowser.open("file://" + os.path.abspath("book_comparison/_build/html/index.html"))
 
@@ -241,6 +266,7 @@ def compare_simulations(
     ask=True,
     out_dir="",
     build = True,
+    max_level = -2,
     **kwargs,
 ):
     """
@@ -292,6 +318,9 @@ def compare_simulations(
         The output directory
     build : bool
         Whether to build the book
+    max_level : -2
+        The maximum depth level to use when extracting near-bottom.
+        By default this is -2, i.e. it will assume the very bottom level of the netCDF does not have valid data
     kwargs : dict
         Additional arguments
 
@@ -725,17 +754,27 @@ def compare_simulations(
                     with warnings.catch_warnings(record=True) as w:
                         ds.subset(variables = vv_model)
                         ds.as_missing(0)
-                        ds.sum_all()
                         if measure == "top":
-                            ds.top()
+                            if surface_level == "top":
+                                ds.top()
+                            else:
+                                ds.bottom()
+                        ds.sum_all()
                         if measure == "phenology":
-                            ds.top()
+                            if surface_level == "top":
+                                ds.top()
+                            else:
+                                ds.bottom()
                         if measure == "bottom":
                             if thickness_files[i] is not None:
                                 thickness = thickness_files[i]
                             else:
                                 thickness = session_info["obs_dir"] +  "/amm7_e3t.nc"
-                            n_levels = len(ds.levels) - 1
+                            n_levels = len(ds.levels) 
+                            if max_level < 0:
+                                n_levels = n_levels + max_level + 1
+                            else:
+                                n_levels = max_level
                             ds.cdo_command(f"sellevidx,1/{n_levels}")
                             ds.cdo_command("bottomvalue")
                             # ds.cdo_command("bottomvalue")
@@ -766,6 +805,8 @@ def compare_simulations(
                             if "e3t" not in ds_depth.variables:
                                 ds_depth.rename({ds_depth.variables: "e3t"})
                             ds_depth.subset(variable = "e3t", time = 0)
+                            if surface_level == "bottom":
+                                ds_depth.invert_levels()
                             ds_e3t = ds_depth.copy() 
                             ds_e3t / 2
                             ds_depth - ds_e3t
@@ -780,10 +821,14 @@ def compare_simulations(
                                 ds_e3t.rename({ds_e3t.variables: "e3t"})
                             ds_e3t.subset(variable = "e3t", time = 0)
                             ds_e3t.run()
+                            if surface_level == "bottom":
+                                ds_e3t.invert_levels()
                             ds_depth.append(ds_e3t)
                             ds_depth.merge("variables")
                             ds.tmean()
                             ds.ensemble_mean()
+                            if surface_level == "bottom":
+                                ds.invert_levels()
                             ds.append(ds_depth)
                             ds.merge("variable")
                             ds.assign(total_e3t = lambda x: x.total * x.e3t, total_e3t_depth = lambda x: x.total * x.e3t * x.depth)

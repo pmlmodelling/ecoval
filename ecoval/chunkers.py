@@ -17,7 +17,7 @@ def is_chunk(x):
     except:
         return False
 
-def add_chunks(build = "html", cdf = False):
+def add_chunks(build = "html", cdf = False, dir = None):
 
     nws = False
     if len(glob.glob("matched/gridded/nws/**/*.nc")) > 0:
@@ -25,6 +25,8 @@ def add_chunks(build = "html", cdf = False):
 
     paths = glob.glob(f"book_{build}/notebooks/*.py")
     paths += glob.glob("book/compare/notebooks/*.py")
+    if dir is not None:
+        paths += glob.glob(f"{dir}/*.py")
 
     for path in paths:
         # read file line by line

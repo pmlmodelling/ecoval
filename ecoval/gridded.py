@@ -108,7 +108,7 @@ def gridded_matchup(
         for ii in range(n_run):
             for vv in vars:
                 if ii == 1:
-                    # if it's not chlorophyll, stop
+                    # if global is not selected, stop
                     if vv not in session_info["global_data"]:
                         continue
                 # a dictionary for summarizing things
