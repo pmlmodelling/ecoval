@@ -420,7 +420,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", r_warnings = False, build = "html", model = None, cdf = False, test = False):
+def validate(title="Automated model evaluation", author=None, variables = "all", build = "html", r_warnings = False,  model = None, cdf = False, test = False):
     # docstring
     """
     Run the model evaluation for all of the available datasets, and generate a validation report.
@@ -433,16 +433,17 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         The author of the book. Default is None
     variables : str or list
         The variables to run the model evaluation for. Default is "all"
-    r_warnings : bool
-        Whether to suppress R warnings. Default is False
     build : str
         Whether to build the book as "html" or "pdf". Default is "html"
+    r_warnings : bool
+        Whether to shows R warnings. Default is False. Only set to True if something is going with the output and you need to debug.
     model : str
         The name of the model. This is only for providing model info and a schematic.
         The only option right now is "ersem". 
     cdf : bool
         Whether to calculate the cumulative distribution function for variables. Default is False 
-
+    test : bool
+        Default is False. Ignore, unless you are testing ecoval.
 
 
     Returns
@@ -1081,7 +1082,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 def rebuild_validation(build = None):
     """
     Rebuild the validation report after modifying notebooks.
-    Use this if you have modified the notebooks generated and want to create a validation report.
+    Use this if you have modified the notebooks generated and want to create a new validation report.
 
     Parameters
     ----------
@@ -1157,7 +1158,7 @@ except Exception:
 def compare_validations(model_dict=None):
     """
     Compare pre-validated simulations.
-    This function will compare the validition output from two models.
+    This function will compare the validation output from two simulations.
 
     Parameters
     ----------
