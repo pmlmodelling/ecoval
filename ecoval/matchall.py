@@ -491,6 +491,7 @@ def matchup(
         Path to output directory. Default is "", so the output will be saved in the current directory.
     matchup_global : list
         List of variables to matchup with global data in addition to regional. Default is [].
+        Set to "all" if you want all possible variables listed in surface to matchup with available global data.
 
     Returns
     -------------
