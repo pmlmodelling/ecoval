@@ -414,7 +414,7 @@ def matchup(
     point_all=[],
     ask=True,
     out_dir="",
-    global_data = [],
+    matchup_global = [],
     **kwargs,
 ):
     """
@@ -489,7 +489,7 @@ def matchup(
         If True, the user will be asked if they are happy with the matchups. Default is True.
     out_dir : str
         Path to output directory. Default is "", so the output will be saved in the current directory.
-    global_data : list
+    matchup_global : list
         List of variables to matchup with global data in addition to regional. Default is [].
 
     Returns
@@ -509,10 +509,25 @@ def matchup(
 
     """
 
+    global_data = matchup_global
+
+    if obs_dir != "default":
+        if not os.path.exists(obs_dir):
+            raise ValueError(f"{obs_dir} does not exist")
+        session_info["obs_dir"] = obs_dir
+    else:
+        obs_dir = session_info["obs_dir"]
+
     # check variables in global_data are valid
     # coerce global_data to list
     if isinstance(global_data, str):
-        global_data = [global_data]
+        if global_data == "all":
+            # find the available variables
+            surface_variables = glob.glob(obs_dir + "/gridded/global/*")
+            surface_variables = [os.path.basename(x) for x in surface_variables]
+            global_data = surface_variables
+        else:
+            global_data = [global_data]
     for vv in global_data:
         if vv not in valid_vars:
             raise ValueError(f"{vv} in global_data is not a valid variable")
