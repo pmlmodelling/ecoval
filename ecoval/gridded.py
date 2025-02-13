@@ -464,7 +464,7 @@ def gridded_matchup(
                             ds_obs.subset(years=range(start_year, end_year + 1))
 
                         # read in the annual observational data for WOA
-                        if vv_source == "woa":
+                        if vv_source == "woa" and domain != "nws":
                             vv_file = nc.create_ensemble(dir_var)
                             vv_file = [x for x in vv_file if "annual" in x]
                             ds_obs_annual = nc.open_data(
