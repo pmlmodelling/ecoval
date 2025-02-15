@@ -70,6 +70,7 @@ def generate_mapping(ds, fvcom = False):
 
     ds_contents_top = ds_contents.query("nlevels == 1").reset_index(drop=True)
     ds_contents = ds_contents.query("nlevels > 1").reset_index(drop=True)
+    ds_variables = ds_contents.variable
 
     model_dict = {}
     for vv in candidate_variables:
@@ -78,7 +79,7 @@ def generate_mapping(ds, fvcom = False):
             the_vars = [
                 x
                 for x in [str(x) for x in ds_contents.long_name]
-                if vv_check.lower() in x
+                if vv_check.lower() in x.lower()
                 and "benthic" not in x.lower()
                 and "river" not in x.lower()
             ]
@@ -145,8 +146,11 @@ def generate_mapping(ds, fvcom = False):
             the_vars = [
                 x
                 for x in ds_contents.long_name
-                if "pH" in x and "benthic" not in x.lower() and "river" not in x.lower()
+                if ("pH" in x) or (" ph " in x) and "benthic" not in x.lower() and "river" not in x.lower()
             ]
+            if len(the_vars) == 0:
+                if len(ds_contents.query("variable == 'ph'")) > 0:
+                    the_vars = list(ds_contents.query("variable == 'ph'").long_name)
         if vv == "co2flux":
             the_vars = [
                 x
@@ -169,7 +173,7 @@ def generate_mapping(ds, fvcom = False):
             the_vars = [
                 x
                 for x in ds_contents.long_name
-                if ("silicate" in x or "silicic" in x)
+                if ("silicate" in x.lower() or "silicic" in x.lower())
                 and "benthic" not in x.lower()
                 and "river" not in x.lower()
             ]

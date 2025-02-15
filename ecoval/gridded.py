@@ -137,11 +137,14 @@ def gridded_matchup(
                 if ii == 1:
                     dir_var = f"{obs_dir}/gridded/global/{vv}"
 
-                vv_source = [
-                    os.path.basename(x).replace(".txt", "")
-                    for x in glob.glob(dir_var + "/*")
-                    if ".txt" in x
-                ][0]
+                try:
+                    vv_source = [
+                        os.path.basename(x).replace(".txt", "")
+                        for x in glob.glob(dir_var + "/*")
+                        if ".txt" in x
+                    ][0]
+                except:
+                    continue
 
                 print("**********************")
                 #
@@ -302,15 +305,14 @@ def gridded_matchup(
                                     new_paths.remove(ff)
                             paths = new_paths
 
-                        if vv_source == "woa" and domain != "nws":
+                        if vv_source == "woa" and domain not in  ["nws", "europe"]:
                             ds_vertical = nc.open_data(paths, checks=False)
-                            if domain == "nws":
-                                ds_vertical.top()
                         else:
                             ds_surface = nc.open_data(paths, checks=False)
 
                         if fvcom is False:
-                            if vv_source == "woa" and domain != "nws":
+                            if vv_source == "woa" and domain not in  ["nws", "europe"]:
+                                raise ValueError("here")
                                 # handle this differently
                                 ds_vertical = nc.open_data()
                                 for mm in range(1, 13):
@@ -321,7 +323,7 @@ def gridded_matchup(
                                     mm_paths = list(set(mm_paths))
 
                                     ds_mm = nc.open_data(mm_paths, checks=False)
-                                    if domain == "nws":
+                                    if domain in ["nws", "europe"]:
                                         ds_mm.top()
                                     # ds_mm.nco_command(nco_command, ensemble = False)
                                     ds_mm.subset(variables=selection)
@@ -337,7 +339,7 @@ def gridded_matchup(
                                 ds_vertical.ensemble_mean()
                             else:
                                 if use_nco:
-                                    if vv_source != "woa" or domain != "nws":
+                                    if vv_source != "woa" or domain not in  ["nws", "europe"]:
                                         ds_surface.nco_command(
                                             f"ncks -F -d deptht,1 -v {nco_selection}"
                                         )
@@ -357,7 +359,7 @@ def gridded_matchup(
                                         else:
                                             ds_surface.bottom()
                                 else:
-                                    if vv_source != "woa" or domain == "nws":
+                                    if vv_source != "woa" or domain in ["nws", "europe"]:
                                         ds_surface.subset(variables=selection)
                                         if surface_level == "top":
                                             ds_surface.top()
@@ -446,7 +448,7 @@ def gridded_matchup(
                     with warnings.catch_warnings(record=True) as w:
                         start_year = min(ds_surface.years)
                         end_year = max(ds_surface.years)
-                        if vv_source == "woa" and domain != "nws":
+                        if vv_source == "woa" and domain not in  ["nws", "europe"]:
                             # ds_surface = ds.copy()
                             ds_vertical.ensemble_mean(nco=True)
 
@@ -462,9 +464,10 @@ def gridded_matchup(
                         if vv_source == "occci":
                             ds_obs.subset(variable="chlor_a")
                             ds_obs.subset(years=range(start_year, end_year + 1))
+                            ds_obs.run()
 
                         # read in the annual observational data for WOA
-                        if vv_source == "woa" and domain != "nws":
+                        if vv_source == "woa" and domain not in  ["nws", "europe"]:
                             vv_file = nc.create_ensemble(dir_var)
                             vv_file = [x for x in vv_file if "annual" in x]
                             ds_obs_annual = nc.open_data(
@@ -524,8 +527,8 @@ def gridded_matchup(
                             ds_obs.merge("time")
                             ds_obs.tmean(["year", "month"], align = "left")
 
-                        if vv in ["salinity"] and domain != "nws":
-                            if vv_source != "woa" or domain == "nws":
+                        if vv in ["salinity"] and domain not in  ["nws", "europe"]:
+                            if vv_source != "woa" or domain in ["nws", "europe"]:
                                 ds_obs.top()
                             sub_years = [x for x in ds_vertical.years if x in ds_obs.years]
                             ds_obs.subset(years=sub_years)
@@ -536,7 +539,7 @@ def gridded_matchup(
                             ds_surface.tmean("month", align = "left")
                             ds_obs_annual.subset(years=sub_years)
                             ds_obs_annual.tmean(align = "left")
-                        if vv in ["chlorophyll"] and domain != "nws":
+                        if vv in ["chlorophyll"] and domain not in  ["nws", "europe"]:
                             ds_obs.top()
                             sub_years = [x for x in ds_surface.years if x in ds_obs.years]
                             ds_obs.subset(years=sub_years)
@@ -661,10 +664,10 @@ def gridded_matchup(
                             ds_obs * 12.011
                             ds_surface + (40 * 12.011)
 
-                        if vv_source != "woa" or domain == "nws":
+                        if vv_source != "woa" or domain in ["nws", "europe"]:
                             ds_obs.top()
 
-                        if vv_source == "woa" and domain != "nws":
+                        if vv_source == "woa" and domain not in  ["nws", "europe"]:
                             levels = ds_obs_annual.levels
                             levels = [x for x in levels if x >= np.min(ds_vertical.levels)]
                             ds1 = ds_vertical.copy()
@@ -788,7 +791,7 @@ def gridded_matchup(
                         if os.path.exists(out_file):
                             os.remove(out_file)
                         ds_obs.set_precision("F32")
-                        if vv == "salinity" and domain != "nws":
+                        if vv == "salinity" and domain not in  ["nws" "europe"]:
                             ds_obs.tmean("month")
                         ds_surface = ds_obs.copy()
                         if vv_source == "woa":
@@ -817,7 +820,7 @@ def gridded_matchup(
 
                     # now do the masking etc.
 
-                    if vv_source == "woa" and domain != "nws":
+                    if vv_source == "woa" and domain not in  ["nws", "europe"]:
                         out_file = (
                             session_info["out_dir"]
                             + f"matched/gridded/{domain}/{vv}/{vv_source}_{vv}_vertical.nc"
