@@ -100,4 +100,5 @@ def tidy_warnings(w):
         if bad:
             out_warnings.append(x_message)
     for ww in out_warnings:
-        warnings.warn(ww)
+        if "months were missing" not in ww:
+            warnings.warn(ww)
