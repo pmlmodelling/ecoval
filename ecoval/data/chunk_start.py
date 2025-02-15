@@ -90,8 +90,18 @@ def fix_variable_name(x):
 
 def df_display(df):
     # only 2 decimal places
+    for col in df.columns:
+        if "Number" in col:
+            try:
+                df[col] = df[col].astype(int)
+                # put in commas
+                df[col] = df[col].apply(lambda x: "{:,}".format(x))
+            except:
+                pass
     df = df.round(2)
     # coerce numeric columns to str
+    # if number is in the column title, make sure the variable is int
+
     df = df.astype(str)
     # capitalize unit column name, if it exists
     if "unit" in df.columns:
