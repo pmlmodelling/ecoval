@@ -877,10 +877,11 @@ def matchup(
                 # global_grid = True
         # figure out if the model domain is european
         # should not go further east than 50 
-        if lon_max > -21 and lon_max < 40: 
-            if lat_max > 25 and lat_max < 70:
-                model_domain = "europe"
-                global_grid = False
+        if model_domain != "nws":
+            if lon_max > -21 and lon_max < 40: 
+                if lat_max > 25 and lat_max < 70:
+                    model_domain = "europe"
+                    global_grid = False
 
         if global_grid:
             model_domain = "global"
