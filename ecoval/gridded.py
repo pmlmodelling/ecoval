@@ -146,6 +146,8 @@ def gridded_matchup(
                         )
                     if ii == 0:
                         dir_var = non_globals[0]
+                        if len(non_globals) == 0:
+                            dir_var = [x for x in dir_names if "global" in x][0]
                     else:
                         dir_var = [x for x in dir_names if "global" in x][0]
 
