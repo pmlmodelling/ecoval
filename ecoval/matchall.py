@@ -853,7 +853,11 @@ def matchup(
         path = str(path)
         break
 
-    ds = nc.open_data(path, checks=False)
+    try:
+        ds = nc.open_data(path, checks=False)
+    except:
+        raise ValueError("Problems finding files. Check n_dirs_down arg")
+
     if fvcom is False:
         with warnings.catch_warnings(record=True) as w:
             ds_extent = get_extent(ds[0])

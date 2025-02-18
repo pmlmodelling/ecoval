@@ -139,6 +139,7 @@ def gridded_matchup(
                     dir_names = dirs 
 
                     non_globals = [x for x in dir_names if "global" not in x.split("/")[-2]]
+                    non_globals = [x for x in dir_names if domain in x.split("/")[-2]]
                     if len(non_globals) > 1:
                         raise ValueError(
                             f"Multiple directories found for {vv}. Please specify the correct directory"
