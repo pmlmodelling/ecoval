@@ -132,10 +132,21 @@ def gridded_matchup(
                 # check if this directory is empty
                 if len(glob.glob(dir_var + "/*")) == 0:
                     dir_var = f"{obs_dir}/gridded/{domain}/{vv}"
-                if len(glob.glob(dir_var + "/*")) == 0:
-                    dir_var = f"{obs_dir}/gridded/global/{vv}"
-                if ii == 1:
-                    dir_var = f"{obs_dir}/gridded/global/{vv}"
+                    dirs = glob.glob(f"{obs_dir}/gridded/**/{vv}", recursive=True)
+                    if len(dirs) == 0:
+                        raise ValueError(f"No data found for {vv}")
+                    # get directory names for dirs
+                    dir_names = dirs 
+
+                    non_globals = [x for x in dir_names if "global" not in x.split("/")[-2]]
+                    if len(non_globals) > 1:
+                        raise ValueError(
+                            f"Multiple directories found for {vv}. Please specify the correct directory"
+                        )
+                    if ii == 0:
+                        dir_var = non_globals[0]
+                    else:
+                        dir_var = [x for x in dir_names if "global" in x][0]
 
                 try:
                     vv_source = [
@@ -146,7 +157,6 @@ def gridded_matchup(
                 except:
                     continue
 
-                print("**********************")
                 #
                 vv_name = vv
                 if vv == "poc":
@@ -312,7 +322,6 @@ def gridded_matchup(
 
                         if fvcom is False:
                             if vv_source == "woa" and domain not in  ["nws", "europe"]:
-                                raise ValueError("here")
                                 # handle this differently
                                 ds_vertical = nc.open_data()
                                 for mm in range(1, 13):
