@@ -837,6 +837,30 @@ def matchup(
                 else:
                     all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
     
+    if "poc" in surface_req: 
+        pattern = list(all_df.query("variable == 'poc'").pattern)[0]
+        print(pattern)
+        final_extension = extension_of_directory(sim_dir)
+
+        if final_extension[0] == "/":
+            final_extension = final_extension[1:]
+
+        wild_card = final_extension + pattern
+        wild_card = wild_card.replace("**", "*")
+        for x in pathlib.Path(sim_dir).glob(wild_card):
+            path = x
+            # convert to string
+            path = str(path)
+            break
+        ds = nc.open_data(path, checks=False)
+        poc_variables = list(all_df.query("variable == 'poc'").model_variable)[0].split("+")
+        if len([x for x in poc_variables if x not in ds.variables]):
+            surface_req.remove("poc")
+            print("POC variables not available in model output. Removing from matchups")
+            all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
+
+
+    # check if the variables are in all_df
 
     pattern = all_df.reset_index(drop=True).iloc[0, :].pattern
 
