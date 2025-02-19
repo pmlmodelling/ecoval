@@ -259,7 +259,7 @@ def generate_mapping(ds, fvcom = False):
                         "long_name in @the_vars"
                     ).variable
                 else:
-                    model_vars = ds_contents_top.query(
+                    model_vars = ds_contents.query(
                         "long_name in @the_vars"
                     ).variable
 
