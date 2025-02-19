@@ -810,8 +810,11 @@ def gridded_matchup(
                             ds_surface.top()
                         if lon_lim is not None and lat_lim is not None:
                             ds_surface.subset(lon=lon_lim, lat=lat_lim)
+                        
 
                         ds_surface.run()
+                        if list(ds_surface.contents.query("variable == 'model'").long_name)[0] is None:
+                            ds_surface.set_longnames({"model": f"Model {vv_name}"})
 
                         regrid_later = False
                         if is_latlon(ds_surface[0]) is False:
