@@ -773,7 +773,8 @@ def matchup(
     if not isinstance(point_all, list):
         raise ValueError("point_all must be a list")
     if mld:
-        point_all = ["temperature"]
+        if "temperature" not in point_all:
+            point_all.append("temperature")
     point_bottom = []
     point_benthic = benthic
 
@@ -838,26 +839,35 @@ def matchup(
                     all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
     
     if "poc" in surface_req: 
-        pattern = list(all_df.query("variable == 'poc'").pattern)[0]
-        print(pattern)
-        final_extension = extension_of_directory(sim_dir)
-
-        if final_extension[0] == "/":
-            final_extension = final_extension[1:]
-
-        wild_card = final_extension + pattern
-        wild_card = wild_card.replace("**", "*")
-        for x in pathlib.Path(sim_dir).glob(wild_card):
-            path = x
-            # convert to string
-            path = str(path)
-            break
-        ds = nc.open_data(path, checks=False)
-        poc_variables = list(all_df.query("variable == 'poc'").model_variable)[0].split("+")
-        if len([x for x in poc_variables if x not in ds.variables]):
+        pattern = list(all_df.query("variable == 'poc'").pattern)
+        if len(pattern) == 0:
             surface_req.remove("poc")
-            print("POC variables not available in model output. Removing from matchups")
             all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
+        else:
+            pattern = pattern[0]
+            if pattern is None:
+                surface_req.remove("poc")
+                all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
+            else:
+
+                final_extension = extension_of_directory(sim_dir)
+
+                if final_extension[0] == "/":
+                    final_extension = final_extension[1:]
+
+                wild_card = final_extension + pattern
+                wild_card = wild_card.replace("**", "*")
+                for x in pathlib.Path(sim_dir).glob(wild_card):
+                    path = x
+                    # convert to string
+                    path = str(path)
+                    break
+                ds = nc.open_data(path, checks=False)
+                poc_variables = list(all_df.query("variable == 'poc'").model_variable)[0].split("+")
+                if len([x for x in poc_variables if x not in ds.variables]):
+                    surface_req.remove("poc")
+                    print("POC variables not available in model output. Removing from matchups")
+                    all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
 
 
     # check if the variables are in all_df
@@ -922,7 +932,6 @@ def matchup(
         else:
             global_grid = True
             model_domain = "global"
-    print("********************************")
 
     if session_info["user_dir"]:
         if global_grid:
@@ -1005,6 +1014,8 @@ def matchup(
         benthic = [x for x in benthic if x in valid_vars]
         bottom = valid_bottom
         bottom = [x for x in bottom if x in valid_vars]
+        point_all = point_surface 
+
     
     if fvcom:
         point_benthic = []
@@ -1037,6 +1048,7 @@ def matchup(
     )
     # check variables chosen are valid
 
+
     remove = []
     for vv in surface_req:
         if vv not in valid_surface:
@@ -1063,10 +1075,25 @@ def matchup(
     point_benthic = [x for x in point_benthic if x in vars_available]
     var_chosen = surface + bottom + point_benthic + point_bottom + point_surface
     var_chosen = list(set(var_chosen))
+    point_all = [x for x in point_all if x in vars_available]
+
 
     # create matched directory
     if not os.path.exists("matched"):
         os.mkdir("matched")
+    
+    for vv in point_all:
+        if vv not in ["pco2"]:
+            if vv in point_bottom:
+                point_bottom.remove(vv)
+            if vv in point_surface:
+                point_surface.remove(vv)
+        if vv in ["pco2"]:
+            if vv not in point_surface:
+                point_surface.append(vv)
+            point_all.remove(vv)
+    
+    # raise ValueError(point_all)
 
     if len(point_bottom) > 0 or mld or len(point_all) > 0:
         if session_info["z_level"] == False:
@@ -2002,7 +2029,7 @@ def matchup(
                                         df_grid = (
                                             ds_grid.to_dataframe()
                                             .reset_index()
-                                            .dropna()
+                                            # .dropna()
                                         )
                                         columns = [
                                             x
@@ -2207,6 +2234,19 @@ def matchup(
                             df_all = df_all.merge(df)
 
                         if len(df_all) > 0:
+                            # read in bottom data
+                            bottom_paths = glob.glob(f"{obs_dir}/point/nws/bottom/{variable}/*bottom*{variable}.feather")
+
+                            if len(bottom_paths) == 1:
+                                # average based on point_time_res
+                                # drop observation
+                                df_bottom = pd.read_feather(bottom_paths[0])
+                                df_bottom = df_bottom.loc[:,["lon", "lat", "depth"]]
+                                df_bottom = df_bottom.assign(bottom = 1)
+                                df_all = df_all.merge(df_bottom, how = "left")
+                                # fill in the missing values
+                                df_all = df_all.fillna(0)
+
                             df_all.to_csv(out, index=False)
                             if session_info["out_dir"] != "":
                                 out_unit = f"{session_info['out_dir']}/matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}_unit.csv"
