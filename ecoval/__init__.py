@@ -361,6 +361,7 @@ def compare(model_dict=None):
                 filedata = file.read()
 
             # Replace the target string
+            filedata = filedata.replace("point_layer", ss)
             filedata = filedata.replace("layer", ss)
 
             # Write the file out again
@@ -617,10 +618,26 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                         )
                         with open(file1, "r") as file:
                             filedata = file.read()
+                        
+                        if layer in ["surface", "all", "benthic"]:
+                            filedata = filedata.replace("chunk_point_surface", "chunk_point")
+                        else:
+                            filedata = filedata.replace("chunk_point_surface", "")
+                        if layer in ["bottom", "all"]:
+                            if vv.lower() not in ["pco2"]:
+                                filedata = filedata.replace("chunk_point_bottom", "chunk_point") 
+                            else:
+                                filedata = filedata.replace("chunk_point_bottom", "") 
+                        else:
+                            filedata = filedata.replace("chunk_point_bottom", "") 
 
                         # Replace the target string
                         out = f"{book_dir}/notebooks/{source}_{layer}_{variable}.ipynb"
                         filedata = filedata.replace("point_variable", variable)
+                        if layer != "all":
+                            filedata = filedata.replace("Validation of point_layer", f"Validation of {layer}")
+                        else:
+                            filedata = filedata.replace("Validation of point_layer", f"Validation of ")
                         filedata = filedata.replace("point_layer", layer)
                         filedata = filedata.replace("template_title", Variable)
 

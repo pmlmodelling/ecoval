@@ -117,6 +117,9 @@ def df_display(df):
         df["Variable"] = df["Variable"].str.replace("Poc ", "POC ")
         # ensure "Doc" is "DOC"
         df["Variable"] = df["Variable"].str.replace("Doc", "DOC")
+    # if R2 is in the column name, make sure the 2 is superscript
+    if "R2" in df.columns:
+        df = df.rename(columns={"R2": "R²"}) 
     # convert nan to N/A
     df = df.replace("nan", "N/A")
     return df.style.hide(axis="index")
