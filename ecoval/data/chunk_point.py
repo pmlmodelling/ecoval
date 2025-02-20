@@ -7,6 +7,16 @@ ff = glob.glob(f"../../matched/point/**/{layer}/{variable}/*_{variable}.csv")[0]
 vv_source = os.path.basename(ff).split("_")[0]
 vv_source = vv_source.upper()
 df = pd.read_csv(ff)
+ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
+point_time_res = ["year", "month", "day"]
+try:
+    with open(ff_dict, "rb") as f:
+        matchup_dict = pickle.load(f)
+        min_year = matchup_dict["start"]
+        max_year = matchup_dict["end"]
+        point_time_res = matchup_dict["point_time_res"]
+except:
+    pass
 
 if layer_select == "surface":
     try:
@@ -30,7 +40,10 @@ df_raw = copy.deepcopy(df)
 if variable == "benbio":
     df = df.assign(observation = lambda x: 1000 * 0.45 * x.observation) 
 if variable not in  ["carbon", "benbio", "susfrac", "oxycons"]:
-    df = df.groupby(["lon", "lat", "year", "month"]).mean().reset_index()
+    if "year" in point_time_res:
+        df = df.groupby(["lon", "lat", "year", "month"]).mean().reset_index()
+    else:
+        df = df.groupby(["lon", "lat",  "month"]).mean().reset_index()
 else:
     df = df.groupby(["lon", "lat"]).mean().reset_index()
 
@@ -112,13 +125,37 @@ if variable == "doc":
 df_mapping = pd.read_csv("../../matched/mapping.csv")
 model_variable = list(df_mapping.query("variable == @variable").model_variable)[0]
 
-if "year" in df_raw.columns:
-    min_year = df_raw.year.min()
-    max_year = df_raw.year.max()
+import pickle
+try:
+    ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
+    with open(ff_dict, "rb") as f:
+        matchup_dict = pickle.load(f)
+        min_year = matchup_dict["start"]
+        max_year = matchup_dict["end"]
+        point_time_res = matchup_dict["point_time_res"]
+
+    if min_year == max_year:
+        intro.append(f"The model output was matched up with the observational data with model output from  the year **{min_year}**.")
+    else:
+        intro.append(f"The model output was matched up with the observational data with model output from the years **{min_year} to {max_year}**.")
+    
+    if point_time_res == ["year", "month", "day"]:
+        intro.append(f"The model output was matched up precisely with the observational data for each day of the year in the years with data in both model and observations.")
+    if point_time_res == ["month", "day"]:
+        intro.append(f"The model output was matched up with the observational data for each day of the year. However, the year in the observational data was not considered, so the comparison is climatological.")
+    if point_time_res == ["month"]:
+        intro.append(f"The model output was matched up with the observational data for each month of the year. However, the year and day of month in the observational data was not considered, so the comparison is climatological.")
+    
+    
+except:
+    if "year" in df_raw.columns:
+        min_year = df_raw.year.min()
+        max_year = df_raw.year.max()
     if min_year == max_year:
         intro.append(f"The model output was matched up with the observational data for the year **{min_year}**.")
     else:
         intro.append(f"The model output was matched up with the observational data for the years **{min_year} to {max_year}**.")
+
 
 intro.append(f"The following model output was used to compare with observational **{vv_name}**: **{model_variable}**.")
 
@@ -303,18 +340,25 @@ if "month" in df_raw.columns:
     
     md(" ".join(fig_summary).strip().replace("  ", " "))
 
+if "month" in df_raw.columns:
+    df_totals = (
+        df_raw.groupby("month").size().reset_index()
+        # rename
+        .rename(columns = {0: "n"})
+    )
+else:
+    df_totals = pd.DataFrame({"month": ["All"], "n": [len(df_raw)]})
 
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df_raw -i variable -i unit -w 500 
+# %%R -i df_totals -i variable -i unit -w 500 
 # calculate number of observations per month
 # figure out if "month" in df
-if("month" %in% colnames(df_raw)){
+if("month" %in% colnames(df_totals)){
 
-df1 <- df_raw %>%
-    group_by(lon, lat, month) %>%
-    summarise(observation = n()) %>%
+df1 <- df_totals %>%
+    rename(observation = n) %>%
     ungroup()   
 
 # plot number of observations per month using plotnine and geom_bar
