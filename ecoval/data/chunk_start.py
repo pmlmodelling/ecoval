@@ -16,6 +16,7 @@ def fix_basename(x):
 
 
 def fix_variable_name(x):
+    return x
     valid_vars = [
         "temperature", "salinity", "oxygen", "phosphate",
         "silicate", "nitrate", "ammonium", "alkalinity",
@@ -57,9 +58,6 @@ def fix_variable_name(x):
         return x
     if x_lower == "co2flux":
         x = "air-sea carbon dioxide flux"
-        return x
-    if x_lower == "pco2":
-        x = "pCO2"
         return x
     if x_lower == "carbon":
         x = "carbon concentration in sediments"
@@ -126,7 +124,52 @@ def df_display(df):
 
 import warnings
 warnings.filterwarnings('ignore')
-from IPython.display import Markdown as md
+from IPython.display import Markdown as md_markdown
+def md(x):
+    valid_vars = [
+        "temperature", "salinity", "oxygen", "phosphate",
+        "silicate", "nitrate", "ammonium", "alkalinity",
+        "ph", "chlorophyll", "co2flux", "pco2",
+        "doc", "poc", "carbon", "benbio",
+        "benthic_carbon_flux", "mesozoo", "oxycons" ]
+    if x.lower() == "temperature":
+        return "temperature"
+    x = x.replace(" doc ", " DOC concentration ")
+    x = x.replace(" doc.", " DOC concentration.")
+    x = x.replace(" poc ", " POC concentration ")
+    x = x.replace(" poc.", " POC concentration.")
+    x = x.replace(" oxygen ", " oxygen concentration ")
+    x = x.replace(" oxygen.", " oxygen concentration.")
+    x = x.replace(" phosphate ", " phosphate concentration ")
+    x = x.replace(" phosphate.", " phosphate concentration.")
+    x = x.replace(" silicate ", " silicate concentration ")
+    x = x.replace(" silicate.", " silicate concentration.")
+    x = x.replace(" nitrate ", " nitrate concentration ")
+    x = x.replace(" nitrate.", " nitrate concentration.")
+    x = x.replace(" ammonium ", " ammonium concentration ")
+    x = x.replace(" ammonium.", " ammonium concentration.")
+    x = x.replace(" ph ", " pH ")
+    x = x.replace(" ph.", " pH.") 
+    x = x.replace(" chlorophyll ", " chlorophyll concentration ")
+    x = x.replace(" chlorophyll.", " chlorophyll concentration.")
+    x = x.replace(" co2flux ", " air-sea carbon dioxide flux ")
+    x = x.replace(" co2flux.", " air-sea carbon dioxide flux.")
+    x = x.replace(" carbon ", " carbon concentration in sediments ")
+    x = x.replace(" carbon.", " carbon concentration in sediments.")
+    x = x.replace(" benbio ", " macrobenthos biomass concentration ")
+    x = x.replace(" benbio.", " macrobenthos biomass concentration.")
+    x = x.replace(" benthic_carbon_flux ", " carbon flux in sediments ")
+    x = x.replace(" benthic_carbon_flux.", " carbon flux in sediments.")
+    x = x.replace(" mesozoo ", " mesozooplankton concentration ")
+    x = x.replace(" mesozoo.", " mesozooplankton concentration.")
+    x = x.replace(" oxycons ", " benthic oxygen consumption ")
+    x = x.replace(" oxycons.", " benthic oxygen consumption.")
+
+    x = x.replace("pco2", "pCO<sub>2</sub>")
+    # make CO2 subscript
+    x = x.replace("CO2", "CO<sub>2</sub>")
+    x = x.replace(" ph ", " pH ")
+    return md_markdown(x)
 %load_ext rpy2.ipython
 import jellyfish
 compact = False

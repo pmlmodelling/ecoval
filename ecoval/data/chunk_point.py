@@ -82,7 +82,6 @@ def data_source(vv_source, vv_name):
 
 
 # %% tags=["remove-input"]
-from IPython.display import Markdown as md
 intro = []
 
 if vv_source == "ICES": 
@@ -157,11 +156,11 @@ except:
         intro.append(f"The model output was matched up with the observational data for the years **{min_year} to {max_year}**.")
 
 
-intro.append(f"The following model output was used to compare with observational **{vv_name}**: **{model_variable}**.")
 
 md(" ".join(intro).strip().replace("  ", " "))
 
 md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.")
+md_markdown(f"The following model output was used to compare with observational values: **{model_variable}**.")
 
 # %% tags=["remove-cell"]
 # bottom 1% of observations
