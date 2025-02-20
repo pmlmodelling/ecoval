@@ -268,6 +268,7 @@ def compare_simulations(
     build = True,
     max_level = -2,
     averaging = ["month"],
+    mask = None,
     **kwargs,
 ):
     """
@@ -322,6 +323,11 @@ def compare_simulations(
     max_level : -2
         The maximum depth level to use when extracting near-bottom.
         By default this is -2, i.e. it will assume the very bottom level of the netCDF does not have valid data
+    averaging : list
+        Temporal averaging used by nctoolkit's tmean. By default this is ["month"], so it's a monthly climatology
+    mask : str
+        A mask file to use. This should be 1 where you want to keep the data and 0 where you want to ignore it.
+        Ensure this file is CF-compliant and can be regridded.
     kwargs : dict
         Additional arguments
 
@@ -337,8 +343,8 @@ def compare_simulations(
     If you wanted to compare surface chlorophyll, bottom oxygen, and integrated phosphate, nitrate, and silicate, the phenology of chlorophyll, and the depth profile of oxygen, you would run:  
 
     ecoval.compare_simulations(
-        sim_dir_1 = "/data/foo",
-        sim_dir_2 = "/data/bar",
+        sim_1 = {"sim_1": "/data/foo"},
+        sim_2 = {"sim_2": "/data/bar"}, 
         surface_variables = {"chlorophyll": "P1_Chl+P2_Chl+P3_Chl+P4_Chl"},
         bottom_variables = {"oxygen": "O2_o", "pH": "O3_pH"},
         vertmean_variables = {"oxygen": "O2_o"},
@@ -879,6 +885,28 @@ def compare_simulations(
                         if not os.path.exists(os.path.dirname(out_file)):
                             os.makedirs(os.path.dirname(out_file))
                         ds.set_fill(-9999)
+                    if mask is not None:
+                        ds_mask = nc.open_data(mask)
+                        ds_mask.as_missing(0)
+                        ds_mask > 0
+                        ds_mask.set_fill(-9999999999999999)
+                        ds_mask.regrid(ds)
+                        ds * ds_mask
+                        ds_xr = ds_mask.to_xarray()
+                        lon_name = [x for x in ds_xr.coords if "lon" in x][0]
+                        lat_name = [x for x in ds_xr.coords if "lat" in x][0]
+                        ds_xr = ds_mask.to_dataframe().reset_index().dropna()
+                        lon_min = float(ds_xr[lon_name].min())
+                        lon_max = float(ds_xr[lon_name].max())
+                        lat_min = float(ds_xr[lat_name].min())
+                        lat_max = float(ds_xr[lat_name].max())
+                        # crop it
+                        ds.crop(lon = [lon_min, lon_max], lat = [lat_min, lat_max])
+                        if os.path.exists("mask.nc"):
+                            os.remove("mask.nc")
+                        if not os.path.exists("mask.nc"): 
+                            ds_mask.to_nc("mask.nc", zip = True)
+
                     ds.to_nc(out_file, zip = True)
                     output_files.append(out_file)
                 
