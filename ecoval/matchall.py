@@ -418,6 +418,7 @@ def matchup(
     ask=True,
     out_dir="",
     matchup_global = [],
+    point_years = [-1000, 10000],
     **kwargs,
 ):
     """
@@ -498,6 +499,9 @@ def matchup(
     matchup_global : list
         List of variables to matchup with global data in addition to regional. Default is [].
         Set to "all" if you want all possible variables listed in surface to matchup with available global data.
+    point_years : list
+        List of two integers. The first is the minimum year, the second is the maximum year to extract for point data. Default is [-1000, 10000].
+
 
     Returns
     -------------
@@ -516,7 +520,12 @@ def matchup(
 
     """
 
+    # add point years to session info
+    session_info["point_years"] = point_years
+
     point_time_dict = dict()
+        # add point years to session info
+    session_info["point_years"] = point_years
     if isinstance(point_time_res, dict):
         point_time_dict = copy.deepcopy(point_time_res)
     if isinstance(point_time_res, str):
@@ -1870,10 +1879,17 @@ def matchup(
                             # if it exists, coerce year to int
                             if "year" in df.columns:
                                 df = df.assign(year=lambda x: x.year.astype(int))
+                                point_start = session_info["point_years"][0]
+                                point_end = session_info["point_years"][1]
+                                df = df.query("year >= @point_start and year <= @point_end").reset_index(drop=True)
+                                # subset to 
                             if "month" in df.columns:
                                 df = df.assign(month=lambda x: x.month.astype(int))
                             if "day" in df.columns:
                                 df = df.assign(day=lambda x: x.day.astype(int))
+                            
+                            print(df.year.max())
+                            print(df.year.min())
 
                             if variable == "doc":
                                 # go from mole to g of C
