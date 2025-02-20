@@ -1887,9 +1887,6 @@ def matchup(
                                 df = df.assign(month=lambda x: x.month.astype(int))
                             if "day" in df.columns:
                                 df = df.assign(day=lambda x: x.day.astype(int))
-                            
-                            print(df.year.max())
-                            print(df.year.min())
 
                             if variable == "doc":
                                 # go from mole to g of C
