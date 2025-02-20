@@ -267,6 +267,7 @@ def compare_simulations(
     out_dir="",
     build = True,
     max_level = -2,
+    averaging = ["month"],
     **kwargs,
 ):
     """
@@ -552,6 +553,7 @@ def compare_simulations(
             print("Identifying time info and finding relevant files")
 
             pattern_files_list = []
+            i = 0
             for ii in range(2):
                 while True:
                     if ii == 0:
@@ -684,6 +686,7 @@ def compare_simulations(
                     raise ValueError("No data found for the specified years")
 
                 # now do the climatology
+                output_files = []
                 for i in range(2):
                     if i == 0:
                         print(f"Extracting data for {measure} {var_choice} for the first simulation")
@@ -759,7 +762,10 @@ def compare_simulations(
                                 ds.top()
                             else:
                                 ds.bottom()
-                        ds.sum_all()
+
+                        if len(vv_model) > 1:
+                            ds.sum_all()
+
                         if measure == "phenology":
                             if surface_level == "top":
                                 ds.top()
@@ -825,8 +831,10 @@ def compare_simulations(
                                 ds_e3t.invert_levels()
                             ds_depth.append(ds_e3t)
                             ds_depth.merge("variables")
-                            ds.tmean()
-                            ds.ensemble_mean()
+                            ds.merge("time")
+                            if averaging is not None:
+                                ds.tmean(averaging)
+                            #ds.ensemble_mean()
                             if surface_level == "bottom":
                                 ds.invert_levels()
                             ds.append(ds_depth)
@@ -846,8 +854,8 @@ def compare_simulations(
                         if measure == "phenology":
                             ds.tmean(["year", "month", "day"])
                         else:
-                            ds.tmean(["year", "month"])
-                            ds.tmean(["month"])
+                            ds.merge("time")
+                            ds.tmean(averaging)
 
                         ds.run()
                         try:
@@ -872,6 +880,44 @@ def compare_simulations(
                             os.makedirs(os.path.dirname(out_file))
                         ds.set_fill(-9999)
                     ds.to_nc(out_file, zip = True)
+                    output_files.append(out_file)
+                
+                # now, we need to figure out if the files are comparable
+                ds1 = nc.open_data(output_files[0])
+                ds2 = nc.open_data(output_files[1])
+                if len(ds1.times) != len(ds2.times):
+                    # now we need to subset things to be the same
+                    ds1_times = ds1.times
+                    ds1_months = [x.month for x in ds1_times]
+                    ds1_days = [x.day for x in ds1_times]
+                    ds1_years = [x.year for x in ds1_times]
+                    ds2_times = ds2.times
+                    ds2_months = [x.month for x in ds2_times]
+                    ds2_days = [x.day for x in ds2_times]
+                    ds2_years = [x.year for x in ds2_times]
+                    df1 = pd.DataFrame({"month": ds1_months, "day": ds1_days, "year": ds1_years})
+                    df1 = df1.reset_index()
+                    # rename the new index to "index1"
+                    df1 = df1.rename(columns = {"index": "index1"})
+                    df2 = pd.DataFrame({"month": ds2_months, "day": ds2_days, "year": ds2_years})
+                    df2 = df2.reset_index()
+                    # rename the new index to "index2"
+                    df2 = df2.rename(columns = {"index": "index2"})
+                    df1 = df1.merge(df2, on = ["month", "day", "year"], how = "outer")
+                    df1 = df1.dropna()
+                    # now we need to subset the data
+                    times1 = [int(x) for x in df1.index1]
+                    times2 = [int(x) for x in df1.index2]
+                    ds1.subset(time = times1)
+                    ds2.subset(time = times2)
+                    ds1.run()
+                    os.remove(output_files[0])
+                    ds1.to_nc(output_files[0], zip = True)
+                    ds2.run()
+                    os.remove(output_files[1])
+                    ds2.to_nc(output_files[1], zip = True)
+
+            
 
     if build:
         simulation_differences_comparison()
