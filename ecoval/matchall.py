@@ -2280,7 +2280,24 @@ def matchup(
                                 # fill in the missing values
                                 df_all = df_all.fillna(0)
 
+                            if "year" not in point_time_res:
+                                try:
+                                    df_all = df_all.drop(columns="year")
+                                except:
+                                    pass
+                            if "day" not in point_time_res:
+                                try:
+                                    df_all = df_all.drop(columns="day")
+                                except:
+                                    pass
                             df_all.to_csv(out, index=False)
+
+                            out1 = out.replace(os.path.basename(out), "matchup_dict.pkl")
+                            the_dict = {"start": min_year, "end": max_year, "point_time_res" : point_time_res}
+                            # write to pickle
+                            with open(out1, "wb") as f:
+                                pickle.dump(the_dict, f)
+
                             if session_info["out_dir"] != "":
                                 out_unit = f"{session_info['out_dir']}/matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}_unit.csv"
                             else:
