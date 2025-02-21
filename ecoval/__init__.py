@@ -64,6 +64,8 @@ def fix_toc(book_dir):
         x = f.write(f"- caption: Introduction\n")
         x = f.write("  chapters:\n")
         x = f.write(f"  - file: notebooks/000_info.ipynb\n")
+        x = f.write(f"  - file: notebooks/001_methods.ipynb\n")
+
         # open notebook and replace book_chapter with i_chapter
         with open(f"{book_dir}/notebooks/000_info.ipynb", "r") as file:
             filedata = file.read()
@@ -76,6 +78,16 @@ def fix_toc(book_dir):
             file.write(filedata)
         i_chapter += 1
 
+        # open notebook and replace book_chapter with i_chapter
+        with open(f"{book_dir}/notebooks/001_methods.ipynb", "r") as file:
+            filedata = file.read()
+
+        # Replace the target string
+        filedata = filedata.replace("book_chapter", str(i_chapter))
+
+        with open(f"{book_dir}/notebooks/001_methods.ipynb", "w") as file:
+            file.write(filedata)
+        i_chapter += 1
 
 
 
@@ -520,6 +532,9 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         if not os.path.exists(f"{book_dir}/notebooks/000_info.ipynb"):
             copyfile(data_path, f"{book_dir}/notebooks/000_info.ipynb")
 
+        data_path = pkg_resources.resource_filename(__name__, "data/001_methods.ipynb")
+        if not os.path.exists(f"{book_dir}/notebooks/001_methods.ipynb"):
+            copyfile(data_path, f"{book_dir}/notebooks/001_methods.ipynb")
         # open this file and replace model_name with model
 
 
