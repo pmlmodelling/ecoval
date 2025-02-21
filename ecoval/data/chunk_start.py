@@ -18,71 +18,6 @@ def fix_basename(x):
 
 def fix_variable_name(x):
     return x
-    valid_vars = [
-        "temperature", "salinity", "oxygen", "phosphate",
-        "silicate", "nitrate", "ammonium", "alkalinity",
-        "ph", "chlorophyll", "co2flux", "pco2",
-        "doc", "poc", "carbon", "benbio",
-        "benthic_carbon_flux", "mesozoo", "oxycons" ]
-    if x.lower() == "temperature":
-        return "temperature"
-    x_lower = x.lower()
-    if x_lower == "doc":
-        x = "DOC concentration"
-        return x
-    if x_lower == "poc":
-        x = "POC concentration"
-        return x
-    if x_lower == "oxygen":
-        x = "oxygen concentration"
-        return x
-    if x_lower == "phosphate":
-        x = "phosphate concentration"
-        return x
-    if x_lower == "silicate":
-        x = "silicate concentration"
-        return x
-    if x_lower == "nitrate":
-        x = "nitrate concentration"
-        return x
-    if x_lower == "ammonium":
-        x = "ammonium concentration"
-        return x
-    if x_lower == "alkalinity":
-        x = "alkalinity"
-        return x
-    if x_lower == "ph":
-        x = "pH"
-        return x
-    if x_lower == "chlorophyll":
-        x = "chlorophyll concentration"
-        return x
-    if x_lower == "co2flux":
-        x = "air-sea carbon dioxide flux"
-        return x
-    if x_lower == "carbon":
-        x = "carbon concentration in sediments"
-        return x
-    if x_lower == "benbio":
-        x = "macrobenthos biomass concentration"
-        return x
-    if x_lower == "benthic_carbon_flux":
-        x = "carbon flux in sediments"
-        return x
-    if x_lower == "mesozoo":
-        x = "mesozooplankton concentration"
-        return x
-    if x_lower == "oxycons":
-        x = "benthic oxygen consumption"
-        return x
-    if x_lower == "temperature":
-        x = "temperature"
-        return x
-    if x_lower == "salinity":
-        x = "salinity"
-        return x
-
-    return x
 
 
 
@@ -97,6 +32,9 @@ def df_display(df):
                 df[col] = df[col].apply(lambda x: "{:,}".format(x))
             except:
                 pass
+    # if rsmd is a column title change to RSMD
+    if "rsmd" in df.columns:
+        df = df.rename(columns={"rsmd": "RSMD"})
     df = df.round(2)
     # coerce numeric columns to str
     # if number is in the column title, make sure the variable is int
@@ -165,6 +103,7 @@ def md(x):
     x = x.replace(" mesozoo.", " mesozooplankton concentration.")
     x = x.replace(" oxycons ", " benthic oxygen consumption ")
     x = x.replace(" oxycons.", " benthic oxygen consumption.")
+    x = x.replace(" color", " colour")
 
     x = x.replace("pco2", "pCO<sub>2</sub>")
     # make CO2 subscript
@@ -175,6 +114,24 @@ def md(x):
     # get rid of double spaces
     x = x.replace("  ", " ")
     # use regex to ensure any numbers have commas
+    if "**Figure" in x:
+        # ensure the sentence ends with .
+        if x[-1] != ".":
+            x = x + "."
+    if "**Table" in x:
+        # ensure the sentence ends with .
+        if x[-1] != ".":
+            x = x + "."
+
+    x = x.replace(" .", ".")
+    x = x.replace(" ,", ",")
+    x = x.replace(" :", ":")
+    x = x.replace(" ;", ";")
+    x = x.replace(" %", "%")
+    # /m^3
+    x = x.replace("/m3", "m<sup>-3</sup>")
+    x = x.replace("/m^3", "m<sup>-3</sup>")
+
     if "year" not in x.lower(): 
         x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
