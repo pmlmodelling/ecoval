@@ -3,6 +3,7 @@ nc.options(parallel=True)
 import os
 import pkg_resources
 import pandas as pd
+import re
 
 def fix_basename(x):
     #annualmean_nitrate_nsbc.nc
@@ -169,6 +170,13 @@ def md(x):
     # make CO2 subscript
     x = x.replace("CO2", "CO<sub>2</sub>")
     x = x.replace(" ph ", " pH ")
+    x = x.replace(" R2 ", " R<sup>2</sup> ")
+    x = x.replace(" R2.", " R<sup>2</sup>.")
+    # get rid of double spaces
+    x = x.replace("  ", " ")
+    # use regex to ensure any numbers have commas
+    if "year" not in x.lower(): 
+        x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
 %load_ext rpy2.ipython
 import jellyfish
