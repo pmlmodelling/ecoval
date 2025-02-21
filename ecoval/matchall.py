@@ -1877,11 +1877,14 @@ def matchup(
 
                             df = pd.concat([pd.read_feather(x) for x in paths])
                             # if it exists, coerce year to int
+                            point_years = session_info["point_years"]
                             if "year" in df.columns:
                                 df = df.assign(year=lambda x: x.year.astype(int))
                                 point_start = session_info["point_years"][0]
                                 point_end = session_info["point_years"][1]
                                 df = df.query("year >= @point_start and year <= @point_end").reset_index(drop=True)
+                                point_years[0] = df.year.min()
+                                point_years[1] = df.year.max()
                                 # subset to 
                             if "month" in df.columns:
                                 df = df.assign(month=lambda x: x.month.astype(int))
@@ -2096,6 +2099,19 @@ def matchup(
                                             + "matched/model_grid.csv",
                                             index=False,
                                         )
+                                        # save ds_grid
+                                        if not os.path.exists(
+                                            session_info["out_dir"] + "matched"
+                                        ):
+                                            os.makedirs(
+                                                session_info["out_dir"] + "matched"
+                                            )
+                                        ds_grid.to_nc(
+                                            session_info["out_dir"]
+                                            + "matched/model_grid.nc",
+                                            zip=True,
+                                            overwrite=True,
+                                        )
                                     for ww in w:
                                         if str(ww.message) not in session_warnings:
                                             session_warnings.append(str(ww.message))
@@ -2306,7 +2322,7 @@ def matchup(
                             df_all.to_csv(out, index=False)
 
                             out1 = out.replace(os.path.basename(out), "matchup_dict.pkl")
-                            the_dict = {"start": min_year, "end": max_year, "point_time_res" : point_time_res}
+                            the_dict = {"start": min_year, "end": max_year, "point_time_res" : point_time_res, "point_years":point_years}
                             # write to pickle
                             with open(out1, "wb") as f:
                                 pickle.dump(the_dict, f)
