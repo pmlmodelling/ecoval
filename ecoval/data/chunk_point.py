@@ -53,6 +53,8 @@ else:
 # %% tags=["remove-input"]
 if True:
     ff = "../../matched/model_grid.nc"
+    if not os.path.exists(ff):  
+        ff = "../../matched/model_bathymetry.nc"
     import nctoolkit as nc
     ds_coords = nc.open_data(ff)
     ds_coords.rename({ds_coords.variables[0]: "e3t"})
@@ -361,35 +363,6 @@ else:
     df_totals = pd.DataFrame({"month": ["All"], "n": [len(df_raw)]})
 
 
-# %% tags=["remove-input"]
-# %%capture --no-display
-# %%R -i df_totals -i variable -i unit -w 500 
-# calculate number of observations per month
-# figure out if "month" in df
-if("month" %in% colnames(df_totals)){
-
-df1 <- df_totals %>%
-    rename(observation = n) %>%
-    ungroup()   
-
-# plot number of observations per month using plotnine and geom_bar
-
-# change month to month name
-df1$month <- factor(df1$month, levels = 1:12, labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-
-gg <- df1 %>%
-    ggplot(aes(x = month, y = observation))+
-    theme_gray(base_size = 14)+
-    geom_bar(stat = "identity")+
-    labs(y = "Number of observations", x= "")
-
-gg
-}
-
-# %% tags=["remove-input"]
-if "month" in df.columns:
-    md(f"**Figure {chapter}{i_figure}:** Number of {layer_select} observations per month for {vv_name}.")
-    i_figure += 1
 
 # %% tags=["remove-input"]
 bias_text = []
