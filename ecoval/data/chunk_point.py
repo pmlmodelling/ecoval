@@ -9,12 +9,15 @@ vv_source = vv_source.upper()
 df = pd.read_csv(ff)
 ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
 point_time_res = ["year", "month", "day"]
+point_years = None
 try:
     with open(ff_dict, "rb") as f:
         matchup_dict = pickle.load(f)
         min_year = matchup_dict["start"]
         max_year = matchup_dict["end"]
         point_time_res = matchup_dict["point_time_res"]
+        if "point_years" in matchup_dict:
+            point_years = matchup_dict["point_years"]
 except:
     pass
 
@@ -48,10 +51,11 @@ else:
     df = df.groupby(["lon", "lat"]).mean().reset_index()
 
 # %% tags=["remove-input"]
-if layer == "all":
-    ff = "../../matched/model_bathymetry.nc"
+if True:
+    ff = "../../matched/model_grid.nc"
     import nctoolkit as nc
     ds_coords = nc.open_data(ff)
+    ds_coords.rename({ds_coords.variables[0]: "e3t"})
     ds_coords.assign(lon_model = lambda x: lon(x.e3t), lat_model = lambda x: lat(x.e3t))
     ds_coords.drop(variables = "e3t")
     ds_coords.run()
@@ -59,7 +63,8 @@ if layer == "all":
     df_coords = ds_coords.to_dataframe().reset_index()
     df = df.merge(df_coords, on = ["lon", "lat"], how = "left")
     if variable not in  ["carbon", "benbio", "susfrac", "oxycons"]:
-        df = df.groupby(["lon_model", "lat_model", "year", "month"]).mean().reset_index()
+        grouping = [x for x in ["lon_model", "lat_model", "year", "month"] if x in df.columns]
+        df = df.groupby(grouping).mean().reset_index()
     else:
         df = df.groupby(["lon_model", "lat_model"]).mean().reset_index()
     # drop lon/lat
@@ -144,6 +149,13 @@ try:
         intro.append(f"The model output was matched up with the observational data for each day of the year. However, the year in the observational data was not considered, so the comparison is climatological.")
     if point_time_res == ["month"]:
         intro.append(f"The model output was matched up with the observational data for each month of the year. However, the year and day of month in the observational data was not considered, so the comparison is climatological.")
+    if point_years is not None:
+        point_start = point_years[0]
+        point_end = point_years[1]
+        if point_start < point_end:
+            intro.append(f"The observational data was restricted to the years **{point_start} to {point_end}**.")
+        else:
+            intro.append(f"The observational data was restricted to the year **{point_start}**.")
     
     
 except:
@@ -655,7 +667,7 @@ else:
     md(f"## Summary statistics for {vv_name} at the near-bottom")
 
 # %% tags=["remove-input"]
-md(f"The overall ability of the model to predict the observed {vv_name} was assessed by calculating the average bias, the root mean square error (RMSE) and the correlation coefficient (R). The bias was calculated as the model value minus the observed value. The RMSE was calculated as the square root of the mean squared error. The correlation coefficient was calculated as the Pearson correlation coefficient between the model and observed values.") 
+md(f"The overall ability of the model to predict the observed {vv_name} was assessed by calculating the average bias, the root mean square deviation (RMSD) and the correlation coefficient (R). The bias was calculated as the model value minus the observed value. The RMSD was calculated as the square root of the mean squared deviation. The correlation coefficient was calculated as the Pearson correlation coefficient between the model and observed values.") 
 md(f"This was calculated for each month and for the entire dataset. The results are shown in the tables below.")
 
 # %% tags=["remove-input"]
@@ -724,8 +736,8 @@ else:
     df_corr = pd.DataFrame({"month": ["All"], "correlation": [df_raw.model.corr(df_raw.observation)]})
 df_table = df_table.merge(df_corr)
 df_table = df_table.round(2)
-df_table = df_table.rename(columns={"month": "Month", "bias": "Bias", "rmse": "RMSE", "correlation": "Correlation"})
-df_table = df_table[["Month", "Bias", "RMSE", "Correlation"]]
+df_table = df_table.rename(columns={"month": "Month", "bias": "Bias", "rmse": "RMSD", "correlation": "Correlation"})
+df_table = df_table[["Month", "Bias", "RMSD", "Correlation"]]
 # change Month to Period
 df_table = df_table.rename(columns={"Month": "Time period"})
 
@@ -751,7 +763,7 @@ df_table["Number of observations"] = df_table["Number of observations"].apply(la
 df_display(df_table)
 
 # %% tags=["remove-input"]
-md(f"**Table {chapter}{i_table}:** Average bias and root-mean square error in {layer_select} {vv_name} for each month using the raw {data_source(vv_source, vv_name)} data. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
+md(f"**Table {chapter}{i_table}:** Average bias and root-mean square deviation in {layer_select} {vv_name} for each month using the raw {data_source(vv_source, vv_name)} data. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
 i_table += 1
 
 
@@ -808,5 +820,5 @@ df_stats = df_stats[["Period", "Slope", "Intercept", "R2", "p-value"]]
 df_display(df_stats)
 
 # %% tags=["remove-input"]
-md(f"**Table {chapter}{i_table}:** Linear regression analysis of modelled and observed {vv_name}. The modelled {vv_name} was used as the independent variable and the observed {vv_name} was used as the dependent variable. The slope and intercept of the regression line are shown, along with the R<sup>2</sup> value and the p-value of the slope. The p-value is a measure of the significance of the slope. A p-value less than 0.05 is considered statistically significant. Note: only months with sufficient values for a regression are shown.")
+md(f"**Table {chapter}{i_table}:** Linear regression analysis of modelled and observed {vv_name}. The modelled {vv_name} was used as the independent variable and the observed {vv_name} was used as the dependent variable. The slope and intercept of the regression line are shown, along with the R<sup>2</sup> value and the p-value of the slope. Note: only months with sufficient values for a regression are shown.")
 i_table += 1 
