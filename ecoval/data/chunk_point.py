@@ -97,15 +97,15 @@ if vv_source == "ICES":
         intro.append(f"Near-bottom values of {vv_name} were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
     if layer_select in ["surface", "all"]:
         if layer not in ["benthic"]:
-            intro.append(f"Values from the **top 5 m** of the water column were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
+            intro.append(f"Values from the **top 5m** of the water column were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
     if layer == "benthic":
         intro.append("Benthic values were extracted from existing datasets")
 else:
     if layer_select == "bottom":
-        intro.append(f"This data was extracted from vertical profiles. The near-bottom value was defined as the value closest to the bottom, that was within 5 m of the bottom. Bathymetry was estimated using GEBCO Bathymetry data.")
+        intro.append(f"This data was extracted from vertical profiles. The near-bottom value was defined as the value closest to the bottom, that was within 5m of the bottom. Bathymetry was estimated using GEBCO Bathymetry data.")
     if layer_select == "surface":
         if layer not in ["benthic"]:
-            intro.append(f"This data was extracted from vertical profiles. Values from the **top 5 m** were extracted from the database. This was compared with the model values from the surface level.")
+            intro.append(f"This data was extracted from vertical profiles. Values from the **top 5m** were extracted from the database. This was compared with the model values from the surface level.")
     if variable in ["benbio"]:
         intro.append("Biomass data for macrobenthos was downloaded from the North Sea Benthos Survey 1986.")
     if variable in ["susfrac"]:
@@ -164,6 +164,9 @@ except:
     if "year" in df_raw.columns:
         min_year = df_raw.year.min()
         max_year = df_raw.year.max()
+        # coerce to int
+        min_year = int(min_year)
+        max_year = int(max_year)
     if min_year == max_year:
         intro.append(f"The model output was matched up with the observational data for the year **{min_year}**.")
     else:
@@ -230,7 +233,7 @@ gg
 # %% tags=["remove-input"]
 if layer_select == "surface":
     if layer not in ["benthic"]:
-        md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} in the top 5 m of the water column.") 
+        md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} in the top 5m of the water column.") 
 if layer_select == "bottom":
     md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} near the bottom of the water column.")
 if layer_select == "all":
@@ -583,7 +586,7 @@ gg
 if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
     if compact is False:
         if layer_select == "surface":
-            md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} in the top 5 m of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
+            md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} in the top 5m of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
         if layer_select == "bottom":
             md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} near the bottom of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
         i_figure = i_figure + 1
@@ -736,7 +739,7 @@ df_table["Number of observations"] = df_table["Number of observations"].apply(la
 df_display(df_table)
 
 # %% tags=["remove-input"]
-md(f"**Table {chapter}{i_table}:** Average bias and root-mean square deviation in {layer_select} {vv_name} for each month using the raw {data_source(vv_source, vv_name)} data. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
+md(f"**Table {chapter}{i_table}:** Average bias ({unit}) and root-mean square deviation ({unit}) in {layer_select} {vv_name} for each month using the raw {data_source(vv_source, vv_name)} data. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
 i_table += 1
 
 

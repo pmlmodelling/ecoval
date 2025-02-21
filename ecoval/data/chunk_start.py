@@ -71,6 +71,8 @@ def md(x):
         "ph", "chlorophyll", "co2flux", "pco2",
         "doc", "poc", "carbon", "benbio",
         "benthic_carbon_flux", "mesozoo", "oxycons" ]
+    x = x.replace(" 5 m ", " 5m ")
+    x = x.replace(" 5 m.", " 5m.")
     if x.lower() == "temperature":
         return "temperature"
     x = x.replace(" doc ", " DOC concentration ")
@@ -133,7 +135,8 @@ def md(x):
     x = x.replace("/m^3", "m<sup>-3</sup>")
 
     if "year" not in x.lower(): 
-        x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+        if "period" not in x.lower(): 
+            x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
 %load_ext rpy2.ipython
 import jellyfish
