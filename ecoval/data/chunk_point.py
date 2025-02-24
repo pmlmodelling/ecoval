@@ -8,6 +8,8 @@ vv_source = os.path.basename(ff).split("_")[0]
 vv_source = vv_source.upper()
 df = pd.read_csv(ff)
 ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
+if not os.path.exists(ff_dict):
+    ff_dict = f"../../matched/point/europe/{layer}/{variable}/matchup_dict.pkl"
 point_time_res = ["year", "month", "day"]
 point_years = None
 try:
@@ -36,7 +38,6 @@ else:
 if variable == "ph":
     df = df.query("observation > 4").reset_index(drop = True)
 # Danish part is always dubious
-df = df.query("lon < 9")
 df_locs = df.loc[:,["lon", "lat"]].drop_duplicates()
 # bin to 0.01 resolution
 df_raw = copy.deepcopy(df)
@@ -134,6 +135,8 @@ model_variable = list(df_mapping.query("variable == @variable").model_variable)[
 import pickle
 try:
     ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
+    if not os.path.exists(ff_dict):
+        ff_dict = f"../../matched/point/europe/{layer}/{variable}/matchup_dict.pkl"
     with open(ff_dict, "rb") as f:
         matchup_dict = pickle.load(f)
         min_year = matchup_dict["start"]
