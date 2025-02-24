@@ -1077,8 +1077,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         output_path = f"{book_dir}/_build/latex"
         output = subprocess.run([makecmd, "all-pdf"], cwd=output_path)
         if output.returncode != 0:
-            _error("Error: Failed to build pdf")
-            return output.returncode
+            raise RuntimeWarning("Error: Failed to build pdf")
 
 
 
