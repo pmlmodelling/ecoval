@@ -244,9 +244,15 @@ def gridded_matchup(
                     for ff in paths:
                         all_years += list(times_dict[ff].year)
                     all_years = list(set(all_years))
+                    n_years = len(all_years)
 
                     sim_years = range(sim_start, sim_end + 1)
                     sim_years = [x for x in all_years if x in sim_years]
+                    min_year = min(all_years)
+                    max_year = max(all_years)
+
+                    if len(sim_years) == 0:
+                        raise ValueError(f"{sim_start}-{sim_end} are not in the years available for {vv}. Please check start and end args! Years available are {min_year}-{max_year}!")  
                     # now simplify paths, so that only the relevant years are used
                     new_paths = []
                     year_options =   list(set(
@@ -260,7 +266,11 @@ def gridded_matchup(
                         .year
                     ))
                     old_years = sim_years
+                    n_years = len(sim_years)
                     sim_years = [x for x in sim_years if x in year_options]
+                    if n_years > 0:
+                        if len(sim_years) == 0:
+                            raise ValueError(f"No years in common between model and observation for {vv}. Please check start and end args!")
                     month_sel = range(1, 13)
                     if len(sim_years) == 0:
                         sim_years = old_years
