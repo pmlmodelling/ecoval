@@ -71,6 +71,23 @@ def df_display(df):
             df = pd.concat([df1, df2]) 
             df = df.reset_index(drop = True)
 
+    def fix_unit(x):
+        #/m^3
+        x = x.replace("/m^3", "m<sup>-3</sup>") 
+        x = x.replace("/m3", "m<sup>-3</sup>")
+        x = x.replace("m-3", "m<sup>-3</sup>")
+        x = x.replace("/m^2", "m<sup>-2</sup>")
+        x = x.replace("/m2", "m<sup>-2</sup>")
+        x = x.replace("m2", "m<sup>2</sup>")
+        x = x.replace("m3", "m<sup>3</sup>")
+        #O_2
+        x = x.replace("O_2", "O<sub>2</sub>")
+
+        return x
+    if "Unit" in df.columns:
+        #format this appropriately. Markdown, superscripts etc.
+        df["Unit"] = df["Unit"].apply(fix_unit)
+
     return df.style.hide(axis="index")
 
 import warnings
