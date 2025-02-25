@@ -437,7 +437,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", build = "html", r_warnings = False,  model = None, cdf = False, test = False):
+def validate(title="Automated model evaluation", author=None, variables = "all", ask = False, build = "html", r_warnings = False,  model = None, cdf = False, test = False):
     # docstring
     """
     Run the model evaluation for all of the available datasets, and generate a validation report.
@@ -450,6 +450,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         The author of the book. Default is None
     variables : str or list
         The variables to run the model evaluation for. Default is "all"
+    ask : bool
+        Whether to ask the user to proceed. Default is False
     build : str
         Whether to build the book as "html" or "pdf". Default is "html"
     r_warnings : bool
@@ -484,7 +486,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
 
     if os.path.exists(book_dir):
         #get user input to decide if it should be removed
-        user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
+        if ask:
+            user_input = input("book directory already exists. This will be emptied and replaced. Do you want to proceed? (y/n): ")
+        else:
+            user_input = "y"
         if user_input.lower() == "y":
             while True:
                 files = glob.glob(f"{book_dir}/**/**/**", recursive=True)
