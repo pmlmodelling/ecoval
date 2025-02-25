@@ -61,6 +61,16 @@ def df_display(df):
         df = df.rename(columns={"R2": "R²"}) 
     # convert nan to N/A
     df = df.replace("nan", "N/A")
+    if "Region" in df.columns:
+        if "Full Domain" in df["Region"].values:
+            # ensure the Full Domain region is the first row
+            # get the index of the row
+            i_domain = df[df["Region"] == "Full Domain"].index[0]
+            df1 = df.iloc[i_domain:i_domain+1]
+            df2 = df.drop(i_domain)
+            df = pd.concat([df1, df2]) 
+            df = df.reset_index(drop = True)
+
     return df.style.hide(axis="index")
 
 import warnings
