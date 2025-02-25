@@ -96,6 +96,8 @@ if vv_source == "ICES":
 
     if layer_select == "bottom":
         intro.append(f"Near-bottom values of {vv_name} were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
+        intro.append("The near-bottom was defined as observations **within 2m of the seabed**. This was interpolated to the observational grid using the GEBCO bathymetry dataset.")
+        intro.append("Model values were interpolated to the observational dataset's longitudes and latitudes using 3D interpolation.")
     if layer_select in ["surface", "all"]:
         if layer not in ["benthic"]:
             intro.append(f"Values from the **top 5m** of the water column were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
@@ -157,10 +159,11 @@ try:
     if point_years is not None:
         point_start = point_years[0]
         point_end = point_years[1]
-        if point_start < point_end:
-            intro.append(f"The observational data was restricted to the years **{point_start} to {point_end}**.")
-        else:
-            intro.append(f"The observational data was restricted to the year **{point_start}**.")
+        if point_start > 1900:
+            if point_start < point_end:
+                intro.append(f"The observational data was restricted to the years **{point_start} to {point_end}**.")
+            else:
+                intro.append(f"The observational data was restricted to the year **{point_start}**.")
     
     
 except:
@@ -177,10 +180,10 @@ except:
 
 
 
-md(" ".join(intro).strip().replace("  ", " "))
+md_basic(" ".join(intro).strip().replace("  ", " "))
 
 md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.")
-md_markdown(f"The following model output was used to compare with observational values: **{model_variable}**.")
+md_basic(f"The following model output was used to compare with observational values: **{model_variable}**.")
 
 # %% tags=["remove-cell"]
 # bottom 1% of observations
@@ -478,6 +481,13 @@ if (plot_month){
     # and wrap appropriately. this requires the w to be fixed in %%R. Not sure how to do this
     gg <- gg + facet_wrap(~month)
 }
+colour_lab <- str_glue("Model bias ({unit})")
+colour_lab <- str_replace(colour_lab, "/m\\^3", "m<sup>-3</sup>")
+colour_lab <- str_replace(colour_lab, "/m\\^2", "m<sup>-2</sup>")
+colour_lab <- str_replace_all(colour_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
+
+#
+gg <- gg + labs(colour = colour_lab) 
 
 
 y_labels <-  as.numeric(na.omit(layer_scales(gg)$y$break_positions()))
@@ -530,6 +540,10 @@ md(" ".join(scatter_text).strip().replace("  ", " "))
 #df <- arrow::read_feather("adhoc/tmp/df_raw.feather")
 if("month" %in% colnames(df) & compact == FALSE){
 
+# change the unit for pco2
+if(vv_name == "pco2"){
+    unit = "µatm"
+}
 
 library(tidyverse, warn.conflicts = FALSE)
 
@@ -641,7 +655,7 @@ gg
 
 # %% tags=["remove-input"]
 if compact:
-    md(f"**Figure {chapter}{i_figure}**: Model vs observed {vv_name} for {layer_select} values. The observations are from {data_source(vv_source, vv_name)}. The line is a generalized additive model (GAM) fit to the data. The shaded area is the 95% confidence interval of the GAM fit.")
+    md(f"**Figure {chapter}{i_figure}**: Model vs observed {vv_name} for {layer_select} values. The line is a generalized additive model (GAM) fit to the data. The shaded area is the 95% confidence interval of the GAM fit.")
     i_figure += 1
 if layer_select == "surface":
     if layer not in ["benthic"]:
@@ -748,7 +762,7 @@ df_table["Number of observations"] = df_table["Number of observations"].apply(la
 df_display(df_table)
 
 # %% tags=["remove-input"]
-md(f"**Table {chapter}{i_table}:** Average bias ({unit}) and root-mean square deviation ({unit}) in {layer_select} {vv_name} for each month using the raw {data_source(vv_source, vv_name)} data. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
+md(f"**Table {chapter}{i_table}:** Average bias ({unit}) and root-mean square deviation ({unit}) for the model's {layer_select} {vv_name} for each month. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
 i_table += 1
 
 

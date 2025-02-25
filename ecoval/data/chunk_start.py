@@ -32,14 +32,16 @@ def df_display(df):
                 df[col] = df[col].apply(lambda x: "{:,}".format(x))
             except:
                 pass
-    # if rsmd is a column title change to RSMD
-    if "rsmd" in df.columns:
-        df = df.rename(columns={"rsmd": "RSMD"})
+    # if rmsd is a column title change to RMSD
+    if "rmsd" in df.columns:
+        df = df.rename(columns={"rmsd": "RMSD"})
+    # round to 2 decimal places
     df = df.round(2)
+
     # coerce numeric columns to str
     # if number is in the column title, make sure the variable is int
 
-    df = df.astype(str)
+    df = df.applymap(lambda x: f"{x:.2f}" if isinstance(x, float) else x)
     # capitalize unit column name, if it exists
     if "unit" in df.columns:
         df = df.rename(columns={"unit": "Unit"})
@@ -64,6 +66,36 @@ def df_display(df):
 import warnings
 warnings.filterwarnings('ignore')
 from IPython.display import Markdown as md_markdown
+
+def md_basic(x):
+    x = x.replace(" 5 m ", " 5m ")
+    x = x.replace(" 5 m.", " 5m.")
+
+    x = x.replace("  ", " ")
+    # use regex to ensure any numbers have commas
+    if "**Figure" in x:
+        # ensure the sentence ends with .
+        if x[-1] != ".":
+            x = x + "."
+    if "**Table" in x:
+        # ensure the sentence ends with .
+        if x[-1] != ".":
+            x = x + "."
+
+    x = x.replace(" .", ".")
+    x = x.replace(" ,", ",")
+    x = x.replace(" :", ":")
+    x = x.replace(" ;", ";")
+    x = x.replace(" %", "%")
+    # /m^3
+    # ensure there are spaces after commas, using regex
+    x = re.sub(r",(\w)", r", \1", x)
+    # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+
+    # if "year" not in x.lower(): 
+    #     if "period" not in x.lower(): 
+    #         x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+    return md_markdown(x)
 def md(x):
     valid_vars = [
         "temperature", "salinity", "oxygen", "phosphate",
@@ -124,6 +156,10 @@ def md(x):
         # ensure the sentence ends with .
         if x[-1] != ".":
             x = x + "."
+    # ensure there are spaces after commas, using regex
+    x = re.sub(r",(\w)", r", \1", x)
+    x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+
 
     x = x.replace(" .", ".")
     x = x.replace(" ,", ",")
@@ -133,6 +169,11 @@ def md(x):
     # /m^3
     x = x.replace("/m3", "m<sup>-3</sup>")
     x = x.replace("/m^3", "m<sup>-3</sup>")
+    # handle /m^2
+    x = x.replace("/m2", "m<sup>-2</sup>")
+    x = x.replace("/m^2", "m<sup>-2</sup>")
+    # handl m-3
+    x = x.replace(" m-3", " m<sup>-3</sup>")
 
     if "year" not in x.lower(): 
         if "period" not in x.lower(): 

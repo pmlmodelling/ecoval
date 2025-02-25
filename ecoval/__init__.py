@@ -129,6 +129,10 @@ def fix_toc(book_dir):
                 vv_out = "Benthic biomass"
             if vv.lower() == "susfrac":
                 vv_out = "Suspension feeding fraction"
+            if vv == "mesozoo":
+                vv_out = "Mesozooplankton"
+            if vv == "carbon":
+                vv_out = "Sediment carbon"
 
             if vv.lower() == "pft":
                 vv_out = "Plankton Functional Types"
@@ -620,6 +624,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     Variable = "suspension feeding fraction"
                 if vv == "pft":
                     Variable = "Plankton Functional Types"
+                if variable.lower() == "mesozoo":
+                    Variable = "Mesozooplankton biomass"
                 vv_file = pp
                 vv_file_find = pp.replace("../../", "")
 

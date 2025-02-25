@@ -1883,8 +1883,6 @@ def matchup(
                                 point_start = session_info["point_years"][0]
                                 point_end = session_info["point_years"][1]
                                 df = df.query("year >= @point_start and year <= @point_end").reset_index(drop=True)
-                                point_years[0] = df.year.min()
-                                point_years[1] = df.year.max()
                                 # subset to 
                             if "month" in df.columns:
                                 df = df.assign(month=lambda x: x.month.astype(int))
