@@ -565,6 +565,12 @@ df <- df %>%
 # convert month to factor
 df$month <- factor(df$month, levels = c("All months", month.abb))
 
+# replace pco2 with pCO2 with superscript in x_lab
+x_lab <- str_replace_all(x_lab, "co2", "CO<sub>2</sub>")
+y_lab <- str_replace_all(y_lab, "co2", "CO<sub>2</sub>")
+x_lab <- str_replace_all(x_lab, "CO2", "CO<sub>2</sub>")
+y_lab <- str_replace_all(y_lab, "CO2", "CO<sub>2</sub>")
+
 
 
 gg <- df %>%
