@@ -621,11 +621,13 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                 else:
                     Variable = "pH"
                 if vv == "co2flux":
-                    Variable = "Air-sea CO2 fluxes"
+                    Variable = "Air-sea CO2<sub>2</sub> fluxes"
                 if vv in ["poc", "doc"]:
                     Variable = Variable.upper()
                 if vv == "pco2":
                     Variable = "pCO2"
+                    # subscript this, markdown style
+                    Variable = "pCO<sub>2</sub>"
                 if vv == "benbio":
                     Variable = "macrobenthos biomass"
                 if vv == "oxycons":
