@@ -133,9 +133,14 @@ def fix_toc(book_dir):
                 vv_out = "Mesozooplankton"
             if vv == "carbon":
                 vv_out = "Sediment carbon"
+            if vv == "oxycons":
+                vv_out = "Benthic oxygen consumption"
 
             if vv.lower() == "pft":
                 vv_out = "Plankton Functional Types"
+            if vv.lower() == "co2flux":
+                # user markdown subscript
+                vv_out = "Air-sea CO2 fluxes"
             x = f.write(f"- caption: {vv_out}\n")
             x = f.write("  chapters:\n")
             for ff in vv_dict[vv]:
@@ -706,7 +711,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                         else:
                             Variable = variable
                         if variable == "co2flux":
-                            Variable = "air-sea CO2 flux"
+                            Variable = "air-sea CO2 fluxes"
                         if variable in ["poc", "doc"]:
                             Variable = Variable.upper()
                         if variable == "benbio":

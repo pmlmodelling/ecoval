@@ -15,8 +15,46 @@ def fix_basename(x):
     else:
         return x
 
+def fix_unit(x):
+    #/m^3
+    x = x.replace("/m^3", "m<sup>-3</sup>") 
+    x = x.replace("/m3", "m<sup>-3</sup>")
+    x = x.replace("m-3", "m<sup>-3</sup>")
+    x = x.replace("/m^2", "m<sup>-2</sup>")
+    x = x.replace("/m2", "m<sup>-2</sup>")
+    x = x.replace("m2", "m<sup>2</sup>")
+    x = x.replace("m3", "m<sup>3</sup>")
+    #O_2
+    x = x.replace("O_2", "O<sub>2</sub>")
+    # fix CO2
+    x = x.replace("CO2", "CO<sub>2</sub>")
+    # fix /yr
+    x = x.replace("/yr", "year<sup>-1</sup>")
+
+    return x
 
 def fix_variable_name(x):
+    if "concentration" in x:
+        return x
+    if "nitrate" in x:
+        return "nitrate concentration"
+    if "phosphate" in x:
+        return "phosphate concentration"
+    if "silicate" in x:
+        return "silicate concentration"
+    if "ammonium" in x:
+        return "ammonium concentration"
+    if "temperature" in x:
+        return "temperature"
+    if "salinity" in x:
+        return "salinity"
+    if "oxygen" in x and "enthic" not in x:
+        return "oxygen concentration"
+    if x =="ph":
+        return "pH"
+    if "chlorophyll" in x:
+        return "chlorophyll concentration"
+
     return x
 
 
@@ -71,19 +109,6 @@ def df_display(df):
             df = pd.concat([df1, df2]) 
             df = df.reset_index(drop = True)
 
-    def fix_unit(x):
-        #/m^3
-        x = x.replace("/m^3", "m<sup>-3</sup>") 
-        x = x.replace("/m3", "m<sup>-3</sup>")
-        x = x.replace("m-3", "m<sup>-3</sup>")
-        x = x.replace("/m^2", "m<sup>-2</sup>")
-        x = x.replace("/m2", "m<sup>-2</sup>")
-        x = x.replace("m2", "m<sup>2</sup>")
-        x = x.replace("m3", "m<sup>3</sup>")
-        #O_2
-        x = x.replace("O_2", "O<sub>2</sub>")
-
-        return x
     if "Unit" in df.columns:
         #format this appropriately. Markdown, superscripts etc.
         df["Unit"] = df["Unit"].apply(fix_unit)
@@ -134,44 +159,112 @@ def md(x):
     x = x.replace(" 5 m.", " 5m.")
     if x.lower() == "temperature":
         return "temperature"
-    x = x.replace(" doc ", " DOC concentration ")
-    x = x.replace(" doc.", " DOC concentration.")
-    x = x.replace(" poc ", " POC concentration ")
-    x = x.replace(" poc.", " POC concentration.")
-    x = x.replace(" oxygen ", " oxygen concentration ")
-    x = x.replace(" oxygen.", " oxygen concentration.")
-    x = x.replace(" phosphate ", " phosphate concentration ")
-    x = x.replace(" phosphate.", " phosphate concentration.")
-    x = x.replace(" silicate ", " silicate concentration ")
-    x = x.replace(" silicate.", " silicate concentration.")
-    x = x.replace(" nitrate ", " nitrate concentration ")
-    x = x.replace(" nitrate.", " nitrate concentration.")
-    x = x.replace(" ammonium ", " ammonium concentration ")
-    x = x.replace(" ammonium.", " ammonium concentration.")
-    x = x.replace(" ph ", " pH ")
-    x = x.replace(" ph.", " pH.") 
-    x = x.replace(" chlorophyll ", " chlorophyll concentration ")
-    x = x.replace(" chlorophyll.", " chlorophyll concentration.")
-    x = x.replace(" co2flux ", " air-sea carbon dioxide flux ")
-    x = x.replace(" co2flux.", " air-sea carbon dioxide flux.")
-    x = x.replace(" carbon ", " carbon concentration in sediments ")
-    x = x.replace(" carbon.", " carbon concentration in sediments.")
-    x = x.replace(" benbio ", " macrobenthos biomass concentration ")
-    x = x.replace(" benbio.", " macrobenthos biomass concentration.")
-    x = x.replace(" benthic_carbon_flux ", " carbon flux in sediments ")
-    x = x.replace(" benthic_carbon_flux.", " carbon flux in sediments.")
-    x = x.replace(" mesozoo ", " mesozooplankton concentration ")
-    x = x.replace(" mesozoo.", " mesozooplankton concentration.")
-    x = x.replace(" oxycons ", " benthic oxygen consumption ")
-    x = x.replace(" oxycons.", " benthic oxygen consumption.")
-    x = x.replace(" color", " colour")
-
-    x = x.replace("pco2", "pCO<sub>2</sub>")
+    if "DOC conc" not in x:
+        x = x.replace(" doc ", " DOC concentration ")
+    if "DOC conc" not in x:
+        x = x.replace(" doc.", " DOC concentration.")
+    if "POC conc" not in x:
+        x = x.replace(" poc ", " POC concentration ")
+    if "POC conc" not in x:
+        x = x.replace(" poc.", " POC concentration.")
+    if "oxygen conc" not in x and "enthic" not in x:
+        x = x.replace(" oxygen ", " oxygen concentration ")
+    if "oxygen conc" not in x and "enthic" not in x:
+        x = x.replace(" oxygen.", " oxygen concentration.")
+    if "phosphate conc" not in x:
+        x = x.replace(" phosphate ", " phosphate concentration ")
+    if "phosphate conc" not in x:
+        x = x.replace(" phosphate.", " phosphate concentration.")
+    if "silicate conc" not in x:
+        x = x.replace(" silicate ", " silicate concentration ")
+    if "silicate conc" not in x:
+        x = x.replace(" silicate.", " silicate concentration.")
+    if "nitrate conc" not in x:
+        x = x.replace(" nitrate ", " nitrate concentration ")
+    if "nitrate conc" not in x:
+        x = x.replace(" nitrate.", " nitrate concentration.")
+    if "ammonium conc" not in x:
+        x = x.replace(" ammonium ", " ammonium concentration ")
+    if "ammonium conc" not in x:
+        x = x.replace(" ammonium.", " ammonium concentration.")
+    if "ph conc" not in x:
+        x = x.replace(" ph ", " pH ")
+    if "ph conc" not in x:
+        x = x.replace(" ph.", " pH.")
+    if "chlorophyll conc" not in x:
+        x = x.replace(" chlorophyll ", " chlorophyll concentration ")
+    if "chlorophyll conc" not in x:
+        x = x.replace(" chlorophyll.", " chlorophyll concentration.")
+    if "co2flux" not in x:
+        x = x.replace(" co2flux ", " air-sea carbon dioxide flux ")
+    if "co2flux" not in x:
+        x = x.replace(" co2flux.", " air-sea carbon dioxide flux.")
+    if "carbon" not in x:
+        x = x.replace(" carbon ", " carbon concentration in sediments ")
+    if "carbon" not in x:
+        x = x.replace(" carbon.", " carbon concentration in sediments.")
+    if "benbio" not in x:
+        x = x.replace(" benbio ", " macrobenthos biomass concentration ")
+    if "benbio" not in x:
+        x = x.replace(" benbio.", " macrobenthos biomass concentration.")
+    if "benthic_carbon_flux" not in x:
+        x = x.replace(" benthic_carbon_flux ", " carbon flux in sediments ")
+    if "benthic_carbon_flux" not in x:
+        x = x.replace(" benthic_carbon_flux.", " carbon flux in sediments.")
+    if "mesozoo" not in x:
+        x = x.replace(" mesozoo ", " mesozooplankton concentration ")
+    if "mesozoo" not in x:
+        x = x.replace(" mesozoo.", " mesozooplankton concentration.")
+    if "oxycons" not in x:
+        x = x.replace(" oxycons ", " benthic oxygen consumption ")
+    if "oxycons" not in x:
+        x = x.replace(" oxycons.", " benthic oxygen consumption.")
+    if "color" in x:
+        x = x.replace(" color", " colour")
+    if "pco2" in x:
+        x = x.replace("pco2", "pCO<sub>2</sub>")
     # make CO2 subscript
     x = x.replace("CO2", "CO<sub>2</sub>")
     x = x.replace(" ph ", " pH ")
     x = x.replace(" R2 ", " R<sup>2</sup> ")
     x = x.replace(" R2.", " R<sup>2</sup>.")
+
+
+    # x = x.replace(" poc.", " POC concentration.")
+    # x = x.replace(" oxygen ", " oxygen concentration ")
+    # x = x.replace(" oxygen.", " oxygen concentration.")
+    # x = x.replace(" phosphate ", " phosphate concentration ")
+    # x = x.replace(" phosphate.", " phosphate concentration.")
+    # x = x.replace(" silicate ", " silicate concentration ")
+    # x = x.replace(" silicate.", " silicate concentration.")
+    # x = x.replace(" nitrate ", " nitrate concentration ")
+    # x = x.replace(" nitrate.", " nitrate concentration.")
+    # x = x.replace(" ammonium ", " ammonium concentration ")
+    # x = x.replace(" ammonium.", " ammonium concentration.")
+    # x = x.replace(" ph ", " pH ")
+    # x = x.replace(" ph.", " pH.") 
+    # x = x.replace(" chlorophyll ", " chlorophyll concentration ")
+    # x = x.replace(" chlorophyll.", " chlorophyll concentration.")
+    # x = x.replace(" co2flux ", " air-sea carbon dioxide flux ")
+    # x = x.replace(" co2flux.", " air-sea carbon dioxide flux.")
+    # x = x.replace(" carbon ", " carbon concentration in sediments ")
+    # x = x.replace(" carbon.", " carbon concentration in sediments.")
+    # x = x.replace(" benbio ", " macrobenthos biomass concentration ")
+    # x = x.replace(" benbio.", " macrobenthos biomass concentration.")
+    # x = x.replace(" benthic_carbon_flux ", " carbon flux in sediments ")
+    # x = x.replace(" benthic_carbon_flux.", " carbon flux in sediments.")
+    # x = x.replace(" mesozoo ", " mesozooplankton concentration ")
+    # x = x.replace(" mesozoo.", " mesozooplankton concentration.")
+    # x = x.replace(" oxycons ", " benthic oxygen consumption ")
+    # x = x.replace(" oxycons.", " benthic oxygen consumption.")
+    # x = x.replace(" color", " colour")
+
+    # x = x.replace("pco2", "pCO<sub>2</sub>")
+    # # make CO2 subscript
+    # x = x.replace("CO2", "CO<sub>2</sub>")
+    # x = x.replace(" ph ", " pH ")
+    # x = x.replace(" R2 ", " R<sup>2</sup> ")
+    # x = x.replace(" R2.", " R<sup>2</sup>.")
     # get rid of double spaces
     x = x.replace("  ", " ")
     # use regex to ensure any numbers have commas
@@ -201,6 +294,15 @@ def md(x):
     x = x.replace("/m^2", "m<sup>-2</sup>")
     # handl m-3
     x = x.replace(" m-3", " m<sup>-3</sup>")
+    # fix /yr
+    x = x.replace("/yr", "year<sup>-1</sup>")
+    # fix /day
+    x = x.replace("/day", "day<sup>-1</sup>")
+    if "air-sea" in x:
+        # no need for surface, it's redundant
+        x = x.replace("surface", "")
+        # ensure no double spaces
+        x = x.replace("  ", " ")
 
     if "year" not in x.lower(): 
         if "period" not in x.lower(): 

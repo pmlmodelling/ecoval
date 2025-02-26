@@ -47,8 +47,12 @@ else:
 if fix_grid:
     ds_bias_1 = ds_bias.copy()
     ds_bias_1.to_latlon(lon = [lon_min , lon_max], lat = [lat_min, lat_max], res = [lon_res, lat_res])
+    # change the name
+    ds_bias_1.set_longnames({ds_bias_1.variables[0]: "Model bias"})
     ds_bias_1.pub_plot(robust = True)
 else:
+    # change the name
+    ds_bias.set_longnames({ds_bias.variables[0]: "Model bias"})
     ds_bias.pub_plot(robust = True)
 
 

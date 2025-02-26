@@ -145,9 +145,10 @@ def gridded_matchup(
                             f"Multiple directories found for {vv}. Please specify the correct directory"
                         )
                     if ii == 0:
-                        dir_var = non_globals[0]
                         if len(non_globals) == 0:
                             dir_var = [x for x in dir_names if "global" in x][0]
+                        else:
+                            dir_var = non_globals[0]
                     else:
                         dir_var = [x for x in dir_names if "global" in x][0]
 
@@ -838,6 +839,8 @@ def gridded_matchup(
                                 lon=lons, lat=lats, res=[lon_res, lat_res], method="nn"
                             )
                             regrid_later = True
+
+                        # unit may need some fiddling
 
                         ds_surface.to_nc(out_file, zip=True, overwrite=True)
 

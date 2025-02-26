@@ -156,6 +156,7 @@ df_diff = (
     .assign(diff = lambda x: x.model - x.observation)
 )
 model_unit = ds_model.contents.unit[0]
+model_unit = fix_unit(model_unit)
 from ecoval.utils import get_extent
 raw_extent = get_extent(ds_annual[0])
 if np.abs(raw_extent[0] - df_model.lon.min()) > 3:

@@ -251,7 +251,7 @@ i_figure = i_figure + 1
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df -i variable -i unit -i layer_select -i vv_name -w 500 
+# %%R -i df -i variable -i unit -i layer_select -i vv_name -w 800 
 options(warn=-1)
 options(warn=-1)
 library(tidyverse)
@@ -282,7 +282,9 @@ name <- str_glue("{Layer} {vv_name} ({unit})")
 # m-3 should be superscripted
 # Note: this is for ggplot2
 name <- str_replace_all(name, "m-([0-9]+)", "m<sup>-\\1</sup>")
-name = str_replace(name, "/m\\^2", "m<sup>-2")
+name = str_replace(name, "/m\\^2", "m<sup>-2</sup>")
+# fix /day
+name = str_replace(name, "/day", "day<sup>-1</sup>")
 
 
 gg <- df_map %>%
@@ -485,6 +487,8 @@ colour_lab <- str_glue("Model bias ({unit})")
 colour_lab <- str_replace(colour_lab, "/m\\^3", "m<sup>-3</sup>")
 colour_lab <- str_replace(colour_lab, "/m\\^2", "m<sup>-2</sup>")
 colour_lab <- str_replace_all(colour_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
+# fix /day
+colour_lab <- str_replace(colour_lab, "/day", "day<sup>-1</sup>")
 
 #
 gg <- gg + labs(colour = colour_lab) 
@@ -584,6 +588,9 @@ x_lab <- str_replace_all(x_lab, "co2", "CO<sub>2</sub>")
 y_lab <- str_replace_all(y_lab, "co2", "CO<sub>2</sub>")
 x_lab <- str_replace_all(x_lab, "CO2", "CO<sub>2</sub>")
 y_lab <- str_replace_all(y_lab, "CO2", "CO<sub>2</sub>")
+# fix /day
+x_lab <- str_replace(x_lab, "/day", "day<sup>-1</sup>")
+y_lab <- str_replace(y_lab, "/day", "day<sup>-1</sup>")
 
 
 
@@ -636,6 +643,9 @@ x_lab <- str_replace(x_lab, "/m\\^2", "m<sup>-2</sup>")
 y_lab <- str_replace(y_lab, "/m\\^2", "m<sup>-2</sup>")
 x_lab <- str_replace_all(x_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
 y_lab <- str_replace_all(y_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
+# fix /day
+x_lab <- str_replace(x_lab, "/day", "day<sup>-1</sup>")
+y_lab <- str_replace(y_lab, "/day", "day<sup>-1</sup>")
 
 gg <- df %>%
 # final six months of the year

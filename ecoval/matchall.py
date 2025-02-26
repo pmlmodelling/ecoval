@@ -516,9 +516,97 @@ def matchup(
 
     >>> matchup(folder = "path/to/folder", start = 2002, end = 2002, surface = {"gridded": ["temperature", "salinity", "oxygen"], "point": None}, surface_level = "top")
 
-
-
     """
+
+    if isinstance(surface, dict):
+        try:
+            if isinstance(surface["gridded"], str):
+                surface["gridded"] = [surface["gridded"]]
+            if surface["gridded"] is None:
+                surface["gridded"] = []
+        except:
+            pass
+        try:
+            if isinstance(surface["point"], str):
+                surface["point"] = [surface["point"]]
+            if surface["point"] is None:
+                surface["point"] = []
+        except:
+            pass
+
+    if isinstance(bottom, str):
+        bottom = [bottom] 
+    if isinstance(benthic, str):
+        benthic = [benthic]
+    # if they are None, make them empty lists
+    if bottom is None:
+        bottom = []
+    if benthic is None:
+        benthic = []
+    if point_all is None:
+        point_all = []
+
+    # convert anything with meso and zoo into mesozoo
+    if isinstance(point_all, str):
+        point_all = [point_all]
+    for vv in point_all:
+        if "meso" in vv and "zoo" in vv:
+            point_all.remove(vv)
+            point_all.append("mesozoo")
+    try:
+        for vv in surface["point"]:
+            if "meso" in vv and "zoo" in vv:
+                surface["point"].remove(vv)
+                surface["point"].append("mesozoo")
+    except:
+        pass
+    # do the same for anything with ben and bio in it
+    for vv in benthic:
+        if "ben" in vv and "bio" in vv:
+            benthic.remove(vv)
+            benthic.append("benbio")
+    # do the same for anything with oxy and con in it
+    for vv in benthic:
+        if "oxy" in vv and "con" in vv:
+            benthic.remove(vv)
+            benthic.append("oxycons")
+    # do the same for co2 and flux
+    for vv in point_all:
+        if "co2" in vv and "flux" in vv:
+            point_all.remove(vv)
+            point_all.append("co2flux")
+    # surface
+    try:
+        for vv in surface["point"]:
+            if "co2" in vv and "flux" in vv:
+                print("moving")
+                surface["point"].remove(vv)
+                surface["point"].append("co2flux")
+        # gridded
+        for vv in surface["gridded"]:
+            if "co2" in vv and "flux" in vv:
+                surface["gridded"].remove(vv)
+                surface["gridded"].append("co2flux")
+    except:
+        pass
+
+    # coerce bottom to list if not None
+    # make any variables selected lower cases
+    if isinstance(surface, dict):
+        try:
+            for key in surface:
+                surface[key] = [x.lower() for x in surface[key]]
+        except:
+            pass
+    if isinstance(bottom, list):
+        bottom = [x.lower() for x in bottom]
+    if isinstance(benthic, list):
+        benthic = [x.lower() for x in benthic]
+    if isinstance(point_all, list):
+        point_all = [x.lower() for x in point_all]
+    if isinstance(point_all, str):
+        point_all = [point_all.lower()]
+
 
     # add point years to session info
     session_info["point_years"] = point_years
@@ -708,6 +796,7 @@ def matchup(
             point_surface = []
         if surface is None:
             surface = []
+    
 
     if surface is None:
         surface = []
@@ -727,6 +816,28 @@ def matchup(
         bottom = []
     if isinstance(bottom, str):
         bottom = [bottom]
+
+
+    # coerce point_all to list if it's str
+    if isinstance(point_all, str):
+        point_all = [point_all]
+    # remove mesozoo from point_all
+    point_all = list(set(point_all))
+
+    if "mesozoo" in point_all:
+        point_all.remove("mesozoo")
+        if "mesozoo" not in point_surface:
+            point_surface.append("mesozoo")
+    # mesozoo cannot be in the bottom
+    if "mesozoo" in bottom:
+        raise ValueError("mesozoo cannot be in the bottom variables")
+    # the same with pco2
+    if "pco2" in point_all:
+        point_all.remove("pco2")
+        if "pco2" not in point_surface:
+            point_surface.append("pco2")
+    if "pco2" in bottom:
+        raise ValueError("pco2 cannot be in the bottom variables")
 
     surface_req = copy.deepcopy(surface)
     bottom_req = copy.deepcopy(bottom)
@@ -1004,6 +1115,10 @@ def matchup(
         else:
             valid_surface = [
                 os.path.basename(x) for x in glob.glob(obs_dir + f"/gridded/{model_domain}/*")
+            ]
+            # add in global data
+            valid_surface += [
+                os.path.basename(x) for x in glob.glob(obs_dir + "/gridded/global/*")
             ]
     
     dirs =  glob.glob(obs_dir + "/gridded/**/**")

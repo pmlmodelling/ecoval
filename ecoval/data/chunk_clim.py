@@ -239,7 +239,7 @@ for vv in the_contents.variable:
         long_name = long_name.replace("Modelled", "").strip().replace("surface", "Surface")
     if "Observed" in long_name:
         long_name = long_name.replace("Observed", "").strip().replace("surface", "Surface")
-    ds_both.set_longnames({vv: long_name})
+    ds_both.set_longnames({vv: new_name})
 
 ds_both.pub_plot(variable  = "model", limits = [z_min, z_max], title = "Model", fig = fig, gs = gs[0,0], trans = transformation)
 
