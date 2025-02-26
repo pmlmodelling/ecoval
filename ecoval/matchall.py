@@ -734,7 +734,7 @@ def matchup(
     benthic_req = copy.deepcopy(benthic)
 
     # throw an error if all of these are empty
-    if len(surface_req) == 0 and len(bottom_req) == 0 and len(point_surface_req) == 0 and len(benthic_req) == 0:
+    if len(surface_req) == 0 and len(bottom_req) == 0 and len(point_surface_req) == 0 and len(benthic_req) == 0 and len(point_all) == 0:
         raise ValueError("Please provide at least one variable to matchup")
 
     if isinstance(exclude, str):
@@ -808,7 +808,7 @@ def matchup(
     if bottom is None:
         bottom = []
 
-    var_choice = surface + bottom + point_surface
+    var_choice = surface + bottom + point_surface + point_all
     var_choice = list(set(var_choice))
     for vv in var_choice:
         if vv not in valid_vars and vv != "all":
