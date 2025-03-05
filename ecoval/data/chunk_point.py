@@ -12,6 +12,7 @@ if not os.path.exists(ff_dict):
     ff_dict = f"../../matched/point/europe/{layer}/{variable}/matchup_dict.pkl"
 point_time_res = ["year", "month", "day"]
 point_years = None
+variable_formula = None
 try:
     with open(ff_dict, "rb") as f:
         matchup_dict = pickle.load(f)
@@ -20,6 +21,8 @@ try:
         point_time_res = matchup_dict["point_time_res"]
         if "point_years" in matchup_dict:
             point_years = matchup_dict["point_years"]
+        if "ersem_variable" in matchup_dict:
+            variable_formula = matchup_dict["ersem_variable"]
 except:
     pass
 
@@ -183,8 +186,8 @@ md_basic(" ".join(intro).strip().replace("  ", " "))
 
 md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.", number = True)
 #ds.assign(total = lambda x: x.Ymacro_fYG3c_result/12.011 + x.Y4_fYG3c/12.011 + x.H1_fHG3c/12.011 + x.H2_fHG3c/12.011 + 2.0 * x.ben_nit_nrate, drop = True) 
-if "oxycons" in variable: 
-    md_markdown("The following model output was used to compare with observational values: **Y_macro_fYG3c_result/12.011 + Y4_fYG3c/12.011 + H1_fHG3c/12.011 + H2_fHG3c/12.011 + 2.0 * ben_nit_nrate**.")
+if variable_formula is not None:
+    md_markdown(f"The following model output was used to compare with observational values: **{variable_formula}**.")
 else:
     md_markdown(f"The following model output was used to compare with observational values: **{model_variable}**.")
 

@@ -59,7 +59,7 @@ def mm_match(
     variable,
     df_all,
     top_layer=False,
-    bottom_layer=False,
+    bottom_layer=False
 ):
     """
     Parameters
@@ -146,6 +146,7 @@ def mm_match(
                 ds_variables = ds.variables
                 if "Y2_c" in ds_variables and "Y3_c" in ds_variables:
                     ds.assign(fraction = lambda x: x.Y3_c/(x.Y2_c + x.Y3_c), drop = True)
+                    ersem_variable = "Y3_c/(Y2_c + Y3_c)"
                     ds.run()
             if variable != "pft":
                 if len(var_match) > 1:
@@ -155,14 +156,20 @@ def mm_match(
                         ds.assign(total2 = lambda x: x.Q7_c * (1 - exp(-0.1 / x.Q7_pen_depth_c)))
                         ds.assign(total =  lambda x: (x.total1 + x.total2)/0.1, drop = True)
                         ds * 1e-6
+                        ersem_variable = "1e-6*Q6_c * (1 - exp(-0.1 / Q6_pen_depth_c)) + Q7_c * (1 - exp(-0.1 / Q7_pen_depth_c))/0.1"   
 
                         ds.set_units({"total":"kg/m3"})
                     else:
                         if variable == "oxycons":
                             #Y2_fYG3c/12.011 + Y3_fYG3c/12.011 + Y4_fYG3c/12.011 + H1_fHG3c/12.011 + H2_fHG3c/12.011 + 2.0 * ben_nit_nrate
                             ds.assign(total = lambda x: x.Ymacro_fYG3c_result/12.011 + x.Y4_fYG3c/12.011 + x.H1_fHG3c/12.011 + x.H2_fHG3c/12.011 + 2.0 * x.ben_nit_nrate, drop = True) 
+                            ersem_variable = "Ymacro_fYG3c_result/12.011 + Y4_fYG3c/12.011 + H1_fHG3c/12.011 + H2_fHG3c/12.011 + 2.0 * ben_nit_nrate"   
                         else:
                             ds.sum_all()
+            ff = "/tmp/adhoc_dictionary_2.pkl"
+            the_dict = {"ersem_variable":ersem_variable}
+            with open(ff, "wb") as f:
+                pickle.dump(the_dict, f)
 
             if len(df_locs) > 0:
                 if top_layer:
@@ -1731,6 +1738,14 @@ def matchup(
         #     os.remove("foo.nc")
         # ds_thickness.to_nc("foo.nc")
 
+    ff = session_info["out_dir"] + "matched/times_dict.pkl"
+    # read this in
+    try:
+        with open(ff, "rb") as f:
+            times_dict = pickle.load(f)
+    except:
+        times_dict = dict()
+        pass
 
     print("*************************************")
     for pattern in patterns:
@@ -1749,6 +1764,8 @@ def matchup(
                 time_name = [x for x in list(ds.dims) if "time" in x][0]
 
         for ff in tqdm(ensemble):
+            if ff in times_dict:
+                continue
             if "restart" in ff:
                 continue
             if fvcom is False:
@@ -2257,7 +2274,7 @@ def matchup(
                                     point_variable,
                                     df_all,
                                     top_layer,
-                                    bottom_layer,
+                                    bottom_layer
                                 ],
                             )
 
@@ -2435,7 +2452,15 @@ def matchup(
                             df_all.to_csv(out, index=False)
 
                             out1 = out.replace(os.path.basename(out), "matchup_dict.pkl")
-                            the_dict = {"start": min_year, "end": max_year, "point_time_res" : point_time_res, "point_years":point_years}
+                            # read in the adhoc dict in mm_match
+                            ff1 = "/tmp/adhoc_dictionary_2.pkl"
+                            with open(ff1, "rb") as f:
+                                adhoc_dict = pickle.load(f)
+                                ersem_variable = adhoc_dict["ersem_variable"]
+                            the_dict = {"start": min_year, "end": max_year, "point_time_res" : point_time_res, "point_years":point_years, "ersem_variable":ersem_variable}
+                            # remove the adhoc dict
+                            os.remove(ff1)
+                            print(the_dict)
                             # write to pickle
                             with open(out1, "wb") as f:
                                 pickle.dump(the_dict, f)
