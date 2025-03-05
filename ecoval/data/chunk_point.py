@@ -75,7 +75,6 @@ if True:
     df = df.rename(columns = {"lon_model": "lon", "lat_model": "lat"})
     # only the surface top 5 m
 
-
 # %% tags=["remove-input", "remove-cell"]
 # A function for generating the data source
 
@@ -182,8 +181,12 @@ except:
 
 md_basic(" ".join(intro).strip().replace("  ", " "))
 
-md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.")
-md_basic(f"The following model output was used to compare with observational values: **{model_variable}**.")
+md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.", number = True)
+#ds.assign(total = lambda x: x.Ymacro_fYG3c_result/12.011 + x.Y4_fYG3c/12.011 + x.H1_fHG3c/12.011 + x.H2_fHG3c/12.011 + 2.0 * x.ben_nit_nrate, drop = True) 
+if "oxycons" in variable: 
+    md_markdown("The following model output was used to compare with observational values: **Y_macro_fYG3c_result/12.011 + Y4_fYG3c/12.011 + H1_fHG3c/12.011 + H2_fHG3c/12.011 + 2.0 * ben_nit_nrate**.")
+else:
+    md_markdown(f"The following model output was used to compare with observational values: **{model_variable}**.")
 
 # %% tags=["remove-cell"]
 # bottom 1% of observations
@@ -285,7 +288,31 @@ name <- str_replace_all(name, "m-([0-9]+)", "m<sup>-\\1</sup>")
 name = str_replace(name, "/m\\^2", "m<sup>-2</sup>")
 # fix /day
 name = str_replace(name, "/day", "day<sup>-1</sup>")
+# fix O_2
+name <- str_replace(name, "O_2", "O<sub>2</sub>")
 
+
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
+# def bin_value(x, bin_res):
+#     return np.floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+# if variable == "benbio":
+#     # bin to 0.5 degree
+#     df = df.assign(lon = lambda x: bin_value(x.lon, 0.5), lat = lambda x: bin_value(x.lat, 1))
+#     # df = df.assign(lon = lambda x: np.round(x.lon, 0), lat = lambda x: np.round(x.lat, 0))
+#     df = df.groupby(["lon", "lat"]).mean().reset_index()
+# if 
+# bin_value.numeric <- function(x, bin_res) {
+# 	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+# }
+if(str_detect(vv_name, "macrob")){
+    df_map <- df_map %>%
+        mutate(lon = bin_value(lon, 0.5), lat = bin_value(lat, 0.5)) %>%
+        group_by(lon, lat, variable) %>%
+        summarise(value = mean(value))
+
+}
 
 gg <- df_map %>%
     ggplot()+
@@ -362,7 +389,7 @@ if "month" in df_raw.columns:
     
     fig_summary.append(f"Figure {chapter}{i_figure} below shows the distribution of observations in each month.")
     
-    md(" ".join(fig_summary).strip().replace("  ", " "))
+    md(" ".join(fig_summary).strip().replace("  ", " "), number = True)
 
 if "month" in df_raw.columns:
     df_totals = (
@@ -456,6 +483,8 @@ title = str_replace(title, "/m\\^2", "m<sup>-2")
 title <- str_replace_all(title, "m-([0-9]+)", "m<sup>-\\1</sup>")
 
 
+# not for ben
+if(!str_detect(vv_name, "macrob")){
 gg <- df %>%
 # final six months of the year
     ggplot()+
@@ -478,20 +507,61 @@ gg <- df %>%
     labs(fill = title)
   #  .title.x = ggtext::element_markdown())
 
+}
+if(str_detect(vv_name, "macrob")){
+    # geom_tile approach
+
+gg <- df %>%
+# final six months of the year
+    mutate(lon = bin_value(lon, 0.5), lat = bin_value(lat, 0.5)) %>%
+    group_by(lon, lat) %>%
+    summarise(bias = mean(bias)) %>%
+    ggplot()+
+    geom_tile(aes(lon, lat, fill = bias))+
+    theme_gray(base_size = 24)+
+    # add colour scale. Minimum zero, label 100, ">100"
+    coord_fixed(xlim = xlim, ylim = ylim, ratio = 1.5) +
+    # move legend to the top. Make it 3 cm wide
+    # move legend title to the bottom and centre it
+    scale_fill_gradient2(low = "blue", high = "red",
+    limits = c(-bias_high, bias_high),
+                       guide = guide_colorbar(title.position = "bottom", title.hjust = 0.5, title.theme = ggtext::element_markdown(angle = 0, size = 20, family = "Helvetica"))
+                    #    guide = guide_colorbar(title.position = "bottom", title.hjust = 0.5, title.theme = element_text(angle = 0, size = 20, family = "Helvetica"))
+  )+
+    theme(
+    legend.position = "bottom", legend.direction = "horizontal", legend.box = "horizontal", legend.key.width = unit(3.0, "cm"),
+    # legend.title = ggtext::element_markdown(),
+    legend.key.height = unit(1.0, "cm"))+
+    # set the legend title to bias
+    labs(fill = title)
+
+
+        # use ggtext to ensure things are superscripted
+        #theme(legend.title = element_markdown())
+}
+
 if (plot_month){
     #  option: figure out how many months are in the data
     # and wrap appropriately. this requires the w to be fixed in %%R. Not sure how to do this
     gg <- gg + facet_wrap(~month)
 }
+
 colour_lab <- str_glue("Model bias ({unit})")
 colour_lab <- str_replace(colour_lab, "/m\\^3", "m<sup>-3</sup>")
 colour_lab <- str_replace(colour_lab, "/m\\^2", "m<sup>-2</sup>")
 colour_lab <- str_replace_all(colour_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
 # fix /day
 colour_lab <- str_replace(colour_lab, "/day", "day<sup>-1</sup>")
+# fix O_2
+colour_lab <- str_replace(colour_lab, "O_2", "O<sub>2</sub>")
 
 #
-gg <- gg + labs(colour = colour_lab) 
+if(str_detect(vv_name, "macrob")){
+gg <- gg + labs(fill = colour_lab) 
+}
+if(!str_detect(vv_name, "macrob")){
+gg <- gg + labs(colour = title)
+}
 
 
 y_labels <-  as.numeric(na.omit(layer_scales(gg)$y$break_positions()))
@@ -567,6 +637,9 @@ y_lab <- str_replace(y_lab, "/m\\^2", "m<sup>-2</sup>")
 #title <- str_replace_all(title, "m-([0-9]+)", "m<sup>-\\1</sup>")
 x_lab <- str_replace_all(x_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
 y_lab <- str_replace_all(y_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
+# fix O_2
+x_lab <- str_replace(x_lab, "O_2", "O<sub>2</sub>")
+y_lab <- str_replace(y_lab, "O_2", "O<sub>2</sub>")
 
 
 df <- df %>%

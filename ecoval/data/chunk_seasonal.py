@@ -202,6 +202,7 @@ min_month = min(df_model$month)
 if("month" %in% colnames(df_model) & min_month < 7){
 
     model_unit = str_replace(model_unit, "/m\\^3", "m<sup>-3</sup>")
+    model_unit <- str_replace(model_unit, "/kg", "kg<sup>-1</sup>")
 
     df_model_raw <- drop_na(df_model)
     df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
@@ -475,6 +476,8 @@ if (variable == "temperature" )
     model_unit = "°C"
 
     model_unit = str_replace(model_unit, "/m\\^3", "m<sup>-3</sup>")
+    # fix /kg to kg^-2
+    model_unit <- str_replace(model_unit, "/kg", "kg<sup>-1</sup>")
 
 df_model <- drop_na(df_model)
 df_model <- df_model %>%

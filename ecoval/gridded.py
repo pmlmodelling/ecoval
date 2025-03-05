@@ -841,6 +841,11 @@ def gridded_matchup(
                             regrid_later = True
 
                         # unit may need some fiddling
+                        out1 = out_file.replace(os.path.basename(out_file), "matchup_dict.pkl")
+                        the_dict = {"start": min_year, "end": max_year}
+                        # write to pickle
+                        with open(out1, "wb") as f:
+                            pickle.dump(the_dict, f)
 
                         ds_surface.to_nc(out_file, zip=True, overwrite=True)
 

@@ -148,7 +148,8 @@ def md_basic(x):
     #     if "period" not in x.lower(): 
     #         x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
-def md(x):
+
+def md(x, number = False):
     valid_vars = [
         "temperature", "salinity", "oxygen", "phosphate",
         "silicate", "nitrate", "ammonium", "alkalinity",
@@ -225,46 +226,14 @@ def md(x):
         x = x.replace("pco2", "pCO<sub>2</sub>")
     # make CO2 subscript
     x = x.replace("CO2", "CO<sub>2</sub>")
+    # fix O_2
+    x = x.replace("O_2", "O<sub>2</sub>")
     x = x.replace(" ph ", " pH ")
     x = x.replace(" R2 ", " R<sup>2</sup> ")
     x = x.replace(" R2.", " R<sup>2</sup>.")
+    # fix g/kg
+    x = x.replace("g/kg", "g kg<sup>-1</sup>")
 
-
-    # x = x.replace(" poc.", " POC concentration.")
-    # x = x.replace(" oxygen ", " oxygen concentration ")
-    # x = x.replace(" oxygen.", " oxygen concentration.")
-    # x = x.replace(" phosphate ", " phosphate concentration ")
-    # x = x.replace(" phosphate.", " phosphate concentration.")
-    # x = x.replace(" silicate ", " silicate concentration ")
-    # x = x.replace(" silicate.", " silicate concentration.")
-    # x = x.replace(" nitrate ", " nitrate concentration ")
-    # x = x.replace(" nitrate.", " nitrate concentration.")
-    # x = x.replace(" ammonium ", " ammonium concentration ")
-    # x = x.replace(" ammonium.", " ammonium concentration.")
-    # x = x.replace(" ph ", " pH ")
-    # x = x.replace(" ph.", " pH.") 
-    # x = x.replace(" chlorophyll ", " chlorophyll concentration ")
-    # x = x.replace(" chlorophyll.", " chlorophyll concentration.")
-    # x = x.replace(" co2flux ", " air-sea carbon dioxide flux ")
-    # x = x.replace(" co2flux.", " air-sea carbon dioxide flux.")
-    # x = x.replace(" carbon ", " carbon concentration in sediments ")
-    # x = x.replace(" carbon.", " carbon concentration in sediments.")
-    # x = x.replace(" benbio ", " macrobenthos biomass concentration ")
-    # x = x.replace(" benbio.", " macrobenthos biomass concentration.")
-    # x = x.replace(" benthic_carbon_flux ", " carbon flux in sediments ")
-    # x = x.replace(" benthic_carbon_flux.", " carbon flux in sediments.")
-    # x = x.replace(" mesozoo ", " mesozooplankton concentration ")
-    # x = x.replace(" mesozoo.", " mesozooplankton concentration.")
-    # x = x.replace(" oxycons ", " benthic oxygen consumption ")
-    # x = x.replace(" oxycons.", " benthic oxygen consumption.")
-    # x = x.replace(" color", " colour")
-
-    # x = x.replace("pco2", "pCO<sub>2</sub>")
-    # # make CO2 subscript
-    # x = x.replace("CO2", "CO<sub>2</sub>")
-    # x = x.replace(" ph ", " pH ")
-    # x = x.replace(" R2 ", " R<sup>2</sup> ")
-    # x = x.replace(" R2.", " R<sup>2</sup>.")
     # get rid of double spaces
     x = x.replace("  ", " ")
     # use regex to ensure any numbers have commas
@@ -278,7 +247,6 @@ def md(x):
             x = x + "."
     # ensure there are spaces after commas, using regex
     x = re.sub(r",(\w)", r", \1", x)
-    x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
 
 
     x = x.replace(" .", ".")
@@ -304,9 +272,13 @@ def md(x):
         # ensure no double spaces
         x = x.replace("  ", " ")
 
-    if "year" not in x.lower(): 
-        if "period" not in x.lower(): 
-            x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+    if number:
+        if "year" not in x.lower(): 
+            if "period" not in x.lower(): 
+                # do not use numbers between brackets ()
+                # x = re.sub(r"\((\d{1,3})(\d{3})\)", r"(\1,\2)", x)
+                x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+                # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
 %load_ext rpy2.ipython
 import jellyfish

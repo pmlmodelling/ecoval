@@ -96,7 +96,7 @@ if build == "pdf":
 
 # %% tags=["remove-input"]
 if build != "pdf":
-    md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the model. For clarity, the colorbar is limited to the 98th percentile of the data.") 
+    md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the model{clim_range}. For clarity, the colorbar is limited to the 98th percentile of the data.") 
     i_figure += 1
 
 # %% tags=["remove-input"]
@@ -254,5 +254,5 @@ fig
 
 
 # %% tags=["remove-input"]
-md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the model and observations. Data is limited to the 2nd and 98th percentile of the combined model and observational data. Arrows indicate that values can exceed the colorbar limits.") 
+md(f"**Figure {chapter}{i_figure}**: Annual average {layer} {vv_name} from the model {clim_range} and observations. Data is limited to the 2nd and 98th percentile of the combined model and observational data. Arrows indicate that values can exceed the colorbar limits.") 
 i_figure += 1
