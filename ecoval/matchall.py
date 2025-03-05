@@ -2460,7 +2460,6 @@ def matchup(
                             the_dict = {"start": min_year, "end": max_year, "point_time_res" : point_time_res, "point_years":point_years, "ersem_variable":ersem_variable}
                             # remove the adhoc dict
                             os.remove(ff1)
-                            print(the_dict)
                             # write to pickle
                             with open(out1, "wb") as f:
                                 pickle.dump(the_dict, f)
