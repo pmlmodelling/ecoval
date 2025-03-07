@@ -371,7 +371,9 @@ def gridded_matchup(
                                         if surface == "top":
                                             ds_surface.top()
                                         else:
-                                            ds_surface.bottom()
+                                            the_variable = selection[0]
+                                            n_levels = list(ds_surface.contents.query("variable == @the_variable").nlevels)[0]
+                                            ds_surface.cdo_command(f"sellevidx,1-{n_levels}")
                                     else:
                                         ds_surface.nco_command(f"ncks -F -v {nco_selection}")
                                         ds_surface.as_missing(0)
@@ -380,14 +382,18 @@ def gridded_matchup(
                                         if surface == "top":
                                             ds_surface.top()
                                         else:
-                                            ds_surface.bottom()
+                                            the_variable = selection[0]
+                                            n_levels = list(ds_surface.contents.query("variable == @the_variable").nlevels)[0]
+                                            ds_surface.cdo_command(f"sellevidx,1-{n_levels}")
+                                            # ds_surface.bottom()
                                 else:
                                     if vv_source != "woa" or domain in ["nws", "europe"]:
                                         ds_surface.subset(variables=selection)
                                         if surface_level == "top":
                                             ds_surface.top()
                                         else:
-                                            ds_surface.bottom()
+                                            n_levels = list(ds_surface.contents.query("variable == @selection[0]").nlevels)[0]
+                                            ds_surface.cdo_command(f"sellevidx,1-{n_levels}")
                                         ds_surface.as_missing(0)
                                         ds_surface.tmean(["year", "month"], align = "left")
                         else:
