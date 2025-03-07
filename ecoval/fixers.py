@@ -36,6 +36,10 @@ def ignore_warning(x):
         return True
     if "None of the points are contained" in x:
         return True
+    if "inconsistent variable" in x:
+        return True
+    if "inconsistent data" in x:
+        return True
     if "0 as the fill value" in x:
         return True
     if "found more than one time variabl" in x:
