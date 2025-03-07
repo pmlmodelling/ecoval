@@ -1261,7 +1261,7 @@ def matchup(
                     with warnings.catch_warnings(record=True) as w:
                         # extract the thickness dataset
                         e3t_found = False
-                        if thickness is not None:
+                        if thickness is not None and os.path.exists(thickness):
                             ds_thickness = nc.open_data(thickness, checks=False)
                             if len(ds_thickness.variables) != 1:
                                 if len([x for x in ds_thickness.variables if "e3t" in x]) == 0:
@@ -1279,15 +1279,17 @@ def matchup(
                             print(
                                 "Searching through simulation output to find it"
                             )
+                            if thickness is None:
+                                thickness = "e3t"
                             for ff in random_files:
                                 # do this quietly
                                 with warnings.catch_warnings(record=True) as w:
                                     ds_thickness = nc.open_data(ff, checks=False)
-                                    if "e3t" in ds_thickness.variables:
+                                    if thickness in ds_thickness.variables:
                                         e3t_found = True
                                         break
                                     else:
-                                        if len([x for x in ds_thickness.variables if "e3t" in x]) > 0:
+                                        if len([x for x in ds_thickness.variables if thickness in x]) > 0:
                                             e3t_found = True
                                             break   
 
@@ -1295,18 +1297,20 @@ def matchup(
                             raise ValueError("Unable to find e3t")
 
                         if len(ds_thickness.times) > 0:
-                            ds_thickness.subset(time=0, variables="e3t*")
+                            ds_thickness.subset(time=0, variables=f"{thickness}*")
                         else:
-                            ds_thickness.subset(variables="e3t*")
+                            ds_thickness.subset(variables=f"{thickness}*")
                         ds_thickness.run()
-                        var_sel = ds_thickness.contents.query("variable.str.contains('e3t')").query("nlevels > 1").variable
+                        var_sel = ds_thickness.contents.query(f"variable.str.contains('{thickness}')").query("nlevels > 1").variable
                         ds_thickness.subset(variables = var_sel)
                         ds_thickness.as_missing(0)
                         if len(ds_thickness.variables) > 1:
                             if "e3t" in ds_thickness.variables:
-                                ds_thickness.subset(variables="e3t")
+                                ds_thickness.subset(variables=f"{thickness}*")
                             else:
                                 ds_thickness.subset(variables= ds_thickness.variables[0])
+                        ds_thickness.run()
+                        print(f"Thickness variable is {ds_thickness.variables[0]} from {ff}")
                         # try:
                         #     ds_thickness.fix_amm7_grid()
                         # except:
