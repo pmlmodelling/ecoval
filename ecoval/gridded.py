@@ -347,7 +347,10 @@ def gridded_matchup(
 
                                     ds_mm = nc.open_data(mm_paths, checks=False)
                                     if domain in ["nws", "europe"]:
-                                        ds_mm.top()
+                                        if surface_level == "top":
+                                            ds_mm.top()
+                                        else:
+                                            ds_mm.bottom()
                                     # ds_mm.nco_command(nco_command, ensemble = False)
                                     ds_mm.subset(variables=selection)
                                     ds_mm.subset(month=mm, time=0)
@@ -368,7 +371,7 @@ def gridded_matchup(
                                         )
                                         ds_surface.as_missing(0)
                                         ds_surface.tmean(["year", "month"], align = "left")
-                                        if surface == "top":
+                                        if surface_level == "top":
                                             ds_surface.top()
                                         else:
                                             the_variable = selection[0]
@@ -379,12 +382,12 @@ def gridded_matchup(
                                         ds_surface.as_missing(0)
                                         ds_surface.tmean(["year", "month"], align = "left")
                                         ds_surface = ds_vertical.copy()
-                                        if surface == "top":
+                                        if surface_level == "top":
                                             ds_surface.top()
                                         else:
                                             the_variable = selection[0]
                                             n_levels = list(ds_surface.contents.query("variable == @the_variable").nlevels)[0]
-                                            ds_surface.cdo_command(f"sellevidx,1-{n_levels}")
+                                            ds_surface.cdo_command(f"sellevidx,1/{n_levels}")
                                             # ds_surface.bottom()
                                 else:
                                     if vv_source != "woa" or domain in ["nws", "europe"]:
@@ -393,7 +396,8 @@ def gridded_matchup(
                                             ds_surface.top()
                                         else:
                                             n_levels = list(ds_surface.contents.query("variable == @selection[0]").nlevels)[0]
-                                            ds_surface.cdo_command(f"sellevidx,1-{n_levels}")
+                                            ds_surface.cdo_command(f"sellevidx,1/{n_levels}")
+                                            ds_surface.run()
                                         ds_surface.as_missing(0)
                                         ds_surface.tmean(["year", "month"], align = "left")
                         else:
@@ -558,7 +562,11 @@ def gridded_matchup(
 
                         if vv in ["salinity"] and domain not in  ["nws", "europe"]:
                             if vv_source != "woa" or domain in ["nws", "europe"]:
-                                ds_obs.top()
+                                if surface_level == "top":
+                                    ds_surface.top()
+                                else:
+                                    ds_surface.bottom()
+                                    ds_surface.run()
                             sub_years = [x for x in ds_vertical.years if x in ds_obs.years]
                             ds_obs.subset(years=sub_years)
                             ds_surface.subset(years=sub_years)
@@ -569,7 +577,11 @@ def gridded_matchup(
                             ds_obs_annual.subset(years=sub_years)
                             ds_obs_annual.tmean(align = "left")
                         if vv in ["chlorophyll"] and domain not in  ["nws", "europe"]:
-                            ds_obs.top()
+                            if surface_level == "top":
+                                ds_obs.top()
+                            else:
+                                ds_obs.bottom()
+                                ds_obs.run()
                             sub_years = [x for x in ds_surface.years if x in ds_obs.years]
                             ds_obs.subset(years=sub_years)
                             ds_surface.subset(years=sub_years)
@@ -694,7 +706,11 @@ def gridded_matchup(
                             ds_surface + (40 * 12.011)
 
                         if vv_source != "woa" or domain in ["nws", "europe"]:
-                            ds_obs.top()
+                            if surface_level == "top":
+                                ds_surface.top()
+                            else:
+                                ds_surface.bottom()
+                                ds_surface.run()
 
                         if vv_source == "woa" and domain not in  ["nws", "europe"]:
                             levels = ds_obs_annual.levels
@@ -723,6 +739,7 @@ def gridded_matchup(
                             ds_surface.top()
                         else:
                             ds_surface.bottom()
+                            ds_surface.run()
                         ds_obs.top()
 
                         if vv_source == "occci":
@@ -770,6 +787,11 @@ def gridded_matchup(
                             ds_obs.subset(years=sel_years)
 
                         ds_obs.append(ds_surface)
+
+                        if len(ds_surface.times) < 12:
+                            sel_months = list(set(ds_surface.months))
+                            sel_months.sort()
+                            ds_obs.subset(months=sel_months)
 
                         if len(ds_surface.times) > 12:
                             ds_obs.merge("variable", match=["year", "month"])
