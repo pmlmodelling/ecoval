@@ -467,7 +467,7 @@ def matchup(
         Default is None, which means all cores are used.
         If you use a large number of cores you may run into RAM issues, so keep an eye on things.
     thickness : str
-        Path to a thickness file, i.e. cell vertical thickness. This only needs to be supplied if the variable is missing from the raw data.
+        Path to a thickness file, i.e. cell vertical thickness or the name of the thickness variable. This only needs to be supplied if the variable is missing from the raw data.
         Set this to "z_level", if z-levels are used in the model.
         If the e3t variable is in the raw data, it will be used, and thickness does not need to be supplied.
     mapping : str
@@ -1253,6 +1253,7 @@ def matchup(
         if "default" not in point_time_dict:
             raise ValueError(f"Please provide time resolution for {vv} or set the default!")
 
+    print("sorting out thickness")
     if len(point_bottom) > 0 or mld or len(point_all) > 0:
         if session_info["z_level"] == False:
             ds_depths = False
@@ -1272,6 +1273,7 @@ def matchup(
                                 {ds_thickness.variables[0]: "e3t"}
                             )
                             e3t_found = True
+                            thickness = "e3t"
                         else:
                             print(
                                 "Vertical thickness is required for your matchups, but they are not supplied"
@@ -1296,10 +1298,11 @@ def matchup(
                         if not e3t_found:
                             raise ValueError("Unable to find e3t")
 
-                        if len(ds_thickness.times) > 0:
-                            ds_thickness.subset(time=0, variables=f"{thickness}*")
-                        else:
-                            ds_thickness.subset(variables=f"{thickness}*")
+                        if os.path.exists(thickness) == False:
+                            if len(ds_thickness.times) > 0:
+                                ds_thickness.subset(time=0, variables=f"{thickness}*")
+                            else:
+                                ds_thickness.subset(variables=f"{thickness}*")
                         ds_thickness.run()
                         var_sel = ds_thickness.contents.query(f"variable.str.contains('{thickness}')").query("nlevels > 1").variable
                         ds_thickness.subset(variables = var_sel)
@@ -1356,6 +1359,7 @@ def matchup(
                 raise ValueError(
                     "You have asked for variables that require the specification of thickness"
                 )
+    print("Thickness sorted out")
     if mapping is not None:
         if True:
 
