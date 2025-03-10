@@ -26,6 +26,10 @@ try:
 except:
     pass
 
+# if variable is benbio
+if variable == "benbio":
+    point_time_res = []
+
 if point_time_res is not None:
     if isinstance(point_time_res, str):
         point_time_res = [point_time_res]
@@ -39,6 +43,8 @@ if point_time_res is not None:
         if "day" in df.columns:
             df = df.drop(columns = "day")
     df = df.drop_duplicates().reset_index(drop = True)
+    grouping = [x for x in ["lon", "lat", "year", "depth", "day", "month"] if x in df.columns]
+    df = df.groupby(grouping).mean().reset_index()
 
 if layer_select == "surface":
     try:
