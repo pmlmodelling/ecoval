@@ -590,7 +590,6 @@ def matchup(
     try:
         for vv in surface["point"]:
             if "co2" in vv and "flux" in vv:
-                print("moving")
                 surface["point"].remove(vv)
                 surface["point"].append("co2flux")
         # gridded
@@ -2190,6 +2189,23 @@ def matchup(
                         if len(df) == 0:
                             print("No data for this variable")
                             return None
+                        
+                        if "year" not in df.columns:
+                            try:
+                                point_time_res.remove("year")
+                            except:
+                                pass
+                        if "month" not in df.columns:
+                            try:
+                                point_time_res.remove("month")
+                            except:
+                                pass
+                        if "day" not in df.columns:
+                            try:
+                                point_time_res.remove("day")
+                            except:
+                                pass
+
 
                         df_all = manager.list()
 
@@ -2459,6 +2475,11 @@ def matchup(
                             if "day" not in point_time_res:
                                 try:
                                     df_all = df_all.drop(columns="day")
+                                except:
+                                    pass
+                            if "month" not in point_time_res:
+                                try:
+                                    df_all = df_all.drop(columns="month")
                                 except:
                                     pass
                             df_all.to_csv(out, index=False)

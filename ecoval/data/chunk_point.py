@@ -26,6 +26,20 @@ try:
 except:
     pass
 
+if point_time_res is not None:
+    if isinstance(point_time_res, str):
+        point_time_res = [point_time_res]
+    if "year" not in point_time_res:
+        if "year" in df.columns:
+            df = df.drop(columns = "year")
+    if "month" not in point_time_res:
+        if "month" in df.columns:
+            df = df.drop(columns = "month")
+    if "day" not in point_time_res:
+        if "day" in df.columns:
+            df = df.drop(columns = "day")
+    df = df.drop_duplicates().reset_index(drop = True)
+
 if layer_select == "surface":
     try:
         df = df.query("depth < 5").reset_index()
