@@ -426,6 +426,7 @@ def matchup(
     out_dir="",
     matchup_global = [],
     point_years = [-1000, 10000],
+    model = None,
     **kwargs,
 ):
     """
@@ -508,6 +509,8 @@ def matchup(
         Set to "all" if you want all possible variables listed in surface to matchup with available global data.
     point_years : list
         List of two integers. The first is the minimum year, the second is the maximum year to extract for point data. Default is [-1000, 10000].
+    model : None
+        Ecosystem model to validate. Current option is ERSEM. This will only be used to make variable identification easier.
 
 
     Returns
@@ -524,6 +527,7 @@ def matchup(
     >>> matchup(folder = "path/to/folder", start = 2002, end = 2002, surface = {"gridded": ["temperature", "salinity", "oxygen"], "point": None}, surface_level = "top")
 
     """
+    session_info["model"] = model
 
     if isinstance(surface, dict):
         try:

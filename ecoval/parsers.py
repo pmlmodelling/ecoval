@@ -1,11 +1,50 @@
 import nctoolkit as nc
+import re
 import pandas as pd
 import os
 import xarray as xr
 import warnings
+from ecoval.session import session_info
 
 from pathlib import Path
 from netCDF4 import Dataset
+
+bad_conc_vars = ["medium", "pod", "size"]
+
+def standard_mapping(model = None):
+    if model is None:
+        return None
+    if model == "ersem":
+        mapping = {}
+        mapping["alkalinity"] = "O3_TA"
+        mapping["ammonium"] = "N4_n"
+        mapping["benbio"] = "Y2_c+Y3_c"
+        mapping["benthic_carbon_flux"] = "net_PelBen_POC_result"
+        mapping["carbon"] = "Q6_c+Q7_c"
+        mapping["chlorophyll"] = "P1_Chl+P2_Chl+P3_Chl+P4_Chl"
+        mapping["co2flux"] = "O3_fair"
+        mapping["doc"] = "R1_c+R2_c+R3_c"
+        mapping["mesozoo"] = "Z4_c"
+        mapping["micro"] = "P1_Chl+P4_Chl"
+        mapping["nano"] = "P2_Chl"
+        mapping["nitrate"] = "N3_n"
+        mapping["oxycons"] = "ben_nit_nrate+Ymacro_fYG3c_result+Y4_fYG3c+H1_fHG3c+H2_fHG3c"
+        mapping["oxygen"] = "O2_o"
+        mapping["pco2"] = "O3_pCO2"
+        mapping["ph"] = "O3_pH"
+        mapping["phosphate"] = "N1_p"
+        mapping["pico"] = "P3_Chl"
+        mapping["poc"] = None
+        mapping["salinity"] = "vosaline"
+        mapping["silicate"] = "N5_s"
+        mapping["spm"] = "P4_Chl"
+        mapping["temperature"] = "votemper"
+        return mapping
+    # throw an error
+    raise ValueError("Model not supported")
+
+
+
 
 def fvcom_contents(ds):
     import xarray as xr
@@ -83,6 +122,11 @@ def generate_mapping(ds, fvcom = False):
                 and "benthic" not in x.lower()
                 and "river" not in x.lower()
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None:
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
         if vv == "spm":
             the_vars = [
                 x
@@ -109,6 +153,11 @@ def generate_mapping(ds, fvcom = False):
 
             the_vars = [x for x in the_vars if " loss " not in x]
             the_vars = [x for x in the_vars if "depth" not in x]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
         
         if vv == "benthic_carbon_flux":
             the_vars = [
@@ -122,6 +171,11 @@ def generate_mapping(ds, fvcom = False):
                 and "inorganic" not in x.lower()
             ]
             the_vars = list(set(the_vars))
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "carbon":
             the_vars = [
@@ -132,6 +186,11 @@ def generate_mapping(ds, fvcom = False):
                 and ("refractory" in x.lower() or "particul" in x.lower())
                 and "penetr" not in x.lower()
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "benbio":
             the_vars = [
@@ -141,6 +200,11 @@ def generate_mapping(ds, fvcom = False):
                 and ("feeder" in x.lower() or "predator" in x.lower())
                 and "penetr" not in x.lower()
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "ph":
             the_vars = [
@@ -151,6 +215,12 @@ def generate_mapping(ds, fvcom = False):
             if len(the_vars) == 0:
                 if len(ds_contents.query("variable == 'ph'")) > 0:
                     the_vars = list(ds_contents.query("variable == 'ph'").long_name)
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
+
         if vv == "co2flux":
             the_vars = [
                 x
@@ -159,6 +229,11 @@ def generate_mapping(ds, fvcom = False):
                 and "flux" in x.lower()
                 and "river" not in x.lower()
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None:
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "pco2":
             the_vars = [
@@ -168,6 +243,11 @@ def generate_mapping(ds, fvcom = False):
                 and "partial" in x.lower()
                 and "river" not in x.lower()
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None:
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "silicate":
             the_vars = [
@@ -179,16 +259,20 @@ def generate_mapping(ds, fvcom = False):
             ]
 
             if len(the_vars) > 1:
-                the_vars = [
+                the_vars_2 = [
                     x
                     for x in ds_contents.long_name
-                    if ("silicate silicate" in x or "silicic" in x)
-                    and "benthic" not in x.lower()
+                    if "benthic" not in x.lower()
                     and "river" not in x.lower()
                 ]
-
-
-
+                the_vars_2 = [x for x in the_vars_2 if re.match(r"silicate.silicate", x)]
+                if len(the_vars_2) == 1:
+                    the_vars = the_vars_2
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "oxygen":
             the_vars = [
@@ -201,6 +285,11 @@ def generate_mapping(ds, fvcom = False):
                 and "flux" not in x.lower()
                 and "river" not in x.lower()
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "micro":
             the_vars = [
@@ -208,6 +297,11 @@ def generate_mapping(ds, fvcom = False):
                 for x in ds_contents.long_name
                 if "chloroph" in x and ("micro" in x or "diatom" in x)
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "mesozoo":
             the_vars = [
@@ -219,6 +313,11 @@ def generate_mapping(ds, fvcom = False):
                 "loss" not in x.lower()  
 
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None:
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "nano":
             the_vars = [
@@ -226,6 +325,11 @@ def generate_mapping(ds, fvcom = False):
                 for x in ds_contents.long_name
                 if "chloroph" in x.lower() and "nano" in x
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv == "pico":
             the_vars = [
@@ -233,17 +337,32 @@ def generate_mapping(ds, fvcom = False):
                 for x in ds_contents.long_name
                 if "chloroph" in x.lower() and "pico" in x
             ]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None:
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
         
         if vv == "oxycons":
             oxy_con_vars = list(set(["Ymacro_fYG3c_result", "Y4_fYG3c", "H1_fHG3c", "H2_fHG3c", "ben_nit_nrate"]))
             the_vars = [x for x in ds_contents_top.variable if x in oxy_con_vars]
             if len(the_vars) != len(oxy_con_vars):
                 the_vars = []
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
 
         if vv == "chlorophyll":
             if len(the_vars) > 1:
                 the_vars = [x for x in the_vars if "total" not in x.lower()]
+            if len(the_vars) > 1:
+                if session_info["model"] is not None: 
+                    standard_var = standard_mapping(session_info["model"])[vv]
+                    if len(ds_contents.query("variable == @standard_var")) > 0:
+                        the_vars = list(ds_contents.query("variable == @standard_var").long_name)
 
         if vv in ["carbon", "benbio", "benthic_carbon_flux"]:
             model_vars = ds_contents_top.query("long_name in @the_vars").variable
