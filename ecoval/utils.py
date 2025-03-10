@@ -70,6 +70,7 @@ def get_extent(ff):
     # as a unique, sorted list
     lats = list(set(lats))
     lats.sort()
+    lons.sort()
     lon_res = np.abs(lons[2] - lons[1])
     lat_res = np.abs(lats[2] - lats[1])
     ds = nc.open_data(ff)
