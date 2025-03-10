@@ -51,8 +51,18 @@ if variable not in  ["carbon", "benbio", "susfrac", "oxycons"]:
         df = df.groupby(["lon", "lat", "year", "month"]).mean().reset_index()
     else:
         df = df.groupby(["lon", "lat",  "month"]).mean().reset_index()
+        if "year" in df.columns:
+            df = df.drop(columns = "year")
+        if "day" in df.columns:
+            df = df.drop(columns = "day")
 else:
     df = df.groupby(["lon", "lat"]).mean().reset_index()
+    if "year" in df.columns:
+        df = df.drop(columns = "year")
+    if "month" in df.columns:
+        df = df.drop(columns = "month")
+    if "day" in df.columns:
+        df = df.drop(columns = "day")
 
 # %% tags=["remove-input"]
 if True:
@@ -204,6 +214,9 @@ library(ggplot2, warn.conflicts = FALSE)
 library(stringr)
 world_map <- map_data("world")
 # get lon, lat limits from profile_mld
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 
 xlim = c(min(df_locs$lon), max(df_locs$lon))
 ylim = c(min(df_locs$lat), max(df_locs$lat))
@@ -215,6 +228,9 @@ if(variable == "temperature"){
      unit = "°C"
 }
 
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 
 
 gg <- df_locs %>%
@@ -262,6 +278,10 @@ options(warn=-1)
 options(warn=-1)
 library(tidyverse)
 library(ggtext)
+
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 
 if (("month" %in% colnames(df)) == FALSE){
 
@@ -419,6 +439,9 @@ md(" ".join(bias_text).strip().replace("  ", " "))
 options(warn=-1)
 # #%%R -i df -i variable -i unit -w 1600 -h 1000
 options(warn=-1)
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 
 library(dplyr, warn.conflicts = FALSE)
 library(ggplot2, warn.conflicts = FALSE)
@@ -436,6 +459,9 @@ if(vv_name == "temperature"){
      unit = "°C"
 }
 
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 
 
 df <- df %>%
@@ -549,6 +575,9 @@ if (plot_month){
     gg <- gg + facet_wrap(~month)
 }
 
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 colour_lab <- str_glue("Model bias ({unit})")
 colour_lab <- str_replace(colour_lab, "/m\\^3", "m<sup>-3</sup>")
 colour_lab <- str_replace(colour_lab, "/m\\^2", "m<sup>-2</sup>")
@@ -617,6 +646,9 @@ md(" ".join(scatter_text).strip().replace("  ", " "))
 #df <- arrow::read_feather("adhoc/tmp/df_raw.feather")
 if("month" %in% colnames(df) & compact == FALSE){
 
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 # change the unit for pco2
 if(vv_name == "pco2"){
     unit = "µatm"
@@ -706,6 +738,9 @@ library(dplyr, warn.conflicts = FALSE)
 library(ggplot2, warn.conflicts = FALSE)
 library(stringr)
 
+bin_value <- function(x, bin_res) {
+	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
+}
 
 df <- arrow::read_feather("adhoc/tmp/df.feather")
 
