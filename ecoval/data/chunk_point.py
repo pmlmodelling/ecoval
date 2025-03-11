@@ -512,6 +512,8 @@ df$month <- factor(df$month, levels = df$month, labels = month.abb[df$month])
 # df$month <- factor(df$month, labels = month.abb)
 
 title <- str_glue("Bias in {layer_select} {vv_name} ({unit})")
+# fix O_2
+title <- str_replace(title, "O_2", "O<sub>2</sub>")
 
 out = str_glue("../../results/{layer_select}/{variable}/{layer_select}_{variable}_bias.csv")
 
@@ -527,6 +529,11 @@ df %>% write_csv(out)
 
 title = str_replace(title, "/m\\^3", "m<sup>-3")
 title = str_replace(title, "/m\\^2", "m<sup>-2")
+# fix  O_2
+# replace pco2 with PCO_2
+title = str_replace_all(title, "pco2", "pCO<sub>2</sub>")
+title = str_replace(title, "O_2", "O<sub>2</sub>")
+# 
 
 
 title <- str_replace_all(title, "m-([0-9]+)", "m<sup>-\\1</sup>")
@@ -534,11 +541,15 @@ title <- str_replace_all(title, "m-([0-9]+)", "m<sup>-\\1</sup>")
 
 # not for ben
 if(!str_detect(vv_name, "macrob")){
+    plot_width <- 6.0
+    if(df$month %>% n_distinct() < 9){
+        plot_width <- 4.5
+    }
+
 gg <- df %>%
-# final six months of the year
     ggplot()+
     geom_point(aes(lon, lat, colour = bias))+
-    theme_gray(base_size = 24)+
+    theme_dark(base_size = 24)+
     # add colour scale. Minimum zero, label 100, ">100"
     coord_fixed(xlim = xlim, ylim = ylim, ratio = 1.5) +
     # move legend to the top. Make it 3 cm wide
@@ -546,15 +557,12 @@ gg <- df %>%
     scale_colour_gradient2(low = "blue", high = "red",
     limits = c(-bias_high, bias_high),
                        guide = guide_colorbar(title.position = "bottom", title.hjust = 0.5, title.theme = ggtext::element_markdown(angle = 0, size = 20, family = "Helvetica"))
-                    #    guide = guide_colorbar(title.position = "bottom", title.hjust = 0.5, title.theme = element_text(angle = 0, size = 20, family = "Helvetica"))
   )+
     theme(
-    legend.position = "bottom", legend.direction = "horizontal", legend.box = "horizontal", legend.key.width = unit(6.0, "cm"),
-    # legend.title = ggtext::element_markdown(),
+    legend.position = "bottom", legend.direction = "horizontal", legend.box = "horizontal", legend.key.width = unit(plot_width, "cm"),
     legend.key.height = unit(1.0, "cm"))+
     # set the legend title to bias
     labs(fill = title)
-  #  .title.x = ggtext::element_markdown())
 
 }
 if(str_detect(vv_name, "macrob")){
@@ -567,7 +575,7 @@ gg <- df %>%
     summarise(bias = mean(bias)) %>%
     ggplot()+
     geom_tile(aes(lon, lat, fill = bias))+
-    theme_gray(base_size = 24)+
+    theme_dark(base_size = 24)+
     # add colour scale. Minimum zero, label 100, ">100"
     coord_fixed(xlim = xlim, ylim = ylim, ratio = 1.5) +
     # move legend to the top. Make it 3 cm wide
@@ -628,7 +636,7 @@ y_labels <- ifelse(y_labels >= 0, paste0(y_labels, "°N"), paste0(abs(y_labels),
 x_labels <- ifelse(x_labels >= 0, paste0(x_labels, "°E"), paste0(abs(x_labels), "°W"))
 
 gg <- gg + scale_x_continuous(breaks = x_breaks, labels = x_labels) + scale_y_continuous(breaks = y_breaks, labels = y_labels)+
-    geom_polygon(data = world_map, aes(long, lat, group = group), fill = "grey60")
+    geom_polygon(data = world_map, aes(long, lat, group = group), fill = "grey70")
 
 gg <- gg +
     labs(x = "", y = "")
@@ -719,6 +727,9 @@ y_lab <- str_replace_all(y_lab, "CO2", "CO<sub>2</sub>")
 # fix /day
 x_lab <- str_replace(x_lab, "/day", "day<sup>-1</sup>")
 y_lab <- str_replace(y_lab, "/day", "day<sup>-1</sup>")
+# fix O_2
+x_lab <- str_replace(x_lab, "O_2", "O<sub>2</sub>")
+y_lab <- str_replace(y_lab, "O_2", "O<sub>2</sub>")
 
 
 
