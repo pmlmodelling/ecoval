@@ -944,6 +944,7 @@ def matchup(
             raise ValueError(
                 f"{vv} is not a valid variable. Please choose from {valid_vars}"
             )
+    
     if len(bottom) > 0:
         if bottom != "all":
             point_bottom = bottom
@@ -967,7 +968,7 @@ def matchup(
             .reset_index(drop=True)
         )
         # check if poc in variables
-        if "poc" in surface_req:
+        if "poc" in surface_req or "poc" in point_surface_req:
         # add in poc
             df_poc = all_df.query("variable == 'chlorophyll'").reset_index(drop=True)
             if df_poc.model_variable[0] is not None:
@@ -984,7 +985,7 @@ def matchup(
                 else:
                     all_df = pd.concat([all_df, df_poc]).reset_index(drop=True)
     
-    if "poc" in surface_req: 
+    if "poc" in surface_req or "poc" in point_surface_req:
         pattern = list(all_df.query("variable == 'poc'").pattern)
         if len(pattern) == 0:
             surface_req.remove("poc")
@@ -1014,7 +1015,6 @@ def matchup(
                     surface_req.remove("poc")
                     print("POC variables not available in model output. Removing from matchups")
                     all_df = all_df.query("variable != 'poc'").reset_index(drop=True)
-
 
     # check if the variables are in all_df
 
