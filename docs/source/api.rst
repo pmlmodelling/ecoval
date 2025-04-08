@@ -17,5 +17,6 @@ Matchups and validation
    compare_validations
    compare_simulations
    matchup_starting_point
+   check_simulation
 
 

@@ -9,6 +9,7 @@ import copy
 from ecoval.matchall import matchup
 from ecoval.differences import compare_simulations, simulation_differences_comparison
 from ecoval.fixers import tidy_name
+from ecoval.checks import check_simulation
 from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
 import webbrowser
@@ -1014,7 +1015,7 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
     shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"pml_logo.jpg")
 
     if build == "html":
-        os.system(f"jupyter-book build {book_dir}/")
+        os.system(f"jupyter-book build  {book_dir}/")
     else:
         os.system(f"jupyter-book build {book_dir}/ --builder pdflatex")
         # Now the latex file needs to be modified and re-compiled
