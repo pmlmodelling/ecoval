@@ -1599,7 +1599,15 @@ def matchup(
             # move variable with ** in it to the top of the data frame
             all_df_print = all_df_print.sort_values(by="variable", key=lambda x: x.str.replace(r".*\*\*", "", regex=True))
             all_df_print = all_df_print.reset_index(drop=True)
-            print(all_df_print)
+            # add a new row with --- in it after variables with ** in them
+            new_row = pd.DataFrame(
+                {"variable": ["---"], "model_variable": ["---"], "pattern": ["---"]}
+            )
+            all_df_print = pd.concat([all_df_print, new_row], ignore_index=True)
+            all_df_print = all_df_print.sort_values(by="variable", key=lambda x: x.str.replace(r".*\*\*", "", regex=True))
+            all_df_print = all_df_print.reset_index(drop=True)
+
+            print(all_df_print.to_string(index=False))
             print(
                 "Note: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
             )
