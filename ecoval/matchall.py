@@ -1399,6 +1399,13 @@ def matchup(
                 else:
                     new_variable.append(all_df.variable[i])
             all_df_print["variable"] = new_variable
+            # move variable with ** in it to the top of the data frame
+            all_df_print = all_df_print.sort_values(by="variable")
+            # sort dataframe. move variable with ** in it to the top of the data frame
+            print(all_df_print.sort_values(by="variable", key=lambda x: x.str.replace(r".*\*\*", "", regex=True)))
+
+            all_df_print = all_df_print.reset_index(drop=True)
+
             print(all_df_print)
             print(
                 "Note: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
@@ -1588,6 +1595,10 @@ def matchup(
                 else:
                     new_variable.append(all_df.variable[i])
             all_df_print["variable"] = new_variable
+            all_df_print = all_df_print.sort_values("variable")
+            # move variable with ** in it to the top of the data frame
+            all_df_print = all_df_print.sort_values(by="variable", key=lambda x: x.str.replace(r".*\*\*", "", regex=True))
+            all_df_print = all_df_print.reset_index(drop=True)
             print(all_df_print)
             print(
                 "Note: all possible variables are listed, not just those requested. Variables that will be matched up are starred."
@@ -2363,7 +2374,7 @@ def matchup(
                             out = f"{session_info['out_dir']}/matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
                         else:
                             out = f"matched/point/{model_domain}/{depths}/{variable}/{source}_{depths}_{variable}.csv"
-
+                        
                         # create directory for out if it does not exists
                         if not os.path.exists(os.path.dirname(out)):
                             os.makedirs(os.path.dirname(out))
