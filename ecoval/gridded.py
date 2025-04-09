@@ -597,6 +597,10 @@ def gridded_matchup(
                         if vv_source == "occci":
                             ds_obs.subset(variable="chlor_a")
 
+                        if len(ds_obs) > 1:
+                            ds_obs.merge("time")
+                            ds_obs.run()
+
                         extent = get_extent(ds_surface[0])
                         lons = [extent[0], extent[1]]
                         lats = [extent[2], extent[3]]
