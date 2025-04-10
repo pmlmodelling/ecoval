@@ -39,6 +39,7 @@ def standard_mapping(model = None):
         mapping["silicate"] = "N5_s"
         mapping["spm"] = "P4_Chl"
         mapping["temperature"] = "votemper"
+        mapping["kd"] = "light_xEPS"
         return mapping
     # throw an error
     raise ValueError("Model not supported")
@@ -97,7 +98,8 @@ def generate_mapping(ds, fvcom = False):
         "benthic_carbon_flux",
         "mesozoo",
         "spm",
-        "oxycons"
+        "oxycons",
+        "kd"
     ]
     if fvcom is False:
         ds1 = nc.open_data(ds[0], checks=False)
@@ -318,6 +320,13 @@ def generate_mapping(ds, fvcom = False):
                     standard_var = standard_mapping(session_info["model"])[vv]
                     if len(ds_contents.query("variable == @standard_var")) > 0:
                         the_vars = list(ds_contents.query("variable == @standard_var").long_name)
+        if vv == "kd":
+            the_vars = [
+                x
+                for x in ds_contents.long_name
+                if "atten" in x.lower() and "coeff" in x.lower()
+            ]
+
 
         if vv == "nano":
             the_vars = [

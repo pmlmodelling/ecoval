@@ -91,7 +91,8 @@ def gridded_matchup(
         "ph",
         "alkalinity",
         "doc",
-        "spm"
+        "spm",
+        "kd"
     ]
     vars = [x for x in vars if x in var_choice]
     vars.sort()

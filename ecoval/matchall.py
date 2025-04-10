@@ -39,7 +39,8 @@ valid_vars = [
     "benbio",
     "benthic_carbon_flux",
     "mesozoo",
-    "oxycons"
+    "oxycons",
+    "kd"
     #"spm"
 
 ]
