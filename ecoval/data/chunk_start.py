@@ -151,6 +151,7 @@ from IPython.display import Markdown as md_markdown
 def md_basic(x, build = "book_build"):
     x = x.replace(" 5 m ", " 5m ")
     x = x.replace(" 5 m.", " 5m.")
+    x = x.replace(" Suspension feed", " suspension feed")
 
     x = x.replace("  ", " ")
     # use regex to ensure any numbers have commas
@@ -189,6 +190,9 @@ def md(x, number = False, build = "book_build"):
         "ph", "chlorophyll", "co2flux", "pco2",
         "doc", "poc", "carbon", "benbio",
         "benthic_carbon_flux", "mesozoo", "oxycons" ]
+
+    x = x.replace(" Suspension feed", " suspension feed")
+
     x = x.replace(" 5 m ", " 5m ")
     x = x.replace(" 5 m.", " 5m.")
     if x.lower() == "temperature":
