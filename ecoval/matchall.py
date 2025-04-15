@@ -856,8 +856,9 @@ def matchup(
     benthic_req = copy.deepcopy(benthic)
 
     # throw an error if all of these are empty
-    if len(surface_req) == 0 and len(bottom_req) == 0 and len(point_surface_req) == 0 and len(benthic_req) == 0 and len(point_all) == 0:
-        raise ValueError("Please provide at least one variable to matchup")
+    if mld is False:
+        if len(surface_req) == 0 and len(bottom_req) == 0 and len(point_surface_req) == 0 and len(benthic_req) == 0 and len(point_all) == 0:
+            raise ValueError("Please provide at least one variable to matchup")
 
     if isinstance(exclude, str):
         exclude = [exclude]
@@ -2283,6 +2284,14 @@ def matchup(
                                         ):
                                             os.makedirs(
                                                 session_info["out_dir"] + "matched"
+                                            )
+                                        if os.path.exists(
+                                            session_info["out_dir"]
+                                            + "matched/model_grid.nc"
+                                        ):
+                                            os.remove(
+                                                session_info["out_dir"]
+                                                + "matched/model_grid.nc"
                                             )
                                         ds_grid.to_nc(
                                             session_info["out_dir"]
