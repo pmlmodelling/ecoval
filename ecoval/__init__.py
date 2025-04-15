@@ -1086,17 +1086,26 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                             new_lines.append(various_fixes(line))
                 else:
                     if "Verbatim" not in line:
-                        new_lines.append(various_fixes(line))
+                        if "sphinxlogo" in line:
+                            logo_added = True
+                            new_lines.append("\\newcommand{\\sphinxlogo}{\\vbox{\\includegraphics[width=0.7\\textwidth]{pml_logo.jpg}}}")
+                        else:
+                            new_lines.append(various_fixes(line))
+
+                        if "author{Robert" in line:
+                            # raise ValueError("here")
+                            #shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), "book/pml_logo.jpg")
+                            shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"{book_dir}/_build/latex/pml_logo.jpg")    
+                            #\center\sphinxincludegraphics{{68790fc1af1eeb1850a85bb5594385e9b04511fab72d2696ac87f4494935dcdb}.png}
+
+                            #new_lines.append("\\titlepic{\\includegraphics[width=0.2\\textwidth]{pml_logo.jpg}}")
+                           # new_lines.append("\\titlepic{\\center\\sphinxincludegraphics{{pml_logo.jpg}}}")
+                        if "polyglossia" in line:
+                            new_lines.append("\\usepackage{titlepic}")
+                            new_lines.append("\\usepackage{graphicx}")
                 if i == 0:
                     new_lines.append("\\hline")
                     i = 1
-                if "author{Robert" in line:
-                    #shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), "book/pml_logo.jpg")
-                    shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"{book_dir}/_build/latex/pml_logo.jpg")    
-                    new_lines.append("\\titlepic{\\includegraphics[width=0.2\\textwidth]{pml_logo.jpg}}")
-                if "polyglossia" in line:
-                    new_lines.append("\\usepackage{titlepic}")
-                    new_lines.append("\\usepackage{graphicx}")
                 
 
         # now replace noindent with center in lines with sphinxincludegraphics
