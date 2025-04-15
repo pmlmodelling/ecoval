@@ -84,8 +84,11 @@ else:
     if "day" in df.columns:
         df = df.drop(columns = "day")
 
+available = len(df_raw) > 10
+
+
 # %% tags=["remove-input"]
-if True:
+if True and available:
     ff = "../../matched/model_grid.nc"
     if not os.path.exists(ff):  
         ff = "../../matched/model_bathymetry.nc"
@@ -122,113 +125,116 @@ def data_source(vv_source, vv_name):
 
 
 # %% tags=["remove-input"]
-intro = []
-
-if vv_source == "ICES": 
-
-    if layer_select == "bottom":
-        intro.append(f"Near-bottom values of {vv_name} were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
-        intro.append("The near-bottom was defined as observations **within 2m of the seabed**. This was interpolated to the observational grid using the GEBCO bathymetry dataset.")
-        intro.append("Model values were interpolated to the observational dataset's longitudes and latitudes using 3D interpolation.")
-    if layer_select in ["surface", "all"]:
-        if layer not in ["benthic"]:
-            intro.append(f"Values from the **top 5m** of the water column were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
-    if layer == "benthic":
-        intro.append("Benthic values were extracted from existing datasets")
-else:
-    if layer_select == "bottom":
-        intro.append(f"This data was extracted from vertical profiles. The near-bottom value was defined as the value closest to the bottom, that was within 5m of the bottom. Bathymetry was estimated using GEBCO Bathymetry data.")
-    if layer_select == "surface":
-        if layer not in ["benthic"]:
-            intro.append(f"This data was extracted from vertical profiles. Values from the **top 5m** were extracted from the database. This was compared with the model values from the surface level.")
-    if variable in ["benbio"]:
-        intro.append("Biomass data for macrobenthos was downloaded from the North Sea Benthos Survey 1986.")
-    if variable in ["susfrac"]:
-        intro.append("Abundance data for macrobenthos was downloaded from the North Sea Benthos Survey 1986. It was than converted to biomass using [traitfinder](https://github.com/pmlmodelling/traitfinder) biomasses.")
-
-if variable in ["carbon"]:
-    intro.append("Carbon data was compiled from multiple sources")
-
-if layer_select == "bottom":
-    intro.append("**Note:** this analysis has been restricted to observations on the shelf region.")
-
-
-if variable == "poc":
-    intro.append("Particulate organic carbon data was compiled from multiple sources")
-
-if variable == "pco2":
-    intro.append("The variable pCO2water_SST_wet was extracted from the SOCAT 2023 database.")
-    intro.append("Observational values were averaged for each day in the year.")
-
-if variable == "doc":
-    intro.append("Dissolved organic carbon data was compiled from multiple sources")
-
-df_mapping = pd.read_csv("../../matched/mapping.csv")
-model_variable = list(df_mapping.query("variable == @variable").model_variable)[0]
-
-import pickle
-try:
-    ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
-    if not os.path.exists(ff_dict):
-        ff_dict = f"../../matched/point/europe/{layer}/{variable}/matchup_dict.pkl"
-    with open(ff_dict, "rb") as f:
-        matchup_dict = pickle.load(f)
-        min_year = matchup_dict["start"]
-        max_year = matchup_dict["end"]
-        point_time_res = matchup_dict["point_time_res"]
-
-    if min_year == max_year:
-        intro.append(f"The model output was matched up with the observational data with model output from  the year **{min_year}**.")
+if available:
+    intro = []
+    
+    if vv_source == "ICES": 
+    
+        if layer_select == "bottom":
+            intro.append(f"Near-bottom values of {vv_name} were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
+            intro.append("The near-bottom was defined as observations **within 2m of the seabed**. This was interpolated to the observational grid using the GEBCO bathymetry dataset.")
+            intro.append("Model values were interpolated to the observational dataset's longitudes and latitudes using 3D interpolation.")
+        if layer_select in ["surface", "all"]:
+            if layer not in ["benthic"]:
+                intro.append(f"Values from the **top 5m** of the water column were extracted from International Council for the Exploration of the Sea (ICES) bottle and CTD data.")
+        if layer == "benthic":
+            intro.append("Benthic values were extracted from existing datasets")
     else:
-        intro.append(f"The model output was matched up with the observational data with model output from the years **{min_year} to {max_year}**.")
+        if layer_select == "bottom":
+            intro.append(f"This data was extracted from vertical profiles. The near-bottom value was defined as the value closest to the bottom, that was within 5m of the bottom. Bathymetry was estimated using GEBCO Bathymetry data.")
+        if layer_select == "surface":
+            if layer not in ["benthic"]:
+                intro.append(f"This data was extracted from vertical profiles. Values from the **top 5m** were extracted from the database. This was compared with the model values from the surface level.")
+        if variable in ["benbio"]:
+            intro.append("Biomass data for macrobenthos was downloaded from the North Sea Benthos Survey 1986.")
+        if variable in ["susfrac"]:
+            intro.append("Abundance data for macrobenthos was downloaded from the North Sea Benthos Survey 1986. It was than converted to biomass using [traitfinder](https://github.com/pmlmodelling/traitfinder) biomasses.")
     
-    if point_time_res == ["year", "month", "day"]:
-        intro.append(f"The model output was matched up precisely with the observational data for each day of the year in the years with data in both model and observations.")
-    if point_time_res == ["month", "day"]:
-        intro.append(f"The model output was matched up with the observational data for each day of the year. However, the year in the observational data was not considered, so the comparison is climatological.")
-    if point_time_res == ["month"]:
-        intro.append(f"The model output was matched up with the observational data for each month of the year. However, the year and day of month in the observational data was not considered, so the comparison is climatological.")
-    if point_years is not None:
-        point_start = point_years[0]
-        point_end = point_years[1]
-        if point_start > 1900:
-            if point_start < point_end:
-                intro.append(f"The observational data was restricted to the years **{point_start} to {point_end}**.")
-            else:
-                intro.append(f"The observational data was restricted to the year **{point_start}**.")
+    if variable in ["carbon"]:
+        intro.append("Carbon data was compiled from multiple sources")
+    
+    if layer_select == "bottom":
+        intro.append("**Note:** this analysis has been restricted to observations on the shelf region.")
     
     
-except:
-    if "year" in df_raw.columns:
-        min_year = df_raw.year.min()
-        max_year = df_raw.year.max()
-        # coerce to int
-        min_year = int(min_year)
-        max_year = int(max_year)
-    if min_year == max_year:
-        intro.append(f"The model output was matched up with the observational data for the year **{min_year}**.")
+    if variable == "poc":
+        intro.append("Particulate organic carbon data was compiled from multiple sources")
+    
+    if variable == "pco2":
+        intro.append("The variable pCO2water_SST_wet was extracted from the SOCAT 2023 database.")
+        intro.append("Observational values were averaged for each day in the year.")
+    
+    if variable == "doc":
+        intro.append("Dissolved organic carbon data was compiled from multiple sources")
+    
+    df_mapping = pd.read_csv("../../matched/mapping.csv")
+    model_variable = list(df_mapping.query("variable == @variable").model_variable)[0]
+    
+    import pickle
+    try:
+        ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
+        if not os.path.exists(ff_dict):
+            ff_dict = f"../../matched/point/europe/{layer}/{variable}/matchup_dict.pkl"
+        with open(ff_dict, "rb") as f:
+            matchup_dict = pickle.load(f)
+            min_year = matchup_dict["start"]
+            max_year = matchup_dict["end"]
+            point_time_res = matchup_dict["point_time_res"]
+    
+        if min_year == max_year:
+            intro.append(f"The model output was matched up with the observational data with model output from  the year **{min_year}**.")
+        else:
+            intro.append(f"The model output was matched up with the observational data with model output from the years **{min_year} to {max_year}**.")
+        
+        if point_time_res == ["year", "month", "day"]:
+            intro.append(f"The model output was matched up precisely with the observational data for each day of the year in the years with data in both model and observations.")
+        if point_time_res == ["month", "day"]:
+            intro.append(f"The model output was matched up with the observational data for each day of the year. However, the year in the observational data was not considered, so the comparison is climatological.")
+        if point_time_res == ["month"]:
+            intro.append(f"The model output was matched up with the observational data for each month of the year. However, the year and day of month in the observational data was not considered, so the comparison is climatological.")
+        if point_years is not None:
+            point_start = point_years[0]
+            point_end = point_years[1]
+            if point_start > 1900:
+                if point_start < point_end:
+                    intro.append(f"The observational data was restricted to the years **{point_start} to {point_end}**.")
+                else:
+                    intro.append(f"The observational data was restricted to the year **{point_start}**.")
+        
+        
+    except:
+        if "year" in df_raw.columns:
+            min_year = df_raw.year.min()
+            max_year = df_raw.year.max()
+            # coerce to int
+            min_year = int(min_year)
+            max_year = int(max_year)
+        if min_year == max_year:
+            intro.append(f"The model output was matched up with the observational data for the year **{min_year}**.")
+        else:
+            intro.append(f"The model output was matched up with the observational data for the years **{min_year} to {max_year}**.")
+    
+    
+    
+    md_basic(" ".join(intro).strip().replace("  ", " "))
+    
+    md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.", number = True)
+    #ds.assign(total = lambda x: x.Ymacro_fYG3c_result/12.011 + x.Y4_fYG3c/12.011 + x.H1_fHG3c/12.011 + x.H2_fHG3c/12.011 + 2.0 * x.ben_nit_nrate, drop = True) 
+    if variable_formula is not None:
+        md_markdown(f"The following model output was used to compare with observational values: **{variable_formula}**.")
     else:
-        intro.append(f"The model output was matched up with the observational data for the years **{min_year} to {max_year}**.")
-
-
-
-md_basic(" ".join(intro).strip().replace("  ", " "))
-
-md(f"In total there were {len(df_raw)} values extracted from the observational database. The map below shows the locations of the matched up data for {vv_name}.", number = True)
-#ds.assign(total = lambda x: x.Ymacro_fYG3c_result/12.011 + x.Y4_fYG3c/12.011 + x.H1_fHG3c/12.011 + x.H2_fHG3c/12.011 + 2.0 * x.ben_nit_nrate, drop = True) 
-if variable_formula is not None:
-    md_markdown(f"The following model output was used to compare with observational values: **{variable_formula}**.")
-else:
-    md_markdown(f"The following model output was used to compare with observational values: **{model_variable}**.")
+        md_markdown(f"The following model output was used to compare with observational values: **{model_variable}**.")
 
 # %% tags=["remove-cell"]
 # bottom 1% of observations
-bot_low = df.observation.quantile(0.001)
-df = df.query(f"observation >= {bot_low}")
+if available:
+    bot_low = df.observation.quantile(0.001)
+    df = df.query(f"observation >= {bot_low}")
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df_locs -i variable -i unit -w 500
+# %%R -i df_locs -i variable -i available -i unit -w 500
+if(available){
 library(dplyr, warn.conflicts = FALSE)
 library(ggplot2, warn.conflicts = FALSE)
 library(stringr)
@@ -277,27 +283,30 @@ if( min(df_locs$lon) < -10 ){
     # move legen
 
 gg
+}
 
 # %% tags=["remove-input"]
-if layer_select == "surface":
-    if layer not in ["benthic"]:
-        md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} in the top 5m of the water column.") 
-if layer_select == "bottom":
-    md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} near the bottom of the water column.")
-if layer_select == "all":
-    if layer not in ["benthic"]:
-        md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} throughout the water column.")
-if layer == "benthic":
-    md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} on the seafloor. The observational data is from {data_source(vv_source, vv_name)}.")    
-i_figure = i_figure + 1
+if available:
+    if layer_select == "surface":
+        if layer not in ["benthic"]:
+            md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} in the top 5m of the water column.") 
+    if layer_select == "bottom":
+        md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} near the bottom of the water column.")
+    if layer_select == "all":
+        if layer not in ["benthic"]:
+            md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} throughout the water column.")
+    if layer == "benthic":
+        md(f"**Figure {chapter}{i_figure}:** Locations of matchups between simulated and observed {vv_name} on the seafloor. The observational data is from {data_source(vv_source, vv_name)}.")    
+    i_figure = i_figure + 1
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df -i variable -i unit -i layer_select -i vv_name -w 800 
+# %%R -i df -i variable -i unit -i layer_select -i vv_name -i available -w 800 
 options(warn=-1)
 options(warn=-1)
 library(tidyverse)
 library(ggtext)
+if(available){
 
 bin_value <- function(x, bin_res) {
 	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
@@ -333,6 +342,8 @@ name = str_replace(name, "/m\\^2", "m<sup>-2</sup>")
 name = str_replace(name, "/day", "day<sup>-1</sup>")
 # fix O_2
 name <- str_replace(name, "O_2", "O<sub>2</sub>")
+# CO2
+name <- str_replace(name, "CO2", "CO<sub>2</sub>")
 
 
 bin_value <- function(x, bin_res) {
@@ -403,59 +414,64 @@ gg <- gg +
 gg <- gg + theme(plot.margin=unit(c(0,0,0,0),"cm"))
 gg
 
+}
 
 }
 
 # %% tags=["remove-input"]
-if "month" not in df.columns:
-    md(f"**Figure {chapter}{i_figure}:** Map of average {layer_select} {vv_name} in the model and observational datasets.")
-    i_figure += 1
+if available:
+    if "month" not in df.columns:
+        md(f"**Figure {chapter}{i_figure}:** Map of average {layer_select} {vv_name} in the model and observational datasets.")
+        i_figure += 1
 
 # %% tags=["remove-input"]
-if "month" in df_raw.columns:
-    # summarize using md the number of observations in each month
-    # get the minimum and maximum number in each month and report the month
-    df_size = df_raw.groupby("month").size().reset_index()
-    df_size.columns = ["month", "n"]
-    n_min = df_size.n.min()
-    n_max = df_size.n.max()
-    month_min = list(df_size.query("n == @n_min").month.values)[0]
-    months_max = list(df_size.query("n == @n_max").month.values)[0] 
-    # convert to month names
-    import calendar
-    month_min = calendar.month_name[int(month_min)]
-    months_max = calendar.month_name[int(months_max)] 
-    
-    # summarize using md
-    
-    fig_summary = [f"The number of observations in each month ranged from {n_min} in {month_min} to {n_max} in {months_max}."]
-    
-    fig_summary.append(f"Figure {chapter}{i_figure} below shows the distribution of observations in each month.")
-    
-    md(" ".join(fig_summary).strip().replace("  ", " "), number = True)
+if available:
+    if "month" in df_raw.columns:
+        # summarize using md the number of observations in each month
+        # get the minimum and maximum number in each month and report the month
+        df_size = df_raw.groupby("month").size().reset_index()
+        df_size.columns = ["month", "n"]
+        n_min = df_size.n.min()
+        n_max = df_size.n.max()
+        month_min = list(df_size.query("n == @n_min").month.values)[0]
+        months_max = list(df_size.query("n == @n_max").month.values)[0] 
+        # convert to month names
+        import calendar
+        month_min = calendar.month_name[int(month_min)]
+        months_max = calendar.month_name[int(months_max)] 
 
-if "month" in df_raw.columns:
-    df_totals = (
-        df_raw.groupby("month").size().reset_index()
-        # rename
-        .rename(columns = {0: "n"})
-    )
-else:
-    df_totals = pd.DataFrame({"month": ["All"], "n": [len(df_raw)]})
+        # summarize using md
+
+        fig_summary = [f"The number of observations in each month ranged from {n_min} in {month_min} to {n_max} in {months_max}."]
+
+        fig_summary.append(f"Figure {chapter}{i_figure} below shows the distribution of observations in each month.")
+
+        md(" ".join(fig_summary).strip().replace("  ", " "), number = True)
+
+    if "month" in df_raw.columns:
+        df_totals = (
+            df_raw.groupby("month").size().reset_index()
+            # rename
+            .rename(columns = {0: "n"})
+        )
+    else:
+        df_totals = pd.DataFrame({"month": ["All"], "n": [len(df_raw)]})
 
 
 
 # %% tags=["remove-input"]
-bias_text = []
+if available:
+    bias_text = []
 
-bias_text.append(f"Figure {chapter}{i_figure} below shows the bias between the model and observational data for {vv_name}.")
-bias_text.append(f"The bias is calculated as the model value minus the observational value, and it is shown for each month of the year.")
+    bias_text.append(f"Figure {chapter}{i_figure} below shows the bias between the model and observational data for {vv_name}.")
+    bias_text.append(f"The bias is calculated as the model value minus the observational value, and it is shown for each month of the year.")
 
-md(" ".join(bias_text).strip().replace("  ", " "))
+    md(" ".join(bias_text).strip().replace("  ", " "))
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df -i variable -i unit -i layer_select -w 1000 -h 1200 -i vv_name
+# %%R -i df -i variable -i unit -i layer_select -w 1000 -h 1200 -i vv_name -i available
+if(available){
 options(warn=-1)
 # #%%R -i df -i variable -i unit -w 1600 -h 1000
 options(warn=-1)
@@ -514,6 +530,7 @@ df$month <- factor(df$month, levels = df$month, labels = month.abb[df$month])
 title <- str_glue("Bias in {layer_select} {vv_name} ({unit})")
 # fix O_2
 title <- str_replace(title, "O_2", "O<sub>2</sub>")
+title <- str_replace(title, "CO2", "CO<sub>2</sub>")
 
 out = str_glue("../../results/{layer_select}/{variable}/{layer_select}_{variable}_bias.csv")
 
@@ -532,6 +549,7 @@ title = str_replace(title, "/m\\^2", "m<sup>-2")
 # fix  O_2
 # replace pco2 with PCO_2
 title = str_replace_all(title, "pco2", "pCO<sub>2</sub>")
+title = str_replace(title, "pCO2", "pCO<sub>2</sub>")
 title = str_replace(title, "O_2", "O<sub>2</sub>")
 # 
 
@@ -614,6 +632,7 @@ colour_lab <- str_replace_all(colour_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
 colour_lab <- str_replace(colour_lab, "/day", "day<sup>-1</sup>")
 # fix O_2
 colour_lab <- str_replace(colour_lab, "O_2", "O<sub>2</sub>")
+colour_lab <- str_replace(colour_lab, "CO2", "CO<sub>2</sub>")
 
 #
 if(str_detect(vv_name, "macrob")){
@@ -644,35 +663,38 @@ gg <- gg +
     # move legen
 
 gg
+}
 
 # %% tags=["remove-input"]
-if layer not in ["benthic"]:
-    md(f"**Figure {chapter}{i_figure}**: Bias in {layer_select} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale. **Note:** values have been binned and averaged to the resolution of the model.") 
-else:
-    md(f"**Figure {chapter}{i_figure}**: Bias in {layer_select} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale.") 
-i_figure += 1
+if available:
+    if layer not in ["benthic"]:
+        md(f"**Figure {chapter}{i_figure}**: Bias in {layer_select} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale. **Note:** values have been binned and averaged to the resolution of the model.") 
+    else:
+        md(f"**Figure {chapter}{i_figure}**: Bias in {layer_select} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale.") 
+    i_figure += 1
 
 #"adhoc/tmp/df_raw.feather"
 # create directory if non-existent, recursive
-if os.path.isdir("adhoc/tmp") == False:
-    os.makedirs("adhoc/tmp")
-df_raw.to_feather("adhoc/tmp/df_raw.feather")
-df.to_feather("adhoc/tmp/df.feather")
+    if os.path.isdir("adhoc/tmp") == False:
+        os.makedirs("adhoc/tmp")
+    df_raw.to_feather("adhoc/tmp/df_raw.feather")
+    df.to_feather("adhoc/tmp/df.feather")
 
 
 # %% tags=["remove-input"]
-scatter_text = []
-scatter_text.append(f"Figures {chapter}{i_figure} and {chapter}{i_figure + 1} show the distribution of {layer_select} {vv_name} observations in the model and observational datasets.") 
-scatter_text.append(f"This is shown for each month of the year (Figure {chapter}{i_figure}) and for the entire year (Figure {chapter}{i_figure + 1}).")
+if available:
+    scatter_text = []
+    scatter_text.append(f"Figures {chapter}{i_figure} and {chapter}{i_figure + 1} show the distribution of {layer_select} {vv_name} observations in the model and observational datasets.") 
+    scatter_text.append(f"This is shown for each month of the year (Figure {chapter}{i_figure}) and for the entire year (Figure {chapter}{i_figure + 1}).")
 
-md(" ".join(scatter_text).strip().replace("  ", " "))
+    md(" ".join(scatter_text).strip().replace("  ", " "))
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df -i compact -i vv_name -i unit -w 1000 -h 1200
+# %%R -i df -i compact -i vv_name -i unit -w 1000 -h 1200 -i available
 # #%%R -i df -i variable -i unit -w 1600 -h 1000
 #df <- arrow::read_feather("adhoc/tmp/df_raw.feather")
-if("month" %in% colnames(df) & compact == FALSE){
+if("month" %in% colnames(df) & compact == FALSE & available){
 
 bin_value <- function(x, bin_res) {
 	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
@@ -703,6 +725,8 @@ y_lab <- str_replace_all(y_lab, "m-([0-9]+)", "m<sup>-\\1</sup>")
 # fix O_2
 x_lab <- str_replace(x_lab, "O_2", "O<sub>2</sub>")
 y_lab <- str_replace(y_lab, "O_2", "O<sub>2</sub>")
+x_lab <- str_replace(x_lab, "CO2", "CO<sub>2</sub>")
+y_lab <- str_replace(y_lab, "CO2", "CO<sub>2</sub>")
 
 
 df <- df %>%
@@ -752,19 +776,20 @@ gg
 }
 
 # %% tags=["remove-input"]
-if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
-    if compact is False:
-        if layer_select == "surface":
-            md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} in the top 5m of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
-        if layer_select == "bottom":
-            md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} near the bottom of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
-        i_figure = i_figure + 1
+if available:
+    if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
+        if compact is False:
+            if layer_select == "surface":
+                md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} in the top 5m of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
+            if layer_select == "bottom":
+                md(f"**Figure {chapter}{i_figure}**: Simulated versus observed {vv_name} near the bottom of the water column. The blue curve is a generalized additive model (GAM) fit to the data, and the black line represents 1-1 relationship between the simulation and observations. The data has been averaged per model grid cell.") 
+            i_figure = i_figure + 1
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i vv_name -i unit -i compact -w 500 
+# %%R -i vv_name -i unit -i compact -w 500  -i available
 
-if(compact){
+if(compact & available){
 library(dplyr, warn.conflicts = FALSE)
 library(ggplot2, warn.conflicts = FALSE)
 library(stringr)
@@ -806,112 +831,115 @@ gg
 }
 
 # %% tags=["remove-input"]
-if compact:
-    md(f"**Figure {chapter}{i_figure}**: Model vs observed {vv_name} for {layer_select} values. The line is a generalized additive model (GAM) fit to the data. The shaded area is the 95% confidence interval of the GAM fit.")
-    i_figure += 1
-if layer_select == "surface":
-    if layer not in ["benthic"]:
-        md(f"## Summary statistics for {vv_name} at the sea surface")
+if available:
+    if compact:
+        md(f"**Figure {chapter}{i_figure}**: Model vs observed {vv_name} for {layer_select} values. The line is a generalized additive model (GAM) fit to the data. The shaded area is the 95% confidence interval of the GAM fit.")
+        i_figure += 1
+    if layer_select == "surface":
+        if layer not in ["benthic"]:
+            md(f"## Summary statistics for {vv_name} at the sea surface")
+        else:
+            md(f"## Summary statistics for {vv_name} in the sediment layer") 
     else:
-        md(f"## Summary statistics for {vv_name} in the sediment layer") 
-else:
-    md(f"## Summary statistics for {vv_name} at the near-bottom")
+        md(f"## Summary statistics for {vv_name} at the near-bottom")
 
 # %% tags=["remove-input"]
-md(f"The overall ability of the model to predict the observed {vv_name} was assessed by calculating the average bias, the root mean square deviation (RMSD) and the correlation coefficient (R). The bias was calculated as the model value minus the observed value. The RMSD was calculated as the square root of the mean squared deviation. The correlation coefficient was calculated as the Pearson correlation coefficient between the model and observed values.") 
-md(f"This was calculated for each month and for the entire dataset. The results are shown in the tables below.")
+if available:
+    md(f"The overall ability of the model to predict the observed {vv_name} was assessed by calculating the average bias, the root mean square deviation (RMSD) and the correlation coefficient (R). The bias was calculated as the model value minus the observed value. The RMSD was calculated as the square root of the mean squared deviation. The correlation coefficient was calculated as the Pearson correlation coefficient between the model and observed values.") 
+    md(f"This was calculated for each month and for the entire dataset. The results are shown in the tables below.")
 
 # %% tags=["remove-input"]
-if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
-    df_bias = (
-        df_raw
-        .assign(bias = lambda x: x.model - x.observation)
-        .groupby("month")
-        .mean()
-        .reset_index()
-        .loc[:,["month", "bias"]]
-        # convert month number to name
-        .assign(month = lambda x: x.month.apply(lambda y: calendar.month_abbr[y]))
-    )
-    # add average bias to df_bias as a separate row
-    annual_bias = df_raw.model.mean() - df_raw.observation.mean() 
-    df_bias = pd.concat([df_bias, pd.DataFrame({"month": ["All"], "bias": [annual_bias]})])
+if available:
+    if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
+        df_bias = (
+            df_raw
+            .assign(bias = lambda x: x.model - x.observation)
+            .groupby("month")
+            .mean()
+            .reset_index()
+            .loc[:,["month", "bias"]]
+            # convert month number to name
+            .assign(month = lambda x: x.month.apply(lambda y: calendar.month_abbr[y]))
+        )
+        # add average bias to df_bias as a separate row
+        annual_bias = df_raw.model.mean() - df_raw.observation.mean() 
+        df_bias = pd.concat([df_bias, pd.DataFrame({"month": ["All"], "bias": [annual_bias]})])
 
-    # move the final row to the top
-    df_bias = pd.concat([df_bias.iloc[[-1]], df_bias.iloc[:-1]])
-else:
-    # only want annual
-    df_bias = pd.DataFrame({"month": ["All"], "bias": [df_raw.model.mean() - df_raw.observation.mean()]})
-if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
-    # now create an rmse dataframe
-    df_rmse = (
-        df_raw
-        .assign(month = lambda x: x.month.apply(lambda y: calendar.month_abbr[y]))
-        .groupby("month")
-        .apply(lambda x: np.sqrt((x.model - x.observation).pow(2).mean()))
-        .reset_index()
-        .rename(columns={0: "rmse"})
-    )
-    # add average rmse to df_rmse as a separate row
-    annual_rmse = np.sqrt(((df_raw.model - df_raw.observation).pow(2)).mean())
-    df_rmse = pd.concat([df_rmse, pd.DataFrame({"month": ["All"], "rmse": [annual_rmse]})])
-    # move the final row to the top
-    df_rmse = pd.concat([df_rmse.iloc[[-1]], df_rmse.iloc[:-1]])
-else:
-    # only want annual
-    df_rmse = pd.DataFrame({"month": ["All"], "rmse": [np.sqrt(((df_raw.model - df_raw.observation).pow(2)).mean())]})
-# rename the month column to Month
-# merge the two dataframes
-df_table = copy.deepcopy(df_bias).merge(df_rmse)
-df_table = df_table.round(2)
-# create df_corr
-if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
-    df_corr = (
-        df_raw
-        .groupby("month")
-        .apply(lambda x: x.model.corr(x.observation))
-        .reset_index()
-        .rename(columns={0: "correlation"})
-        .assign(month = lambda x: x.month.apply(lambda y: calendar.month_abbr[y]))
-    )
-    # add average correlation to df_corr as a separate row
-    # calculate annual correlation using all data
-    annual_corr = df_raw.model.corr(df_raw.observation)
-    df_corr = pd.concat([df_corr, pd.DataFrame({"month": ["All"], "correlation": [annual_corr]})])
-    # df_corr = df_corr.append({"month": "All", "correlation": annual_corr}, ignore_index=True)
+        # move the final row to the top
+        df_bias = pd.concat([df_bias.iloc[[-1]], df_bias.iloc[:-1]])
+    else:
+        # only want annual
+        df_bias = pd.DataFrame({"month": ["All"], "bias": [df_raw.model.mean() - df_raw.observation.mean()]})
+    if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
+        # now create an rmse dataframe
+        df_rmse = (
+            df_raw
+            .assign(month = lambda x: x.month.apply(lambda y: calendar.month_abbr[y]))
+            .groupby("month")
+            .apply(lambda x: np.sqrt((x.model - x.observation).pow(2).mean()))
+            .reset_index()
+            .rename(columns={0: "rmse"})
+        )
+        # add average rmse to df_rmse as a separate row
+        annual_rmse = np.sqrt(((df_raw.model - df_raw.observation).pow(2)).mean())
+        df_rmse = pd.concat([df_rmse, pd.DataFrame({"month": ["All"], "rmse": [annual_rmse]})])
+        # move the final row to the top
+        df_rmse = pd.concat([df_rmse.iloc[[-1]], df_rmse.iloc[:-1]])
+    else:
+        # only want annual
+        df_rmse = pd.DataFrame({"month": ["All"], "rmse": [np.sqrt(((df_raw.model - df_raw.observation).pow(2)).mean())]})
+    # rename the month column to Month
+    # merge the two dataframes
+    df_table = copy.deepcopy(df_bias).merge(df_rmse)
+    df_table = df_table.round(2)
+    # create df_corr
+    if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
+        df_corr = (
+            df_raw
+            .groupby("month")
+            .apply(lambda x: x.model.corr(x.observation))
+            .reset_index()
+            .rename(columns={0: "correlation"})
+            .assign(month = lambda x: x.month.apply(lambda y: calendar.month_abbr[y]))
+        )
+        # add average correlation to df_corr as a separate row
+        # calculate annual correlation using all data
+        annual_corr = df_raw.model.corr(df_raw.observation)
+        df_corr = pd.concat([df_corr, pd.DataFrame({"month": ["All"], "correlation": [annual_corr]})])
+        # df_corr = df_corr.append({"month": "All", "correlation": annual_corr}, ignore_index=True)
 
-    # move the final row to the top
-    df_corr = pd.concat([df_corr.iloc[[-1]], df_corr.iloc[:-1]])
-else:
-    # only want annual
-    df_corr = pd.DataFrame({"month": ["All"], "correlation": [df_raw.model.corr(df_raw.observation)]})
-df_table = df_table.merge(df_corr)
-df_table = df_table.round(2)
-df_table = df_table.rename(columns={"month": "Month", "bias": "Bias", "rmse": "RMSD", "correlation": "Correlation"})
-df_table = df_table[["Month", "Bias", "RMSD", "Correlation"]]
-# change Month to Period
-df_table = df_table.rename(columns={"Month": "Time period"})
+        # move the final row to the top
+        df_corr = pd.concat([df_corr.iloc[[-1]], df_corr.iloc[:-1]])
+    else:
+        # only want annual
+        df_corr = pd.DataFrame({"month": ["All"], "correlation": [df_raw.model.corr(df_raw.observation)]})
+    df_table = df_table.merge(df_corr)
+    df_table = df_table.round(2)
+    df_table = df_table.rename(columns={"month": "Month", "bias": "Bias", "rmse": "RMSD", "correlation": "Correlation"})
+    df_table = df_table[["Month", "Bias", "RMSD", "Correlation"]]
+    # change Month to Period
+    df_table = df_table.rename(columns={"Month": "Time period"})
 
-if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
-    # add commas to bias and rmse
-    df_number = df_raw.groupby("month").count().reset_index().loc[:,["month", "observation"]]
-# convert month number to name
-    df_number["month"] = df_number["month"].apply(lambda x: calendar.month_abbr[x])
-    df_number = df_number.rename(columns={"month": "Time period", "observation": "Number of observations"})
-else:
-    df_number = pd.DataFrame({"Time period": ["All"], "Number of observations": [len(df_raw)]})
+    if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
+        # add commas to bias and rmse
+        df_number = df_raw.groupby("month").count().reset_index().loc[:,["month", "observation"]]
+    # convert month number to name
+        df_number["month"] = df_number["month"].apply(lambda x: calendar.month_abbr[x])
+        df_number = df_number.rename(columns={"month": "Time period", "observation": "Number of observations"})
+    else:
+        df_number = pd.DataFrame({"Time period": ["All"], "Number of observations": [len(df_raw)]})
 
-# add total number of observations
-annual_number = len(df_raw)
-if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
-    df_number = pd.concat([df_number, pd.DataFrame({"Time period": ["All"], "Number of observations": [annual_number]})])
-# df_number = df_number.append({"Time period": "All", "Number of observations": annual_number}, ignore_index=True)
-df_table = df_table.merge(df_number)
+    # add total number of observations
+    annual_number = len(df_raw)
+    if variable not in ["carbon", "benbio", "susfrac", "oxycons"]:
+        df_number = pd.concat([df_number, pd.DataFrame({"Time period": ["All"], "Number of observations": [annual_number]})])
+    # df_number = df_number.append({"Time period": "All", "Number of observations": annual_number}, ignore_index=True)
+    df_table = df_table.merge(df_number)
 
-# include commas in the number of observations
-df_table["Number of observations"] = df_table["Number of observations"].apply(lambda x: "{:,}".format(x))
+    # include commas in the number of observations
+    df_table["Number of observations"] = df_table["Number of observations"].apply(lambda x: "{:,}".format(x))
 
-df_display(df_table)
+    df_display(df_table)
 
 # %% tags=["remove-input"]
 md(f"**Table {chapter}{i_table}:** Average bias ({unit}) and root-mean square deviation ({unit}) for the model's {layer_select} {vv_name} for each month. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
@@ -919,57 +947,60 @@ i_table += 1
 
 
 # %% tags=["remove-input"]
-md(f"A linear regression analysis of modelled and observed {vv_name} was performed. The modelled {vv_name} was used as the independent variable and the observed {vv_name} was used as the dependent variable. The results are shown in the table below.")
+if available:
+    md(f"A linear regression analysis of modelled and observed {vv_name} was performed. The modelled {vv_name} was used as the independent variable and the observed {vv_name} was used as the dependent variable. The results are shown in the table below.")
 
-md("The regression was carried out using the Python package statsmodels.")
+    md("The regression was carried out using the Python package statsmodels.")
 
 # %% tags=["remove-input"]
 
 # do a linear regression of model vs observed in df
-X = df.model.values
-Y = df.observation.values
-# linear regression using statsmodels
-import statsmodels.api as sm
-X = sm.add_constant(X)
-# make X and Y random numbers between 0 and 1
-X = sm.add_constant(X)
-model = sm.OLS(Y, X).fit()
-# get the slope and intercept
-intercept, slope = model.params
-# calculate the r squared
-r2 = model.rsquared
-# calculate the p value of the slope
-p = model.f_pvalue
+if available:
+    X = df.model.values
+    Y = df.observation.values
+    # linear regression using statsmodels
+    import statsmodels.api as sm
+    X = sm.add_constant(X)
+    # make X and Y random numbers between 0 and 1
+    X = sm.add_constant(X)
+    model = sm.OLS(Y, X).fit()
+    # get the slope and intercept
+    intercept, slope = model.params
+    # calculate the r squared
+    r2 = model.rsquared
+    # calculate the p value of the slope
+    p = model.f_pvalue
 
-p = model.f_pvalue
-# put that in a dataframe
-df_stats = pd.DataFrame({"Slope": slope, "Intercept": intercept, "R2": r2, "P": p}, index = ["All"]).assign(Period = "All")
-# do this month by month append to df_stats
+    p = model.f_pvalue
+    # put that in a dataframe
+    df_stats = pd.DataFrame({"Slope": slope, "Intercept": intercept, "R2": r2, "P": p}, index = ["All"]).assign(Period = "All")
+    # do this month by month append to df_stats
 
-for month in range(1, 13):
-    try:
-        X = df.query("month == @month").model.values
-        Y = df.query("month == @month").observation.values
-        X = sm.add_constant(X)
-        model = sm.OLS(Y, X).fit()
-        intercept, slope = model.params
-        r2 = model.rsquared
-        p = model.f_pvalue
-        df_stats = pd.concat([df_stats, pd.DataFrame({"Slope": slope, "Intercept": intercept, "R2": r2, "P": p}, index = [month]).assign(Period = month)])
-        df_stats.loc[df_stats.index[-1], "Period"] = calendar.month_abbr[month]
-    except:
-        pass
-# sort period appropriately, so All is first then ordered by month
-df_stats["Period"] = pd.Categorical(df_stats["Period"], [calendar.month_abbr[x] for x in range(1, 13)] + ["All"])
-# round p-value to 3 dp
-df_stats["P"] = df_stats["P"].round(5)
-# change P to p-value
-df_stats = df_stats.rename(columns={"P": "p-value"})
-# put Period first
-df_stats = df_stats[["Period", "Slope", "Intercept", "R2", "p-value"]]
-# 
-df_display(df_stats)
+    for month in range(1, 13):
+        try:
+            X = df.query("month == @month").model.values
+            Y = df.query("month == @month").observation.values
+            X = sm.add_constant(X)
+            model = sm.OLS(Y, X).fit()
+            intercept, slope = model.params
+            r2 = model.rsquared
+            p = model.f_pvalue
+            df_stats = pd.concat([df_stats, pd.DataFrame({"Slope": slope, "Intercept": intercept, "R2": r2, "P": p}, index = [month]).assign(Period = month)])
+            df_stats.loc[df_stats.index[-1], "Period"] = calendar.month_abbr[month]
+        except:
+            pass
+    # sort period appropriately, so All is first then ordered by month
+    df_stats["Period"] = pd.Categorical(df_stats["Period"], [calendar.month_abbr[x] for x in range(1, 13)] + ["All"])
+    # round p-value to 3 dp
+    df_stats["P"] = df_stats["P"].round(5)
+    # change P to p-value
+    df_stats = df_stats.rename(columns={"P": "p-value"})
+    # put Period first
+    df_stats = df_stats[["Period", "Slope", "Intercept", "R2", "p-value"]]
+    # 
+    df_display(df_stats)
 
 # %% tags=["remove-input"]
-md(f"**Table {chapter}{i_table}:** Linear regression analysis of modelled and observed {vv_name}. The modelled {vv_name} was used as the independent variable and the observed {vv_name} was used as the dependent variable. The slope and intercept of the regression line are shown, along with the R<sup>2</sup> value and the p-value of the slope. Note: only months with sufficient values for a regression are shown.")
-i_table += 1 
+if available:
+    md(f"**Table {chapter}{i_table}:** Linear regression analysis of modelled and observed {vv_name}. The modelled {vv_name} was used as the independent variable and the observed {vv_name} was used as the dependent variable. The slope and intercept of the regression line are shown, along with the R<sup>2</sup> value and the p-value of the slope. Note: only months with sufficient values for a regression are shown.")
+    i_table += 1 
