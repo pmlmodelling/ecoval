@@ -843,8 +843,11 @@ def compare_simulations(
                             #ds.ensemble_mean()
                             if surface_level == "bottom":
                                 ds.invert_levels()
+                            ds.rename({ds.variables[0]: "total"})
                             ds.append(ds_depth)
                             ds.merge("variable")
+                            ds.run()
+                            print(ds.variables)
                             ds.assign(total_e3t = lambda x: x.total * x.e3t, total_e3t_depth = lambda x: x.total * x.e3t * x.depth)
                             ds.run()
                             ds.vertical_sum()
