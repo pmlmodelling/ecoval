@@ -22,6 +22,20 @@ def various_fixes(x):
     # a number of fixes to ensure the latex is correct
     # Make sure the 2 in R2 is a superscript
     x = x.replace("R2", "R$^2$")
+    # x = \sphinxhyphen{}, include brackets
+    x = re.sub(r"\\sphinxhyphen\{(.*?)}", r"-", x)
+    # fix \textasciicircum{}
+    x = re.sub(r"\\textasciicircum\{(.*?)}", r"^", x)
+    # fix \$ in text
+    # x = re.sub(r"\\textdollar\{(.*?)}", r"$", x)
+    x = re.sub(r"\\\$", r"$", x)
+    x = re.sub(r"\\\{", r"{", x)
+    x = re.sub(r"\\\}", r"}", x)
+    #$\_2$
+    x = x.replace("$\_2$", "$_2$")
+    #$\sphinxstyleemphasis{{2}$ pedantic
+
+    # x = x.replace("$\sphinxstyleemphasis{{2}$", "$_2$")
     # latex to replace
     # pull the figure name out
     
@@ -950,6 +964,11 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                         new_lines[i] = new_lines[i].replace("the_test_status", "True")
                     else:
                         new_lines[i] = new_lines[i].replace("the_test_status", "False")
+                if '"gam"' in new_lines[i]:
+                    new_lines[i] = new_lines[i].replace('"gam"', '"loess"')
+
+                new_lines[i] = new_lines[i].replace("book_build", build)
+
 
 
             
@@ -1060,15 +1079,25 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                          # remove the last element
 
                          return y
-                    if "textbf" not in line:
-                        new_lines.append(make_header_bold(various_fixes(line)))
-                    else:
-                        new_lines.append(various_fixes(line))
+                    if "Verbatim" not in line:
+                        if "textbf" not in line:
+                            new_lines.append(make_header_bold(various_fixes(line)))
+                        else:
+                            new_lines.append(various_fixes(line))
                 else:
-                    new_lines.append(various_fixes(line))
+                    if "Verbatim" not in line:
+                        new_lines.append(various_fixes(line))
                 if i == 0:
                     new_lines.append("\\hline")
                     i = 1
+                if "author{Robert" in line:
+                    #shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), "book/pml_logo.jpg")
+                    shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"{book_dir}/_build/latex/pml_logo.jpg")    
+                    new_lines.append("\\titlepic{\\includegraphics[width=0.2\\textwidth]{pml_logo.jpg}}")
+                if "polyglossia" in line:
+                    new_lines.append("\\usepackage{titlepic}")
+                    new_lines.append("\\usepackage{graphicx}")
+                
 
         # now replace noindent with center in lines with sphinxincludegraphics
         for i in range(len(new_lines)):

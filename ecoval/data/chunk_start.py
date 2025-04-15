@@ -15,21 +15,42 @@ def fix_basename(x):
     else:
         return x
 
-def fix_unit(x):
-    #/m^3
-    x = x.replace("/m^3", "m<sup>-3</sup>") 
-    x = x.replace("/m3", "m<sup>-3</sup>")
-    x = x.replace("m-3", "m<sup>-3</sup>")
-    x = x.replace("/m^2", "m<sup>-2</sup>")
-    x = x.replace("/m2", "m<sup>-2</sup>")
-    x = x.replace("m2", "m<sup>2</sup>")
-    x = x.replace("m3", "m<sup>3</sup>")
-    #O_2
-    x = x.replace("O_2", "O<sub>2</sub>")
-    # fix CO2
-    x = x.replace("CO2", "CO<sub>2</sub>")
-    # fix /yr
-    x = x.replace("/yr", "year<sup>-1</sup>")
+def fix_unit(x, build = "book_build"):
+    if build == "html":
+        x = x.replace("/m^3", "m<sup>-3</sup>") 
+        x = x.replace("/m3", "m<sup>-3</sup>")
+        x = x.replace("m-3", "m<sup>-3</sup>")
+        x = x.replace("/m^2", "m<sup>-2</sup>")
+        x = x.replace("/m2", "m<sup>-2</sup>")
+        x = x.replace("m2", "m<sup>2</sup>")
+        x = x.replace("m3", "m<sup>3</sup>")
+        #O_2
+        x = x.replace("O_2", "O<sub>2</sub>")
+        # fix CO2
+        x = x.replace("CO2", "CO<sub>2</sub>")
+        # fix /yr
+        x = x.replace("/yr", "year<sup>-1</sup>")
+        # degC
+        x = x.replace("degC", "°C")
+    if build == "pdf":
+        x = x.replace("/m^3", "m$^{-3}$")
+        x = x.replace("/m3", "m$^{-3}$")
+        x = x.replace("m-3", "m$^{-3}$")
+        x = x.replace("/m^2", "m$^{-2}$")
+        x = x.replace("/m2", "m$^{-2}$")
+        x = x.replace("m2", "m$^2$")
+        x = x.replace("m3", "m$^3$")
+        #O_2
+        x = x.replace("O_2", "O$_2$")
+        # fix CO2
+        x = x.replace("CO2", "CO$_2$")
+        # fix /yr
+        x = x.replace("/yr", "year$^{-1}$")
+        # fix /day
+        x = x.replace("/day", "day$^{-1}$")
+        # degC
+        x = x.replace("degC", "$^\circ$C")
+
 
     return x
 
@@ -60,7 +81,7 @@ def fix_variable_name(x):
 
 
 
-def df_display(df):
+def df_display(df, build = "book_build"):
     # only 2 decimal places
     for col in df.columns:
         if "Number" in col:
@@ -94,6 +115,14 @@ def df_display(df):
         df["Variable"] = df["Variable"].str.replace("Poc ", "POC ")
         # ensure "Doc" is "DOC"
         df["Variable"] = df["Variable"].str.replace("Doc", "DOC")
+    if "Variable" in df.columns:
+        if build == "html":
+            # pCO2
+            df["Variable"] = df["Variable"].str.replace("pCO2", "pCO<sub>2</sub>")
+        if build == "pdf":
+            # pCO2
+            df["Variable"] = df["Variable"].str.replace("pCO2", "pCO$_2$") 
+
     # if R2 is in the column name, make sure the 2 is superscript
     if "R2" in df.columns:
         df = df.rename(columns={"R2": "R²"}) 
@@ -119,7 +148,7 @@ import warnings
 warnings.filterwarnings('ignore')
 from IPython.display import Markdown as md_markdown
 
-def md_basic(x):
+def md_basic(x, build = "book_build"):
     x = x.replace(" 5 m ", " 5m ")
     x = x.replace(" 5 m.", " 5m.")
 
@@ -142,6 +171,10 @@ def md_basic(x):
     # /m^3
     # ensure there are spaces after commas, using regex
     x = re.sub(r",(\w)", r", \1", x)
+    if build == "html":
+        x = x.replace("CO", "CO<sub>2</sub>")
+    if build == "pdf":
+        x = x.replace("CO", "CO$_2$")
     # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
 
     # if "year" not in x.lower(): 
@@ -149,7 +182,7 @@ def md_basic(x):
     #         x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
 
-def md(x, number = False):
+def md(x, number = False, build = "book_build"):
     valid_vars = [
         "temperature", "salinity", "oxygen", "phosphate",
         "silicate", "nitrate", "ammonium", "alkalinity",
@@ -222,63 +255,124 @@ def md(x, number = False):
         x = x.replace(" oxycons.", " benthic oxygen consumption.")
     if "color" in x:
         x = x.replace(" color", " colour")
-    if "pco2" in x:
-        x = x.replace("pco2", "pCO<sub>2</sub>")
-    # make CO2 subscript
-    x = x.replace("CO2", "CO<sub>2</sub>")
-    # fix O_2
-    x = x.replace("O_2", "O<sub>2</sub>")
-    x = x.replace(" ph ", " pH ")
-    x = x.replace(" R2 ", " R<sup>2</sup> ")
-    x = x.replace(" R2.", " R<sup>2</sup>.")
-    # fix g/kg
-    x = x.replace("g/kg", "g kg<sup>-1</sup>")
+    if build == "html":
+        if "pco2" in x:
+            x = x.replace("pco2", "pCO<sub>2</sub>")
+        # make CO2 subscript
+        x = x.replace("CO2", "CO<sub>2</sub>")
+        # fix O_2
+        x = x.replace("O_2", "O<sub>2</sub>")
+        x = x.replace(" ph ", " pH ")
+        x = x.replace(" R2 ", " R<sup>2</sup> ")
+        x = x.replace(" R2.", " R<sup>2</sup>.")
+        # fix g/kg
+        x = x.replace("g/kg", "g kg<sup>-1</sup>")
 
-    # get rid of double spaces
-    x = x.replace("  ", " ")
-    # use regex to ensure any numbers have commas
-    if "**Figure" in x:
-        # ensure the sentence ends with .
-        if x[-1] != ".":
-            x = x + "."
-    if "**Table" in x:
-        # ensure the sentence ends with .
-        if x[-1] != ".":
-            x = x + "."
-    # ensure there are spaces after commas, using regex
-    x = re.sub(r",(\w)", r", \1", x)
-
-
-    x = x.replace(" .", ".")
-    x = x.replace(" ,", ",")
-    x = x.replace(" :", ":")
-    x = x.replace(" ;", ";")
-    x = x.replace(" %", "%")
-    # /m^3
-    x = x.replace("/m3", "m<sup>-3</sup>")
-    x = x.replace("/m^3", "m<sup>-3</sup>")
-    # handle /m^2
-    x = x.replace("/m2", "m<sup>-2</sup>")
-    x = x.replace("/m^2", "m<sup>-2</sup>")
-    # handl m-3
-    x = x.replace(" m-3", " m<sup>-3</sup>")
-    # fix /yr
-    x = x.replace("/yr", "year<sup>-1</sup>")
-    # fix /day
-    x = x.replace("/day", "day<sup>-1</sup>")
-    if "air-sea" in x:
-        # no need for surface, it's redundant
-        x = x.replace("surface", "")
-        # ensure no double spaces
+        # get rid of double spaces
         x = x.replace("  ", " ")
+        # use regex to ensure any numbers have commas
+        if "**Figure" in x:
+            # ensure the sentence ends with .
+            if x[-1] != ".":
+                x = x + "."
+        if "**Table" in x:
+            # ensure the sentence ends with .
+            if x[-1] != ".":
+                x = x + "."
+        # ensure there are spaces after commas, using regex
+        x = re.sub(r",(\w)", r", \1", x)
 
-    if number:
-        if "year" not in x.lower(): 
-            if "period" not in x.lower(): 
-                # do not use numbers between brackets ()
-                # x = re.sub(r"\((\d{1,3})(\d{3})\)", r"(\1,\2)", x)
-                x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
-                # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+
+        x = x.replace(" .", ".")
+        x = x.replace(" ,", ",")
+        x = x.replace(" :", ":")
+        x = x.replace(" ;", ";")
+        x = x.replace(" %", "%")
+        # /m^3
+        x = x.replace("/m3", "m<sup>-3</sup>")
+        x = x.replace("/m^3", "m<sup>-3</sup>")
+        # handle /m^2
+        x = x.replace("/m2", "m<sup>-2</sup>")
+        x = x.replace("/m^2", "m<sup>-2</sup>")
+        # handl m-3
+        x = x.replace(" m-3", " m<sup>-3</sup>")
+        # fix /yr
+        x = x.replace("/yr", "year<sup>-1</sup>")
+        # fix /day
+        x = x.replace("/day", "day<sup>-1</sup>")
+        if "air-sea" in x:
+            # no need for surface, it's redundant
+            x = x.replace("surface", "")
+            # ensure no double spaces
+            x = x.replace("  ", " ")
+
+        if number:
+            if "year" not in x.lower(): 
+                if "period" not in x.lower(): 
+                    # do not use numbers between brackets ()
+                    # x = re.sub(r"\((\d{1,3})(\d{3})\)", r"(\1,\2)", x)
+                    x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+                    # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+    if build == "pdf":
+        # this is latex
+        if "pco2" in x:
+            x = x.replace("pco2", "pCO$_2$")
+        # make CO2 subscript
+        x = x.replace("CO2", "CO$_2$")
+        # fix O_2
+        x = x.replace("O_2", "O$_2$")
+        x = x.replace(" ph ", " pH ")
+        x = x.replace(" R2 ", " R$^2$ ")
+        x = x.replace(" R2.", " R$^2$.")
+        # fix g/kg
+        x = x.replace("g/kg", "g kg$^{-1}$")
+        # get rid of double spaces
+        x = x.replace("  ", " ")
+        # use regex to ensure any numbers have commas
+        if "**Figure" in x:
+            # ensure the sentence ends with .
+            if x[-1] != ".":
+                x = x + "."
+        if "**Table" in x:
+            # ensure the sentence ends with .
+            if x[-1] != ".":
+                x = x + "."
+        # ensure there are spaces after commas, using regex
+        x = re.sub(r",(\w)", r", \1", x)
+        x = x.replace(" .", ".")
+        x = x.replace(" ,", ",")
+        x = x.replace(" :", ":")
+        x = x.replace(" ;", ";")
+        x = x.replace(" %", "%")
+        # /m^3
+        x = x.replace("/m3", "m$^{-3}$")
+        x = x.replace("/m^3", "m$^{-3}$")
+        # handle /m^2
+
+        x = x.replace("/m2", "m$^{-2}$")
+        x = x.replace("/m^2", "m$^{-2}$")
+        # handl m-3
+        x = x.replace(" m-3", " m$^{-3}$")
+        # fix /yr
+        x = x.replace("/yr", "year$^{-1}$")
+        # fix /day
+        x = x.replace("/day", "day$^{-1}$")
+        if "air-sea" in x:
+            # no need for surface, it's redundant
+            x = x.replace("surface", "")
+            # ensure no double spaces
+            x = x.replace("  ", " ")
+        if number:
+            if "year" not in x.lower(): 
+                if "period" not in x.lower(): 
+                    # do not use numbers between brackets ()
+                    # x = re.sub(r"\((\d{1,3})(\d{3})\)", r"(\1,\2)", x)
+                    x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+                    # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
+
+
+
+
     return md_markdown(x)
 %load_ext rpy2.ipython
 import jellyfish
