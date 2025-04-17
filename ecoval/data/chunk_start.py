@@ -20,6 +20,8 @@ def fix_unit(x, build = "book_build"):
         x = x.replace("/m^3", "m<sup>-3</sup>") 
         x = x.replace("/m3", "m<sup>-3</sup>")
         x = x.replace("m-3", "m<sup>-3</sup>")
+        x = x.replace("m-1", "m<sup>-1</sup>")
+        x = x.replace("m-2", "m<sup>-2</sup>")
         x = x.replace("/m^2", "m<sup>-2</sup>")
         x = x.replace("/m2", "m<sup>-2</sup>")
         x = x.replace("m2", "m<sup>2</sup>")
@@ -32,10 +34,13 @@ def fix_unit(x, build = "book_build"):
         x = x.replace("/yr", "year<sup>-1</sup>")
         # degC
         x = x.replace("degC", "°C")
+        x = x.replace("degrees C", "°C")
     if build == "pdf":
         x = x.replace("/m^3", "m$^{-3}$")
         x = x.replace("/m3", "m$^{-3}$")
         x = x.replace("m-3", "m$^{-3}$")
+        x = x.replace("m-1", "m$^{-1}$")
+        x = x.replace("m-2", "m$^{-2}$")
         x = x.replace("/m^2", "m$^{-2}$")
         x = x.replace("/m2", "m$^{-2}$")
         x = x.replace("m2", "m$^2$")
@@ -50,6 +55,7 @@ def fix_unit(x, build = "book_build"):
         x = x.replace("/day", "day$^{-1}$")
         # degC
         x = x.replace("degC", "$^\circ$C")
+        x = x.replace("degrees C", "$^\circ$C")
 
 
     return x
@@ -97,6 +103,7 @@ def df_display(df, build = "book_build"):
     # round to 2 decimal places
     df = df.round(2)
 
+
     # coerce numeric columns to str
     # if number is in the column title, make sure the variable is int
 
@@ -119,9 +126,11 @@ def df_display(df, build = "book_build"):
         if build == "html":
             # pCO2
             df["Variable"] = df["Variable"].str.replace("pCO2", "pCO<sub>2</sub>")
+            df["Variable"] = df["Variable"].str.replace("CO2", "CO<sub>2</sub>")
         if build == "pdf":
             # pCO2
             df["Variable"] = df["Variable"].str.replace("pCO2", "pCO$_2$") 
+            df["Variable"] = df["Variable"].str.replace("CO2", "CO$_2$")
 
     # if R2 is in the column name, make sure the 2 is superscript
     if "R2" in df.columns:
@@ -137,10 +146,24 @@ def df_display(df, build = "book_build"):
             df2 = df.drop(i_domain)
             df = pd.concat([df1, df2]) 
             df = df.reset_index(drop = True)
+    
+    if len(df.columns) > 7:
+        # remove concentration from variable
+        df = df.assign(Variable = df["Variable"].str.replace(" concentration", ""))
 
     if "Unit" in df.columns:
         #format this appropriately. Markdown, superscripts etc.
         df["Unit"] = df["Unit"].apply(fix_unit)
+
+    # if "Correlation" in df.columns:
+        # change this to r, italicized
+    if True:
+        if build == "html":
+            df = df.rename(columns={"Correlation": "*r*"})
+            df = df.rename(columns={"Correlation coefficient": "*r*"})
+        else:
+            df = df.rename(columns={"Correlation": "\\textit{r}"})
+            df = df.rename(columns={"Correlation coefficient": "\\textit{r}"})
 
     return df.style.hide(axis="index")
 
@@ -190,8 +213,31 @@ def md(x, number = False, build = "book_build"):
         "ph", "chlorophyll", "co2flux", "pco2",
         "doc", "poc", "carbon", "benbio",
         "benthic_carbon_flux", "mesozoo", "oxycons" ]
+        #x = x.replace("degC", "°C")
+        #x = x.replace("degrees C", "°C")
+    if build == "html":
+        x = x.replace("(degC)", "(°C)")
+        x = x.replace("(degrees C)", "(°C)")
+    if build == "pdf":
+        x = x.replace("(degC)", "(°C)")
+        x = x.replace("(degrees C)", "(°C)")
 
+    x = x.replace(" Air-sea", " air-sea")
     x = x.replace(" Suspension feed", " suspension feed")
+    #model - observation
+    x = x.replace("model - observation", "model-observation")
+    #98th, handle this kind of thing appropriately with superscripts
+    if build == "html":
+        x = x.replace("98th", "98<sup>th</sup>")
+    if build == "pdf":
+        # 98th, superscript the th, but not italics 
+        x = x.replace("98th", "98$^{\\text{th}}$")
+    #2nd
+    if build == "html":
+        x = x.replace("2nd", "2<sup>nd</sup>")
+    if build == "pdf":
+        x = x.replace("2nd", "2$^{\\text{nd}}$")
+
 
     x = x.replace(" 5 m ", " 5m ")
     x = x.replace(" 5 m.", " 5m.")

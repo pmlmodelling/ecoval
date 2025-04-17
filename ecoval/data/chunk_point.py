@@ -2,7 +2,14 @@
 # %% [markdown] tags=["remove-cell"]
 # ## Read in the data
 
+
 # %% tags=["remove-input", "remove-cell"]
+if layer_select == "bottom":
+    layer_long = "near-bottom"
+if layer_select == "surface":
+    layer_long = "sea surface"
+if layer == "benthic":
+    layer_long = "benthic"
 ff = glob.glob(f"../../matched/point/**/{layer}/{variable}/*_{variable}.csv")[0]
 vv_source = os.path.basename(ff).split("_")[0]
 vv_source = vv_source.upper()
@@ -144,7 +151,7 @@ if available:
             intro.append(f"This data was extracted from vertical profiles. The near-bottom value was defined as the value closest to the bottom, that was within 5m of the bottom. Bathymetry was estimated using GEBCO Bathymetry data.")
         if layer_select == "surface":
             if layer not in ["benthic"]:
-                intro.append(f"This data was extracted from vertical profiles. Values from the **top 5m** were extracted from the database. This was compared with the model values from the surface level.")
+                intro.append(f"This data was extracted from vertical profiles. Values from the **top 5m** were extracted from the database. This was compared with the model values from the sea surface level.")
         if variable in ["benbio"]:
             intro.append("Biomass data for macrobenthos was downloaded from the North Sea Benthos Survey 1986.")
         if variable in ["susfrac"]:
@@ -301,7 +308,7 @@ if available:
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df -i variable -i unit -i layer_select -i vv_name -i available -w 800 
+# %%R -i df -i variable -i unit -i layer_long -i vv_name -i available -w 800 
 options(warn=-1)
 options(warn=-1)
 library(tidyverse)
@@ -331,7 +338,7 @@ if(variable == "temperature"){
 }
 
 
-Layer <- str_to_title(layer_select)
+Layer <- str_to_title(layer_long)
 name <- str_glue("{Layer} {vv_name} ({unit})")
 # ensure everything is superscripted where necessary
 # m-3 should be superscripted
@@ -421,7 +428,7 @@ gg
 # %% tags=["remove-input"]
 if available:
     if "month" not in df.columns:
-        md(f"**Figure {chapter}{i_figure}:** Map of average {layer_select} {vv_name} in the model and observational datasets.")
+        md(f"**Figure {chapter}{i_figure}:** Map of average {layer_long} {vv_name} in the model and observational datasets.")
         i_figure += 1
 
 # %% tags=["remove-input"]
@@ -470,7 +477,7 @@ if available:
 
 # %% tags=["remove-input"]
 # %%capture --no-display
-# %%R -i df -i variable -i unit -i layer_select -w 1000 -h 1200 -i vv_name -i available
+# %%R -i df -i variable -i unit -i layer_long -w 1000 -h 1200 -i vv_name -i available -i layer_select
 if(available){
 options(warn=-1)
 # #%%R -i df -i variable -i unit -w 1600 -h 1000
@@ -527,7 +534,7 @@ df$month <- factor(df$month, levels = df$month, labels = month.abb[df$month])
 }
 # df$month <- factor(df$month, labels = month.abb)
 
-title <- str_glue("Bias in {layer_select} {vv_name} ({unit})")
+title <- str_glue("Bias in {layer_long} {vv_name} ({unit})")
 # fix O_2
 title <- str_replace(title, "O_2", "O<sub>2</sub>")
 title <- str_replace(title, "CO2", "CO<sub>2</sub>")
@@ -668,9 +675,9 @@ gg
 # %% tags=["remove-input"]
 if available:
     if layer not in ["benthic"]:
-        md(f"**Figure {chapter}{i_figure}**: Bias in {layer_select} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale. **Note:** values have been binned and averaged to the resolution of the model.") 
+        md(f"**Figure {chapter}{i_figure}**: Bias in {layer_long} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale. **Note:** values have been binned and averaged to the resolution of the model.") 
     else:
-        md(f"**Figure {chapter}{i_figure}**: Bias in {layer_select} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale.") 
+        md(f"**Figure {chapter}{i_figure}**: Bias in {layer_long} {vv_name}. The bias is calculated as model - observation. The colour scale is from blue (negative bias) to red (positive bias). The colour scale is capped at the 98th percentile of the absolute bias. This is to avoid a few extreme outliers from dominating the colour scale.") 
     i_figure += 1
 
 #"adhoc/tmp/df_raw.feather"
@@ -684,7 +691,7 @@ if available:
 # %% tags=["remove-input"]
 if available:
     scatter_text = []
-    scatter_text.append(f"Figures {chapter}{i_figure} and {chapter}{i_figure + 1} show the distribution of {layer_select} {vv_name} observations in the model and observational datasets.") 
+    scatter_text.append(f"Figures {chapter}{i_figure} and {chapter}{i_figure + 1} show the distribution of {layer_long} {vv_name} observations in the model and observational datasets.") 
     scatter_text.append(f"This is shown for each month of the year (Figure {chapter}{i_figure}) and for the entire year (Figure {chapter}{i_figure + 1}).")
 
     md(" ".join(scatter_text).strip().replace("  ", " "))
@@ -833,15 +840,15 @@ gg
 # %% tags=["remove-input"]
 if available:
     if compact:
-        md(f"**Figure {chapter}{i_figure}**: Model vs observed {vv_name} for {layer_select} values. The line is a generalized additive model (GAM) fit to the data. The shaded area is the 95% confidence interval of the GAM fit.")
+        md(f"**Figure {chapter}{i_figure}**: Model vs observed {vv_name} for {layer_long} values. The line is a generalized additive model (GAM) fit to the data. The shaded area is the 95% confidence interval of the GAM fit.")
         i_figure += 1
     if layer_select == "surface":
         if layer not in ["benthic"]:
-            md(f"## Summary statistics for {vv_name} at the sea surface")
+            md(f"## Summary statistics for sea surface {vv_name}")
         else:
             md(f"## Summary statistics for {vv_name} in the sediment layer") 
     else:
-        md(f"## Summary statistics for {vv_name} at the near-bottom")
+        md(f"## Summary statistics for near-bottom {vv_name}")
 
 # %% tags=["remove-input"]
 if available:
@@ -942,7 +949,7 @@ if available:
     df_display(df_table)
 
 # %% tags=["remove-input"]
-md(f"**Table {chapter}{i_table}:** Average bias ({unit}) and root-mean square deviation ({unit}) for the model's {layer_select} {vv_name} for each month. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
+md(f"**Table {chapter}{i_table}:** Average bias ({unit}) and root-mean square deviation ({unit}) for the model's {layer_long} {vv_name} for each month. The bias is calculated as model - observation. The average bias is calculated as the mean of the monthly biases.")
 i_table += 1
 
 

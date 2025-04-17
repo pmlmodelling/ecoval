@@ -1,6 +1,6 @@
 title:
-author:   "Robert Wilson, Plymouth Marine Laboratory"
-logo                        : "../pml_logo.jpg" 
+author:   "Robert Wilson | Plymouth Marine Laboratory"
+logo: "../pml_logo.jpg" 
 copyright:  Plymouth Marine Laboratory
 execute:
   execute_notebooks: force

@@ -21,6 +21,10 @@ import re
 def various_fixes(x):
     # a number of fixes to ensure the latex is correct
     # Make sure the 2 in R2 is a superscript
+    #{textit{
+    x = x.replace("{textit{", "{\\textit{")
+    #\textbackslash{}
+    x = x.replace("\\textbackslash{}", "\\")
     x = x.replace("R2", "R$^2$")
     # x = \sphinxhyphen{}, include brackets
     x = re.sub(r"\\sphinxhyphen\{(.*?)}", r"-", x)
@@ -1061,7 +1065,13 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         logo_added = False
         for line in lines:
             if "\\begin{tabular}" in line:
-                new_lines.append(line)
+                if "lllllll" in line:
+                        # if "\\begin{split}\\begin{tabular}{llllllllllll}" in line:
+                    #new_line = line.replace("\\begin{tab}", "\\addtolength{\\tabcolsep}{-0.5em}\\begin{tab}")
+                    new_line = "\\begin{split}\\addtolength{\\tabcolsep}{-0.5em}\\begin{tabular}{llllllllllll}"
+                    new_lines.append(new_line)
+                else:
+                    new_lines.append(line)
                 i = 0
             else:
                 if i == 0:
@@ -1075,6 +1085,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                          y = ["\\textbf{" + x.replace("\\", "").strip() + "}" for x in y]
                          # make sure the 2 in R2 is a superscript
                          y = [x.replace("R2", "R$^2$") for x in y]
+                            #x = x.replace("{textit{", "{\\textit{")
+                         y = [y.replace("{textit{", "{\\textit{") for y in y]
                          y = " & ".join(y) + " \\\\"
                          # remove the last element
 
@@ -1095,6 +1107,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                         if "author{Robert" in line:
                             # raise ValueError("here")
                             shutil.copyfile(pkg_resources.resource_filename(__name__, "data/pml_logo.jpg"), f"{book_dir}/_build/latex/pml_logo.jpg")    
+
+
 
                 if i == 0:
                     new_lines.append("\\hline")
