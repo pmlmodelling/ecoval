@@ -641,6 +641,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     Variable = "pH"
                 if vv == "co2flux":
                     Variable = "Air-sea CO2<sub>2</sub> fluxes"
+                if vv == "kd":
+                    Variable = "light attenuation coefficient"
                 if vv in ["poc", "doc"]:
                     Variable = Variable.upper()
                 if vv == "pco2":
@@ -741,6 +743,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                             Variable = "pCO2"
                         if variable == "pft":
                             Variable = "PFT"
+                        if variable == "kd":
+                            Variable = "light attenuation coefficient"
                         file1 = pkg_resources.resource_filename(
                             __name__, "data/gridded_template.ipynb"
                         )
