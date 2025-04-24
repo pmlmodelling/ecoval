@@ -461,7 +461,7 @@ def compare(model_dict=None):
     webbrowser.open("file://" + os.path.abspath("book/compare/_build/html/index.html"))
 
 
-def validate(title="Automated model evaluation", author=None, variables = "all", ask = False, build = "html", r_warnings = False,  model = None, cdf = False, test = False):
+def validate(title="Automated model evaluation", author=None, variables = "all", ask = False, build = "html", r_warnings = False,  model = None, cdf = False, test = False, lon_lim = None, lat_lim = None):
     # docstring
     """
     Run the model evaluation for all of the available datasets, and generate a validation report.
@@ -493,6 +493,20 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
     -------
     None
     """
+    # if lon_lim  is not None, make sure it's a list
+    if lon_lim is not None:
+        if isinstance(lon_lim, list) == False:
+            raise ValueError("lon_lim must be a list")
+        else:
+            if len(lon_lim) != 2:
+                raise ValueError("lon_lim must be a list of length 2")
+    if lat_lim is not None:
+        if isinstance(lat_lim, list) == False:
+            raise ValueError("lat_lim must be a list")
+        else:
+            if len(lat_lim) != 2:
+                raise ValueError("lat_lim must be a list of length 2")
+
     import os
     path_df = []
 
@@ -976,8 +990,8 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
                     new_lines[i] = new_lines[i].replace('"gam"', '"loess"')
 
                 new_lines[i] = new_lines[i].replace("book_build", build)
-
-
+                new_lines[i] = new_lines[i].replace("the_lon_lim", str(lon_lim))
+                new_lines[i] = new_lines[i].replace("the_lat_lim", str(lat_lim))
 
             
             # write the new lines to the file

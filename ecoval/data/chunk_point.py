@@ -14,6 +14,11 @@ ff = glob.glob(f"../../matched/point/**/{layer}/{variable}/*_{variable}.csv")[0]
 vv_source = os.path.basename(ff).split("_")[0]
 vv_source = vv_source.upper()
 df = pd.read_csv(ff)
+lon_max = lon_lim[1]
+lon_min = lon_lim[0]
+lat_max = lat_lim[1]
+lat_min = lat_lim[0]
+df = df.query(f"lon >= {lon_min} and lon <= {lon_max} and lat >= {lat_min} and lat <= {lat_max}").reset_index(drop = True) 
 # drop duplicates
 df = df.drop_duplicates().reset_index(drop = True)
 ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"

@@ -4,6 +4,12 @@ import os
 import pkg_resources
 import pandas as pd
 import re
+lon_lim = the_lon_lim
+lat_lim = the_lat_lim
+if lon_lim is None:
+    lon_lim = [-180, 180]
+if lat_lim is None:
+    lat_lim = [-90, 90]
 
 def fix_basename(x):
     #annualmean_nitrate_nsbc.nc
@@ -159,8 +165,8 @@ def df_display(df, build = "book_build"):
         # change this to r, italicized
     if True:
         if build == "html":
-            df = df.rename(columns={"Correlation": "*r*"})
-            df = df.rename(columns={"Correlation coefficient": "*r*"})
+            df = df.rename(columns={"Correlation": "<em>r</em>"})
+            df = df.rename(columns={"Correlation coefficient": "<em>r</em>"})
         else:
             df = df.rename(columns={"Correlation": "\\textit{r}"})
             df = df.rename(columns={"Correlation coefficient": "\\textit{r}"})
@@ -192,18 +198,14 @@ def md_basic(x, build = "book_build"):
     x = x.replace(" :", ":")
     x = x.replace(" ;", ";")
     x = x.replace(" %", "%")
-    # /m^3
+
     # ensure there are spaces after commas, using regex
     x = re.sub(r",(\w)", r", \1", x)
     if build == "html":
         x = x.replace("CO", "CO<sub>2</sub>")
     if build == "pdf":
         x = x.replace("CO", "CO$_2$")
-    # x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
 
-    # if "year" not in x.lower(): 
-    #     if "period" not in x.lower(): 
-    #         x = re.sub(r"(\d{1,3})(\d{3})", r"\1,\2", x)
     return md_markdown(x)
 
 def md(x, number = False, build = "book_build"):
@@ -213,8 +215,6 @@ def md(x, number = False, build = "book_build"):
         "ph", "chlorophyll", "co2flux", "pco2",
         "doc", "poc", "carbon", "benbio",
         "benthic_carbon_flux", "mesozoo", "oxycons" ]
-        #x = x.replace("degC", "°C")
-        #x = x.replace("degrees C", "°C")
     if build == "html":
         x = x.replace("(degC)", "(°C)")
         x = x.replace("(degrees C)", "(°C)")
