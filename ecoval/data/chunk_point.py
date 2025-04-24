@@ -14,6 +14,8 @@ ff = glob.glob(f"../../matched/point/**/{layer}/{variable}/*_{variable}.csv")[0]
 vv_source = os.path.basename(ff).split("_")[0]
 vv_source = vv_source.upper()
 df = pd.read_csv(ff)
+# drop duplicates
+df = df.drop_duplicates().reset_index(drop = True)
 ff_dict = f"../../matched/point/nws/{layer}/{variable}/matchup_dict.pkl"
 if not os.path.exists(ff_dict):
     ff_dict = f"../../matched/point/europe/{layer}/{variable}/matchup_dict.pkl"
@@ -276,7 +278,7 @@ gg <- df_locs %>%
     coord_fixed(xlim = xlim, ylim = ylim, ratio = 1.5) 
 
 # figure out if lon minimum is less than -10
-if( min(df_locs$lon) < -10 ){
+if( min(df_locs$lon) < -13 ){
     # add sensible labels for longitude and latitude
 
     gg <- gg +
@@ -772,7 +774,7 @@ gg <- df %>%
     theme_gray(base_size = 24)+
     labs(fill = title)+
     geom_abline()+
-    geom_smooth(aes(model, observation), method = "gam")+
+    geom_smooth(aes(model, observation), method = "gam", se = FALSE)+
     labs(x = x_lab, y = y_lab)+
     theme(axis.title.x = ggtext::element_markdown())+
     theme(axis.title.y = ggtext::element_markdown())
@@ -828,7 +830,7 @@ gg <- df %>%
     theme_gray(base_size = 14)+
     labs(fill = title)+
     geom_abline()+
-    geom_smooth(aes(model, observation), method = "gam")+
+    geom_smooth(aes(model, observation), method = "gam", se = FALSE)+
     labs(x = x_lab, y = y_lab)+
     theme(axis.title.x = ggtext::element_markdown())+
     theme(axis.title.y = ggtext::element_markdown())
