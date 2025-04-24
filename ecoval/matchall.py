@@ -2495,6 +2495,8 @@ def matchup(
                                 df_all = df_all.merge(df_bottom, how = "left")
                                 # fill in the missing values
                                 df_all = df_all.fillna(0)
+                                # drop duplicates
+                                df_all = df_all.drop_duplicates().reset_index(drop=True)
 
                             if "year" not in point_time_res:
                                 try:
