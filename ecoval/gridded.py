@@ -495,8 +495,13 @@ def gridded_matchup(
                             checks=False,
                         )
                         ds_obs.subset(months = month_sel)
-                        if vv_source == "occci":
+
+                        if vv_source == "occci" and vv == "chlorophyll":
                             ds_obs.subset(variable="chlor_a")
+                            ds_obs.subset(years=range(start_year, end_year + 1))
+                            ds_obs.run()
+                        if vv_source == "occci" and vv == "kd":
+                            ds_obs.subset(variable="kd_490")
                             ds_obs.subset(years=range(start_year, end_year + 1))
                             ds_obs.run()
 
@@ -595,8 +600,10 @@ def gridded_matchup(
                             if len(ds_obs.times) > 12:
                                 ds_obs.subset(years=sim_years)
 
-                        if vv_source == "occci":
+                        if vv_source == "occci" and vv == "chlor_a":
                             ds_obs.subset(variable="chlor_a")
+                        if vv_source == "occci" and vv == "kd":
+                            ds_obs.subset(variable="kd_490")
 
                         if len(ds_obs) > 1:
                             ds_obs.merge("time")
