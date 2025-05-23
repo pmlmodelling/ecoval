@@ -4,8 +4,12 @@ import os
 import pkg_resources
 import pandas as pd
 import re
-lon_lim = the_lon_lim
-lat_lim = the_lat_lim
+try:
+    lon_lim = the_lon_lim
+    lat_lim = the_lat_lim
+except:
+    lon_lim = None
+    lat_lim = None
 if lon_lim is None:
     lon_lim = [-180, 180]
 if lat_lim is None:
