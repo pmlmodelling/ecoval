@@ -751,6 +751,7 @@ def matchup(
 
     if surface == "default":
         surface = copy.deepcopy(valid_vars)
+        surface.append("mesozoo")
     # add overwrite to session_info
 
     if everything:
@@ -784,8 +785,13 @@ def matchup(
     if isinstance(surface, str):
         surface = [surface]
         surface = {"gridded": surface, "point": []}
+
     if isinstance(surface, list):
-        surface = {"gridded": surface, "point": []}
+        if "mesozoo" in surface:
+            surface.remove("mesozoo")
+            surface = {"gridded": surface, "point": ["mesozoo"]}
+        else:
+            surface = {"gridded": surface, "point": []}
     if isinstance(surface, dict):
         # throw error if gridded and point not in surface
         if "gridded" not in surface and "point" not in surface:
@@ -933,6 +939,7 @@ def matchup(
 
     var_choice = surface + bottom + point_surface + point_all
     var_choice = list(set(var_choice))
+
     for vv in var_choice:
         if vv not in valid_vars and vv != "all":
             # suggest another variable based on similarity to valid_vars
@@ -1230,6 +1237,7 @@ def matchup(
     point_all = [x for x in point_all if x in vars_available]
 
 
+
     # create matched directory
     if not os.path.exists("matched"):
         os.mkdir("matched")
@@ -1389,6 +1397,8 @@ def matchup(
             point_benthic = [x for x in point_benthic if x in vars_available]
 
             all_df_print = copy.deepcopy(all_df).reset_index(drop=True)
+
+            raise ValueError(var_chosen)
 
             # new tidied variable
             new_variable = []
@@ -1696,6 +1706,10 @@ def matchup(
     if "doc" in surface and model_domain == "nws":
         if surface_default:
             point_surface.append("doc")
+    if "mesozoo" in surface and model_domain == "nws":
+        if surface_default:
+            point_surface.append("mesozoo")
+
 
     if pft:
         point_surface.append("pft")
