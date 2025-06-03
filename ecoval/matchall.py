@@ -1240,7 +1240,11 @@ def matchup(
 
     # create matched directory
     if not os.path.exists("matched"):
-        os.mkdir("matched")
+        if out_dir != "":
+            # recusively create the directory
+            os.makedirs(out_dir + "/matched", exist_ok=True)
+        else:
+            os.mkdir("matched")
     
     for vv in point_all:
         if vv not in ["pco2"]:
@@ -1336,12 +1340,13 @@ def matchup(
                         #####
                         # now output the bathymetry if it does not exists
 
-                        if not os.path.exists("matched/model_bathymetry.nc"):
+                        ff_bath = out_dir + "/matched/model_bathymetry.nc"
+                        if not os.path.exists(ff_bath):
                             ds_bath = ds_thickness.copy()
                             ds_bath.vertical_sum()
                             ds_bath.to_nc(
-                                "matched/model_bathymetry.nc", zip=True
-                            )
+                                    ff_bath, zip=True
+                                )
 
                         # thickness needs to be inverted if the sea surface is at the bottom
 
