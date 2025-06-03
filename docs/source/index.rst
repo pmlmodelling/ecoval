@@ -16,6 +16,7 @@ Documentation
 
 
    installing 
+   examples 
 
 
 
