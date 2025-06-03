@@ -11,6 +11,7 @@ from ecoval.differences import compare_simulations, simulation_differences_compa
 from ecoval.fixers import tidy_name
 from ecoval.checks import check_simulation
 from ecoval.session import session_info
+from ecoval.helpers import list_observational_data
 import webbrowser
 from ecoval.chunkers import add_chunks
 import os
