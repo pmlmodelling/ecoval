@@ -88,5 +88,19 @@ If the structure is different, you can specify the `n_dirs_down` argument. For e
 
    ecoval.matchup(.., n_dirs_down = 0)
 
+Handing dubious files in the simulation directory
+------------------------------------------------
+
+ecoval will automatically scan through the simulation directory and figure out which files are which, identify where variables are stored and so on.
+
+In general, this works fairly well. However, it is possible you will have files stored that cause confusion. For example, you might have some post-processed files in among raw simulation output.
+
+If you want to ignore certain files, use the `exclude` argument. This will take a list of strings and any files that partially match the string will be ignored.
+
+So for example, if you want to ignore all files with "initial_conditions" in them, you would do the following:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., exclude = ["initial_conditions"])
 
 
