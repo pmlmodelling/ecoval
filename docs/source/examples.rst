@@ -220,6 +220,16 @@ If you want to validate mixed layer depth and stratification, you can do so by s
 
 Note: this has the potential to matchup a lot of data, and maybe require **a lot** of interpolation. 
 
+
+Specifying where ecoval stores matched up data
+------------------------------------------------
+By default, ecoval will store matched up data the directory it is run from.
+If you want to specify a different directory, you can do so using the `out_dir` argument in `matchup`. For example, if you wanted to store the matched up data in "foo_bar", you would do the following: 
+.. code:: ipython3
+
+   ecoval.matchup(.., out_dir = "foo_bar")
+
+
 Modifying ecoval's variable mapping
 ------------------------------------------------
 
