@@ -39,10 +39,27 @@ By default, this will produce an html document. To get a pdf do the following:
    ecoval.validate("pdf")
 
 
+
 Specifying which variables to validate
 --------------------------------------
 
 Three `matchup` arguments specify which variables to validate: `surface`, `bottom` and `benthic`.
+
+If you do not want any of these three to be matched up, set them to None. For example, if you do not want to validate any benthic variables, you would do the following:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., benthic = None)
+
+Matchups for the surface come in two flavours, either using gridded or point data.
+If you want to specifify what you want, you need to provide a dictionary to matchup.
+So, if you only wanted to validate gridded temperature data and point chlorophyll data, you would do the following:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., surface = {"gridded": ["temperature"], "point": ["chlorophyll"]})
+
+
 
 
 Carrying out an ultra-extensive validation
@@ -101,6 +118,17 @@ So, for example if you did the following:
 
 It will matchup all observational values for January, February and so on and come it with the average monthly value for the simulation.
 
+You can also have some additional control with the `point_years` argument. This will tell ecoval which years to use from the point data.
+For example, if you only wanted to use the years 2000 to 2010, you would do the following:
+
+.. code:: ipython3
+
+   ecoval.matchup("/foo/bar", point_years = [2000, 2010])
+
+This can be useful if you have 1 year of simulation, but only want to compare it with data for the decade prior, not the decades long observational dataset.
+
+
+
 Handling the location of simulation files
 ------------------------------------------------
 
@@ -158,3 +186,23 @@ For example, if you had 1000s of files in a directory, you might want to set `n_
 .. code:: ipython3
 
    ecoval.matchup(.., n_check = 20)
+
+Not asking for user input when running matchup
+------------------------------------------------
+
+By default, the `matchup` function will ask you for confirmation that you are happy with the proposed matchups. This is to avoid you accidentally running a matchup that will take a long time and not give you the results you want. 
+If you want to skip this step, you can set the `ask` argument to False. This will run the matchups without asking for confirmation.
+.. code:: ipython3
+
+   ecoval.matchup(.., ask = False)
+
+Validating mixed layer depth and stratifcation
+------------------------------------------------
+
+If you want to validate mixed layer depth and stratification, you can do so by specifying the `mld` argument in `matchup` as follows:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., mld = True)
+
+Note: this has the potential to matchup a lot of data, and maybe require **a lot** of interpolation. 
