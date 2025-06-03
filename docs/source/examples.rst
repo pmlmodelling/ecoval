@@ -18,6 +18,7 @@ If you want to matchup simulation and observational data with ecoval, you need t
 For example, if you had data in the /foo/bar directory, you could run the following code to match up the data for the years 2000 to 2010, using the top surface level and 6 cores::
 
 .. code:: ipython3
+
    import ecoval
    ecoval.matchup("/foo/bar", surface_level = "top",  cores = 6, start = 2000, end = 2010)
 
