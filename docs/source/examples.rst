@@ -252,3 +252,11 @@ By default, ecoval will use observational data stored on PML's servers. If you h
 
    ecoval.matchup(.., obs_dir = "/foo/bar/obs_data") 
 
+
+Validating a subset of matched up variables
+------------------------------------------------
+If you only want to validate some of the variables you have matched up, specifify the `variables` argument in `validate` as follows:
+
+.. code:: ipython3
+
+   ecoval.validate(variables = ["temperature", "chlorophyll"])
