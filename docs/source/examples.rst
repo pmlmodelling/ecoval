@@ -38,6 +38,8 @@ By default, this will produce an html document. To get a pdf do the following:
 
    ecoval.validate("pdf")
 
+Note: **validate must be run from the directory with the matched up data.**
+
 
 
 Specifying which variables to validate
@@ -260,3 +262,12 @@ If you only want to validate some of the variables you have matched up, specifif
 .. code:: ipython3
 
    ecoval.validate(variables = ["temperature", "chlorophyll"])
+
+Validating a spatial subset of the matched up data
+------------------------------------------------
+
+If you want to validate a spatial subset of the matched up data, you can specify `lon_lim` and `lat_lim` in `validate`. This will limit the validation to the specified longitude and latitude ranges.
+For example, if you wanted to validate a region between 10 degrees west and 10 degrees east, and between 40 and 50 degrees north, you would do the following:
+.. code:: ipython3
+
+   ecoval.validate(lon_lim = [-10, 10], lat_lim = [40, 50])
