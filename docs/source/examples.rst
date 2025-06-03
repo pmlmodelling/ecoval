@@ -68,6 +68,20 @@ If you want to validate plankton functional types, you need to use the pft argum
 
 Note: PFT data is only available for 2011 and 2012.
 
+Specifying the cell thickness
+--------------------------------------
+
+To carry out 3D interpolation of the simulation data, ecoval needs to know the thickness of the cells in the model.
+For NEMO simulations it will assume it is the e3t variable and by default it will try to find this in the simulation files.
+
+However, if this is not available in the files you will need to provide it for any 3D matchups with observational data.
+
+Just create a file with the vertical thicknesses of each cell and point `matchup` towards it as follows:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., thickenss = "/foo/bar/thickness.nc")
+
 Controlling temporal accuracy of point matchups
 ------------------------------------------------
 
@@ -131,3 +145,16 @@ This would work as follows:
 
 if you wanted to validate a region between 10 degrees west and 10 degrees east, and between 40 and 50 degrees north.
 
+
+Speeding up file identification
+------------------------------------------------
+
+To identify files in the simulation directory, ecoval will look at the files in a random subdirectory and identify a mapping from variables to file names, e.g. ***foo**bar**.nc.
+This is normally fast enough, as there are typically only a few files in a subdirectory. 
+However, occasionally you could have all of the simulation files in a single directory. In this case you want to specify `n_check`, which tells ecoval how many randomly selected files to check.
+
+For example, if you had 1000s of files in a directory, you might want to set `n_check` to 20 to identify things quickly.
+
+.. code:: ipython3
+
+   ecoval.matchup(.., n_check = 20)
