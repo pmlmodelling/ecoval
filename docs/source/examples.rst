@@ -60,6 +60,19 @@ So, if you only wanted to validate gridded temperature data and point chlorophyl
    ecoval.matchup(.., surface = {"gridded": ["temperature"], "point": ["chlorophyll"]})
 
 
+Getting a list of available observational data
+------------------------------------------------
+
+A useful helper function is `list_observational_data`, which will give you a list of all the available observational data that can be used for matchups.
+
+.. code:: ipython3
+
+   ecoval.list_observational_data()
+
+This will provide a complete list of observational data available that can pruned down to what you need.
+
+
+
 
 
 Carrying out an ultra-extensive validation
@@ -206,3 +219,14 @@ If you want to validate mixed layer depth and stratification, you can do so by s
    ecoval.matchup(.., mld = True)
 
 Note: this has the potential to matchup a lot of data, and maybe require **a lot** of interpolation. 
+
+
+Validating using a local copy of the observational data
+------------------------------------------------
+
+By default, ecoval will use observational data stored on PML's servers. If you have a copy of this data on your local machine, you can use it instead by specifying the `obs_dir` argument in `matchup` as follows:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., obs_dir = "/foo/bar/obs_data") 
+
