@@ -7,6 +7,8 @@ Matching up data
 
 **Basic requirements**
 
+Validating a simulation is a two-step process. First, you need to match up the simulation data with observational data. Then, you can validate the simulation against the matched-up data.
+
 If you want to matchup simulation and observational data with ecoval, you need to use the `matchup` function. This has some essential requirements.
 
 - sim_dir: The directory containing the simulation data.
@@ -21,4 +23,19 @@ For example, if you had data in the /foo/bar directory, you could run the follow
 
    import ecoval
    ecoval.matchup("/foo/bar", surface_level = "top",  cores = 6, start = 2000, end = 2010)
+
+
+Once you have done this, you can run `validate` to validate the simulation data against the matched-up data. 
+
+
+.. code:: ipython3
+
+   ecoval.validate()
+
+By default, this will produce an html document. To get a pdf do the following:
+
+.. code:: ipython3
+
+   ecoval.validate("pdf")
+
 
