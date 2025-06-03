@@ -16,7 +16,7 @@ Matchups and validation
    rebuild_validation
    compare_validations
    compare_simulations
-   matchup_starting_point
+   list_observational_data
    check_simulation
 
 
