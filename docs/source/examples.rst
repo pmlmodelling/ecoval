@@ -45,6 +45,18 @@ Specifying which variables to validate
 Three `matchup` arguments specify which variables to validate: `surface`, `bottom` and `benthic`.
 
 
+Carrying out an ultra-extensive validation
+------------------------------------------------
+
+If you want to carry out a validation which is as extensive as possible, you can do the following:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., everything = True)
+
+This will matchup all the simulation with all available gridded and observational data across all depth layers. If you have a big simulation, this could take a weekend.
+
+
 Validating plankton functional types
 ------------------------------------
 
@@ -103,4 +115,19 @@ So for example, if you want to ignore all files with "initial_conditions" in the
 
    ecoval.matchup(.., exclude = ["initial_conditions"])
 
+
+Validating a spatial subset
+------------------------------------------------
+
+Sometimes you only want to validate a spatial subset of the simulation data. For example, you might want to ignore regions close to the model boundary.
+
+In this case you can specifify `lon_lim` and `lat_lim`, which will tell you the minimum and maximum latitudes to consider.
+
+This would work as follows:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., lon_lim = [-10, 10], lat_lim = [40, 50])
+
+if you wanted to validate a region between 10 degrees west and 10 degrees east, and between 40 and 50 degrees north.
 
