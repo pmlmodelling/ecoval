@@ -10,6 +10,9 @@ If you are interested in a demo and discussions of how it can be used for your p
 
 **Note: At present, if you want to use ecoVal, you will have to request access to the validation data. This will change in future once various rights issues have been reviewed.**
 
+## Website
+A website for ecoVal is available at [https://ecoval-pml.readthedocs.io/](https://ecoval-pml.readthedocs.io/). This contains a full user guide, and information on how to use the package.
+
 
 ## Steps to carry out automated validation of model output 
 
