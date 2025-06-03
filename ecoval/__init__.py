@@ -10,7 +10,6 @@ from ecoval.matchall import matchup
 from ecoval.differences import compare_simulations, simulation_differences_comparison
 from ecoval.fixers import tidy_name
 from ecoval.checks import check_simulation
-from ecoval.helpers import matchup_starting_point 
 from ecoval.session import session_info
 import webbrowser
 from ecoval.chunkers import add_chunks
