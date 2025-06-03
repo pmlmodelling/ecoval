@@ -220,6 +220,18 @@ If you want to validate mixed layer depth and stratification, you can do so by s
 
 Note: this has the potential to matchup a lot of data, and maybe require **a lot** of interpolation. 
 
+Modifying ecoval's variable mapping
+------------------------------------------------
+
+ecoval will automatically map variables, e.g. temperature, to file patterns based on the metadata in netCDF files.
+Sometimes this will fail because ecoval can either not figure things out correctly or the metadata info could be ambiguous.
+If you are not happy with the way ecoval is matching up variables, type "no" when it asks you to confirm the matchups and then edit the resulting csv file.
+Once that is done, re-run the `matchup` function with the `mapping` argument set to the path of the edited csv file as follows:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., mapping = "/foo/bar/mapping.csv")
+
 
 Validating using a local copy of the observational data
 ------------------------------------------------
