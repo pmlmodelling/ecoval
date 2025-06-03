@@ -75,6 +75,18 @@ So, for example if you did the following:
 
 It will matchup all observational values for January, February and so on and come it with the average monthly value for the simulation.
 
+Handling the location of simulation files
+------------------------------------------------
+
+The `matchup` function will look for simulation files in the directory you specify. However, it needs to make some assumptions about where the files are located.
+
+By default, it will assume that simulation files are stored 2 directories down from the base directory, i.e. files look like ../2000/01/foo_bar.nc.
+
+If the structure is different, you can specify the `n_dirs_down` argument. For example, if your files are all in the `sim_dir` directory and not a subdirectory, do the matchups as follows:
+
+.. code:: ipython3
+
+   ecoval.matchup(.., n_dirs_down = 0)
 
 
 
