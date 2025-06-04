@@ -487,6 +487,10 @@ def validate(title="Automated model evaluation", author=None, variables = "all",
         Whether to calculate the cumulative distribution function for variables. Default is False 
     test : bool
         Default is False. Ignore, unless you are testing ecoval.
+    lon_lim : list or None
+        The longitude limits for the validation. Default is None
+    lat_lim : list or None
+        The latitude limits for the validation. Default is None
 
 
     Returns
