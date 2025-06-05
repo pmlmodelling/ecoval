@@ -58,9 +58,22 @@ def get_extent(ff):
     ds.subset(variables=ds.variables[0])
     ds.top()
     ds.subset(time=0)
+    ds.as_missing(0)
     ds_xr = ds.to_xarray()
     lon_name = [x for x in ds_xr.coords if "lon" in x][0]
     lat_name = [x for x in ds_xr.coords if "lat" in x][0]
+
+    df = ds_xr.to_dataframe().reset_index()
+    df = ds.to_dataframe().dropna().reset_index()
+    df = df.rename(columns={lon_name: "lon", lat_name: "lat"})
+    df = df.dropna()
+    lon_min = float(df.lon.min())
+    lon_max = float(df.lon.max())
+    lat_min = float(df.lat.min())
+    lat_max = float(df.lat.max())
+    return [lon_min, lon_max, lat_min, lat_max]
+
+
     lons = ds_xr[lon_name].values
     lons = lons.flatten()
     # as a unique, sorted list
@@ -73,12 +86,14 @@ def get_extent(ff):
     lons.sort()
     lon_res = np.abs(lons[2] - lons[1])
     lat_res = np.abs(lats[2] - lats[1])
+    print(lon_res)
+    print(lat_res)
     ds = nc.open_data(ff)
     ds.subset(variables=ds.variables[0])
     ds.top()
     ds.tmax()
     ds.to_latlon(lon=[-180, 180], lat=[-90, 90], res=[lon_res, lat_res])
-    df = ds.to_dataframe().dropna().reset_index()
+    # rename
     lon_min = df.lon.min()
     lon_max = df.lon.max()
     lat_min = df.lat.min()
