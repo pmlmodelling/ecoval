@@ -1240,9 +1240,9 @@ def matchup(
 
     # create matched directory
     if not os.path.exists("matched"):
-        if out_dir != "":
+        if session_info["out_dir"] != "":
             # recusively create the directory
-            os.makedirs(out_dir + "/matched", exist_ok=True)
+            os.makedirs(session_info["out_dir"] + "/matched", exist_ok=True)
         else:
             os.mkdir("matched")
     
@@ -1340,7 +1340,7 @@ def matchup(
                         #####
                         # now output the bathymetry if it does not exists
 
-                        ff_bath = out_dir + "/matched/model_bathymetry.nc"
+                        ff_bath = session_info["out_dir"] + "matched/model_bathymetry.nc"
                         if not os.path.exists(ff_bath):
                             ds_bath = ds_thickness.copy()
                             ds_bath.vertical_sum()
