@@ -494,7 +494,8 @@ def gridded_matchup(
                             vv_file,
                             checks=False,
                         )
-                        ds_obs.subset(months = month_sel)
+                        if vv not in ["alkalinity", "ph"]:
+                            ds_obs.subset(months = month_sel)
 
                         if vv_source == "occci" and vv == "chlorophyll":
                             ds_obs.subset(variable="chlor_a")
@@ -796,14 +797,16 @@ def gridded_matchup(
                                 .year.values
                             )
                             ds_surface.subset(years=sel_years)
-                            ds_obs.subset(years=sel_years)
-
-                        ds_obs.append(ds_surface)
+                            if vv not in ["alkalinity", "ph"]:
+                                ds_obs.subset(years=sel_years)
 
                         if len(ds_surface.times) < 12:
                             sel_months = list(set(ds_surface.months))
                             sel_months.sort()
-                            ds_obs.subset(months=sel_months)
+                            if vv not in ["alkalinity", "ph"]:
+                                ds_obs.subset(months=sel_months)
+
+                        ds_obs.append(ds_surface)
 
                         if len(ds_surface.times) > 12:
                             ds_obs.merge("variable", match=["year", "month"])
@@ -817,6 +820,7 @@ def gridded_matchup(
                         ds_mask = ds_obs.copy()
                         ds_mask.assign( mask_these=lambda x: -1e30 * ((isnan(x.observation) + isnan(x.model)) > 0), drop=True,)
                         ds_mask.as_missing([-1e40, -1e20])
+                        ds_mask.run()
                         ds_obs + ds_mask
 
                         # fix the co2 flux units
