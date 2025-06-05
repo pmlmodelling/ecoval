@@ -50,6 +50,15 @@ pip install .
 
 ```
 
+Alternatively, install the conda environment and package using the following commands:
+
+```sh
+    conda env create --name ecoval -f https://raw.githubusercontent.com/pmlmodelling/ecoval/main/ecoval.yml
+    conda activate ecoval​
+    pip install git+https://github.com/pmlmodelling/ecoval.git​
+```
+
+
 
 You can now build the docs in two steps. First, matchup the data in Python. You can specify a start and end years for the comparisons. In this only the years from 2000-2005 are validated. This process might take a couple of hours to run, depending on the size of the simulation. Increase the number of cores to get faster matchups.
 
