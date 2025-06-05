@@ -691,8 +691,8 @@ if available:
 # create directory if non-existent, recursive
     if os.path.isdir("adhoc/tmp") == False:
         os.makedirs("adhoc/tmp")
-    df_raw.to_feather("adhoc/tmp/df_raw.feather")
-    df.to_feather("adhoc/tmp/df.feather")
+    df_raw.to_csv("adhoc/tmp/df_raw.csv")
+    df.to_csv("adhoc/tmp/df.csv")
 
 
 # %% tags=["remove-input"]
@@ -707,7 +707,6 @@ if available:
 # %%capture --no-display
 # %%R -i df -i compact -i vv_name -i unit -w 1000 -h 1200 -i available
 # #%%R -i df -i variable -i unit -w 1600 -h 1000
-#df <- arrow::read_feather("adhoc/tmp/df_raw.feather")
 if("month" %in% colnames(df) & compact == FALSE & available){
 
 bin_value <- function(x, bin_res) {
@@ -812,7 +811,7 @@ bin_value <- function(x, bin_res) {
 	floor((x + bin_res / 2) / bin_res + 0.5) * bin_res - bin_res / 2
 }
 
-df <- arrow::read_feather("adhoc/tmp/df.feather")
+df <- read_csv("adhoc/tmp/df.csv")
 
 
 

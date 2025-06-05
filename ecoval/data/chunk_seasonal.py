@@ -169,12 +169,12 @@ if np.abs(raw_extent[0] - df_model.lon.min()) > 3:
 # create adhoc dir if not
 if not os.path.exists("adhoc/tmp"):
     os.makedirs("adhoc/tmp")
-tmp_csv = f"adhoc/df_obs_model.feather"
-df_obs.to_feather(tmp_csv)
-tmp_csv = f"adhoc/df_model_model.feather"
-df_model.to_feather(tmp_csv)
-tmp_csv = f"adhoc/df_diff_model.feather"
-df_diff.to_feather(tmp_csv)
+tmp_csv = f"adhoc/df_obs_model.csv"
+df_obs.to_csv(tmp_csv)
+tmp_csv = f"adhoc/df_model_model.csv"
+df_model.to_csv(tmp_csv)
+tmp_csv = f"adhoc/df_diff_model.csv"
+df_diff.to_csv(tmp_csv)
 
 
 # %% tags=["remove-input"]
@@ -195,7 +195,7 @@ library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
 
-df_model <- arrow::read_feather("adhoc/df_model_model.feather")
+df_model <- read_csv("adhoc/df_model_model.csv")
 
 
 min_month = min(df_model$month)
@@ -205,8 +205,8 @@ if("month" %in% colnames(df_model) & min_month < 7){
     model_unit <- str_replace(model_unit, "/kg", "kg<sup>-1</sup>")
 
     df_model_raw <- drop_na(df_model)
-    df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
-    df_diff <- arrow::read_feather("adhoc/df_diff_model.feather")
+    df_obs <- read_csv("adhoc/df_obs_model.csv")
+    df_diff <- read_csv("adhoc/df_diff_model.csv")
 
 
 #df_model_raw <- drop_na(df_model)
@@ -459,14 +459,14 @@ library(cowplot, warn.conflicts = FALSE)
 library(tidyr, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
 
-df_model <- arrow::read_feather("adhoc/df_model_model.feather")
+df_model <- read_csv("adhoc/df_model_model.csv")
 
 max_month = max(df_model$month)
 if("month" %in% colnames(df_model) & max_month > 6){
 
     df_model_raw <- drop_na(df_model)
-    df_obs <- arrow::read_feather("adhoc/df_obs_model.feather")
-    df_diff <- arrow::read_feather("adhoc/df_diff_model.feather")
+    df_obs <- read_csv("adhoc/df_obs_model.csv")
+    df_diff <- read_csv("adhoc/df_diff_model.csv")
 
 
 df_obs_raw <- drop_na(df_obs)
