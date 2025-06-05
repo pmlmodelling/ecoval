@@ -67,8 +67,15 @@ def get_extent(ff):
     df = ds.to_dataframe().dropna().reset_index()
     df = df.rename(columns={lon_name: "lon", lat_name: "lat"})
     df = df.dropna()
-    lon_min = float(df.lon.min())
-    lon_max = float(df.lon.max())
+    max_lon = df["lon"].max()
+    if max_lon > 180:
+        new_lon = df["lon"].values % 360
+        new_lon = new_lon - 180
+        lon_min = float(new_lon.min())
+        lon_max = float(new_lon.max())
+    else:
+        lon_min = float(df.lon.min())
+        lon_max = float(df.lon.max())
     lat_min = float(df.lat.min())
     lat_max = float(df.lat.max())
     return [lon_min, lon_max, lat_min, lat_max]
